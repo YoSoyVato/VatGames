@@ -9,13 +9,11 @@
       color: white;
       text-align: center;
 
-      /* NUEVO FONDO (EL TUYO) */
       background: url('https://i.pinimg.com/736x/bb/11/ab/bb11abc76809ac2b7426d682bb6b0634.jpg') no-repeat center center;
       background-size: cover;
       background-attachment: fixed;
     }
 
-    /* OSCURECER + EFECTO INMERSIVO */
     body::before {
       content: "";
       position: fixed;
@@ -35,7 +33,6 @@
 
     #menu { display: block; }
 
-    /* CAJA DE EXAMEN */
     #game {
       background: rgba(255,255,255,0.95);
       color: black;
@@ -79,6 +76,30 @@
       0% { background: #400; }
       100% { background: transparent; }
     }
+
+    /* HOJA INICIAL */
+    #paperStart {
+      display: none;
+    }
+
+    .paper {
+      background: white;
+      color: black;
+      width: 400px;
+      margin: auto;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.8);
+      cursor: pointer;
+    }
+
+    .paper input {
+      padding: 10px;
+      width: 80%;
+      margin-top: 10px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
   </style>
 </head>
 <body>
@@ -90,8 +111,19 @@
   <button onclick="startGame()">Empezar</button>
 </div>
 
+<!-- HOJA ANTES DEL EXAMEN -->
+<div id="paperStart" class="screen">
+  <div class="paper" onclick="beginExam()">
+    <h2>📄 Examen Final</h2>
+    <p>Nombre:</p>
+    <input type="text" id="playerName" placeholder="Escribe tu nombre..." onclick="event.stopPropagation()">
+    <p style="margin-top:20px;">(Haz click en la hoja para comenzar)</p>
+  </div>
+</div>
+
 <!-- JUEGO -->
 <div id="game" class="screen">
+  <h3 id="playerDisplay"></h3>
   <div id="timer">60</div>
   <div id="questionBox"></div>
 </div>
@@ -113,6 +145,7 @@
 <script>
 let time = 60;
 let current = 0;
+let player = "";
 
 const questions = [
   { q: "¿2 + 2?", a: ["3","4","5"], correct: 1 },
@@ -123,7 +156,22 @@ const questions = [
 
 function startGame() {
   document.getElementById("menu").style.display = "none";
+  document.getElementById("paperStart").style.display = "block";
+}
+
+function beginExam() {
+  player = document.getElementById("playerName").value;
+
+  if (player.trim() === "") {
+    alert("Escribe tu nombre primero");
+    return;
+  }
+
+  document.getElementById("paperStart").style.display = "none";
   document.getElementById("game").style.display = "block";
+
+  document.getElementById("playerDisplay").innerText = "Nombre: " + player;
+
   showQuestion();
   timer();
 }
