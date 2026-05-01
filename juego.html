@@ -1,75 +1,183 @@
-<style>
-  body {
-    margin: 0;
-    font-family: Arial;
-    color: white;
-    text-align: center;
+<!DOCTYPE html>
+<html>
+<head>
+  <title>The Last Exam</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial;
+      color: white;
+      text-align: center;
 
-    /* FONDO DE AULA */
-    background: url('https://images.unsplash.com/photo-1588072432836-e10032774350?auto=format&fit=crop&w=1920&q=80') no-repeat center/cover;
+      /* FONDO TIPO ESCRITORIO */
+      background: url('https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=1920&q=80') no-repeat center/cover;
+    }
+
+    /* OSCURECER + EFECTO INMERSIVO */
+    body::before {
+      content: "";
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(2px);
+      z-index: -1;
+    }
+
+    .screen {
+      display: none;
+      padding: 40px;
+    }
+
+    #menu { display: block; }
+
+    /* CAJA DE EXAMEN */
+    #game {
+      background: rgba(255,255,255,0.95);
+      color: black;
+      max-width: 600px;
+      margin: auto;
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.7);
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 10px;
+      cursor: pointer;
+      border: none;
+      border-radius: 5px;
+      background: #444;
+      color: white;
+      font-size: 16px;
+    }
+
+    button:hover {
+      background: #666;
+    }
+
+    #timer {
+      font-size: 30px;
+      margin-bottom: 20px;
+      color: red;
+    }
+
+    .question {
+      margin: 20px 0;
+    }
+
+    .danger {
+      animation: flash 0.2s;
+    }
+
+    @keyframes flash {
+      0% { background: #400; }
+      100% { background: transparent; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- MENÚ -->
+<div id="menu" class="screen">
+  <h1>📄 The Last Exam</h1>
+  <p>Termina el examen antes de que el tiempo se acabe...</p>
+  <button onclick="startGame()">Empezar</button>
+</div>
+
+<!-- JUEGO -->
+<div id="game" class="screen">
+  <div id="timer">60</div>
+  <div id="questionBox"></div>
+</div>
+
+<!-- GAME OVER -->
+<div id="gameover" class="screen">
+  <h1>💀 Game Over</h1>
+  <p>No terminaste a tiempo...</p>
+  <button onclick="location.reload()">Reintentar</button>
+</div>
+
+<!-- VICTORIA -->
+<div id="win" class="screen">
+  <h1>🎉 Aprobaste</h1>
+  <p>Completaste el examen a tiempo</p>
+  <button onclick="location.reload()">Jugar otra vez</button>
+</div>
+
+<script>
+let time = 60;
+let current = 0;
+
+const questions = [
+  { q: "¿2 + 2?", a: ["3","4","5"], correct: 1 },
+  { q: "Capital de Francia", a: ["Madrid","París","Roma"], correct: 1 },
+  { q: "¿5 x 3?", a: ["15","10","20"], correct: 0 },
+  { q: "Color del cielo", a: ["Azul","Rojo","Verde"], correct: 0 }
+];
+
+function startGame() {
+  document.getElementById("menu").style.display = "none";
+  document.getElementById("game").style.display = "block";
+  showQuestion();
+  timer();
+}
+
+function timer() {
+  const interval = setInterval(() => {
+    time--;
+    document.getElementById("timer").innerText = time;
+
+    if (time <= 0) {
+      clearInterval(interval);
+      gameOver();
+    }
+  }, 1000);
+}
+
+function showQuestion() {
+  if (current >= questions.length) {
+    winGame();
+    return;
   }
 
-  /* OSCURECER FONDO */
-  body::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0,0,0,0.6);
-    z-index: -1;
-  }
+  const q = questions[current];
+  let html = `<div class="question"><h2>${q.q}</h2>`;
 
-  .screen {
-    display: none;
-    padding: 40px;
-  }
+  q.a.forEach((ans, i) => {
+    html += `<button onclick="answer(${i})">${ans}</button>`;
+  });
 
-  #menu { display: block; }
+  html += `</div>`;
+  document.getElementById("questionBox").innerHTML = html;
+}
 
-  /* CAJA TIPO EXAMEN */
-  #game {
-    background: rgba(255,255,255,0.95);
-    color: black;
-    max-width: 600px;
-    margin: auto;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 0 20px rgba(0,0,0,0.7);
-  }
+function answer(i) {
+  const q = questions[current];
 
-  button {
-    padding: 10px 20px;
-    margin: 10px;
-    cursor: pointer;
-    border: none;
-    border-radius: 5px;
-    background: #2c3e50;
-    color: white;
-    font-size: 16px;
+  if (i === q.correct) {
+    current++;
+    showQuestion();
+  } else {
+    time -= 5;
+    document.body.classList.add("danger");
+    setTimeout(()=>document.body.classList.remove("danger"), 100);
   }
+}
 
-  button:hover {
-    background: #34495e;
-  }
+function gameOver() {
+  document.getElementById("game").style.display = "none";
+  document.getElementById("gameover").style.display = "block";
+}
 
-  #timer {
-    font-size: 30px;
-    margin-bottom: 20px;
-    color: red;
-  }
+function winGame() {
+  document.getElementById("game").style.display = "none";
+  document.getElementById("win").style.display = "block";
+}
+</script>
 
-  .question {
-    margin: 20px 0;
-  }
-
-  .danger {
-    animation: flash 0.2s;
-  }
-
-  @keyframes flash {
-    0% { background: #400; }
-    100% { background: transparent; }
-  }
-</style>
+</body>
+</html>
