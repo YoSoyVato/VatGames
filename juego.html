@@ -77,7 +77,6 @@
       100% { background: transparent; }
     }
 
-    /* HOJA INICIAL */
     #paperStart {
       display: none;
     }
@@ -111,13 +110,18 @@
   <button onclick="startGame()">Empezar</button>
 </div>
 
-<!-- HOJA ANTES DEL EXAMEN -->
+<!-- HOJA INTERACTIVA -->
 <div id="paperStart" class="screen">
-  <div class="paper" onclick="beginExam()">
+  <div class="paper" id="paperBox" onclick="activatePaper()">
     <h2>📄 Examen Final</h2>
-    <p>Nombre:</p>
-    <input type="text" id="playerName" placeholder="Escribe tu nombre..." onclick="event.stopPropagation()">
-    <p style="margin-top:20px;">(Haz click en la hoja para comenzar)</p>
+    <p id="paperText">(Haz click en la hoja para comenzar)</p>
+
+    <div id="nameSection" style="display:none;">
+      <p>Nombre:</p>
+      <input type="text" id="playerName" placeholder="Escribe tu nombre..." onclick="event.stopPropagation()">
+      <br><br>
+      <button onclick="beginExam(event)">Comenzar Examen</button>
+    </div>
   </div>
 </div>
 
@@ -146,6 +150,7 @@
 let time = 60;
 let current = 0;
 let player = "";
+let paperActivated = false;
 
 const questions = [
   { q: "¿2 + 2?", a: ["3","4","5"], correct: 1 },
@@ -159,7 +164,18 @@ function startGame() {
   document.getElementById("paperStart").style.display = "block";
 }
 
-function beginExam() {
+function activatePaper() {
+  if (paperActivated) return;
+
+  paperActivated = true;
+
+  document.getElementById("paperText").innerText = "Completa el examen:";
+  document.getElementById("nameSection").style.display = "block";
+}
+
+function beginExam(e) {
+  e.stopPropagation();
+
   player = document.getElementById("playerName").value;
 
   if (player.trim() === "") {
