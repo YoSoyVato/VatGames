@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (Edificios Mejorados)</title>
+<title>Detroit PRO 2D (Calles + Ventanas Fijas)</title>
 <style>
 body{margin:0;overflow:hidden;background:#0e1116}
 canvas{display:block}
@@ -42,29 +42,66 @@ function generateCity(){
 
 let city=generateCity();
 
-// Guardar datos de edificios (IMPORTANTE: ya no cambian cada frame)
+// Datos persistentes
 let buildingsData = {};
 
 function getBuildingData(x,y){
  let key = x+","+y;
  if(!buildingsData[key]){
-  buildingsData[key] = {
-    height: 70 + Math.random()*40
-  };
+  // Generar patrón de ventanas fijo
+  let windows = [];
+  let h = 70 + Math.random()*40;
+
+  for(let wy=10; wy<h-10; wy+=12){
+    for(let wx=6; wx<26; wx+=10){
+      windows.push({
+        x: wx,
+        y: wy,
+        on: Math.random()>0.2
+      });
+    }
+  }
+
+  buildingsData[key] = { height:h, windows:windows };
  }
  return buildingsData[key];
 }
 
-function drawGround(x,y,t){
+// CALLADAS PRO
+function drawGround(x,y,t,gridX,gridY){
  if(t===T.ROAD){
   ctx.fillStyle="#2b2f36";
   ctx.fillRect(x,y,TILE,TILE);
 
-  ctx.strokeStyle="#444";
+  ctx.strokeStyle="#555";
   ctx.lineWidth=2;
+
+  let up = city[gridY-1]?.[gridX]===T.ROAD;
+  let down = city[gridY+1]?.[gridX]===T.ROAD;
+  let left = city[gridY]?.[gridX-1]===T.ROAD;
+  let right = city[gridY]?.[gridX+1]===T.ROAD;
+
   ctx.beginPath();
-  ctx.moveTo(x,y+TILE/2);
-  ctx.lineTo(x+TILE,y+TILE/2);
+
+  // líneas según conexión
+  if(left && right){
+    ctx.moveTo(x,y+16);
+    ctx.lineTo(x+32,y+16);
+  }
+
+  if(up && down){
+    ctx.moveTo(x+16,y);
+    ctx.lineTo(x+16,y+32);
+  }
+
+  // cruce
+  if(up && down && left && right){
+    ctx.moveTo(x,y+16);
+    ctx.lineTo(x+32,y+16);
+    ctx.moveTo(x+16,y);
+    ctx.lineTo(x+16,y+32);
+  }
+
   ctx.stroke();
  }
 
@@ -79,33 +116,26 @@ function drawGround(x,y,t){
  }
 }
 
-// NUEVOS edificios (rojo + blanco)
 function drawBuilding(x,y){
  let data = getBuildingData(x,y);
  let h = data.height;
 
- // sombra
  ctx.fillStyle="rgba(0,0,0,0.35)";
  ctx.fillRect(x+5,y-h+5,32,h);
 
- // cuerpo rojo
  ctx.fillStyle="#c0392b";
  ctx.fillRect(x,y-h,32,h);
 
- // techo blanco
  ctx.fillStyle="#ecf0f1";
  ctx.fillRect(x,y-h,32,6);
 
- // borde lateral (detalle)
  ctx.fillStyle="#962d22";
  ctx.fillRect(x+28,y-h,4,h);
 
- // ventanas (más ordenadas)
- for(let wy=10; wy<h-10; wy+=12){
-  for(let wx=6; wx<26; wx+=10){
-   ctx.fillStyle = Math.random()>0.2 ? "#f7dc6f" : "#2c3e50";
-   ctx.fillRect(x+wx, y-h+wy, 5, 6);
-  }
+ // ventanas FIJAS
+ for(let w of data.windows){
+  ctx.fillStyle = w.on ? "#f7dc6f" : "#2c3e50";
+  ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
  }
 }
 
@@ -122,7 +152,7 @@ function drawCity(){
    let t=city[y][x];
    let dx=x*TILE;
    let dy=y*TILE;
-   drawGround(dx,dy,t);
+   drawGround(dx,dy,t,x,y);
   }
  }
 
