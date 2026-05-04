@@ -2,18 +2,10 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
-  <title>Detroit 2D</title>
+  <title>Detroit Ciudad PRO</title>
   <style>
-    body {
-      margin: 0;
-      overflow: hidden;
-      background: #111;
-    }
-    canvas {
-      display: block;
-      margin: auto;
-      background: #1a1a1a;
-    }
+    body { margin:0; overflow:hidden; background:#111; }
+    canvas { display:block; margin:auto; }
   </style>
 </head>
 <body>
@@ -26,102 +18,123 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-// Tamaño de tiles
 const TILE_SIZE = 32;
 const ROWS = Math.floor(canvas.height / TILE_SIZE);
 const COLS = Math.floor(canvas.width / TILE_SIZE);
 
-// Tipos de terreno
-const TILE = {
-  ROAD: 0,
-  BUILDING: 1,
-  PARK: 2,
-  WATER: 3
-};
+// Cargar tileset
+const tileset = new Image();
+tileset.src = "assets/tileset.png"; // <- usa la imagen que mandaste
 
-// Generar ciudad procedural
+// Tipos
+const TILE = { ROAD:0, BUILDING:1, PARK:2 };
+
+// Generación más estética
 function generateCity() {
   let map = [];
-
-  for (let y = 0; y < ROWS; y++) {
-    let row = [];
-    for (let x = 0; x < COLS; x++) {
-      // Calles principales
-      if (x % 6 === 0 || y % 6 === 0) {
-        row.push(TILE.ROAD);
-      } else {
-        // Zonas
-        let rand = Math.random();
-        if (rand < 0.7) row.push(TILE.BUILDING);
-        else if (rand < 0.85) row.push(TILE.PARK);
-        else row.push(TILE.WATER);
+  for (let y=0;y<ROWS;y++){
+    let row=[];
+    for (let x=0;x<COLS;x++){
+      if (x%8===0 || y%8===0) row.push(TILE.ROAD);
+      else {
+        let r=Math.random();
+        if (r<0.75) row.push(TILE.BUILDING);
+        else row.push(TILE.PARK);
       }
     }
     map.push(row);
   }
-
   return map;
 }
 
 let cityMap = generateCity();
 
-// Dibujar ciudad
-function drawCity() {
-  for (let y = 0; y < ROWS; y++) {
-    for (let x = 0; x < COLS; x++) {
-      let tile = cityMap[y][x];
+// Dibujar suelo
+function drawGround(x,y,tile){
+  if(tile===TILE.ROAD){
+    ctx.fillStyle="#3a3a3a";
+    ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
 
-      switch(tile) {
-        case TILE.ROAD:
-          ctx.fillStyle = "#444";
-          break;
-        case TILE.BUILDING:
-          ctx.fillStyle = "#2c3e50";
-          break;
-        case TILE.PARK:
-          ctx.fillStyle = "#2ecc71";
-          break;
-        case TILE.WATER:
-          ctx.fillStyle = "#3498db";
-          break;
-      }
+    // líneas calle
+    ctx.strokeStyle="#555";
+    ctx.beginPath();
+    ctx.moveTo(x,y+16);
+    ctx.lineTo(x+32,y+16);
+    ctx.stroke();
+  }
 
-      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+  if(tile===TILE.PARK){
+    ctx.fillStyle="#2ecc71";
+    ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
+  }
+
+  if(tile===TILE.BUILDING){
+    ctx.fillStyle="#2c3e50";
+    ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
+  }
+}
+
+// Dibujar edificios (con profundidad)
+function drawBuildings(x,y,tile){
+  if(tile===TILE.BUILDING){
+    // ejemplo: edificio del tileset (ajusta coords si querés)
+    ctx.drawImage(
+      tileset,
+      0,0,64,128,   // área del sprite
+      x, y-96,64,128 // posición en juego
+    );
+  }
+}
+
+// Decoración
+function drawDetails(x,y,tile){
+  if(tile===TILE.PARK && Math.random()<0.02){
+    ctx.fillStyle="#27ae60";
+    ctx.beginPath();
+    ctx.arc(x+16,y+16,6,0,Math.PI*2);
+    ctx.fill();
+  }
+}
+
+function drawCity(){
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      let tile=cityMap[y][x];
+      let dx=x*TILE_SIZE;
+      let dy=y*TILE_SIZE;
+
+      drawGround(dx,dy,tile);
+    }
+  }
+
+  // capa edificios (encima)
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      let tile=cityMap[y][x];
+      let dx=x*TILE_SIZE;
+      let dy=y*TILE_SIZE;
+
+      drawBuildings(dx,dy,tile);
+      drawDetails(dx,dy,tile);
     }
   }
 }
 
-// Detalles de edificios
-function drawDetails() {
-  for (let y = 0; y < ROWS; y++) {
-    for (let x = 0; x < COLS; x++) {
-      if (cityMap[y][x] === TILE.BUILDING) {
-        ctx.fillStyle = "#ecf0f1";
-        ctx.fillRect(x * TILE_SIZE + 8, y * TILE_SIZE + 8, 6, 6);
-        ctx.fillRect(x * TILE_SIZE + 18, y * TILE_SIZE + 8, 6, 6);
-      }
-    }
-  }
-}
-
-// Loop principal
-function gameLoop() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
+function gameLoop(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
   drawCity();
-  drawDetails();
-
   requestAnimationFrame(gameLoop);
 }
 
-// Resize
-window.addEventListener("resize", () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
+window.addEventListener("resize",()=>{
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
 });
 
-// Start
-gameLoop();
+// Esperar imagen
+tileset.onload = ()=>{
+  gameLoop();
+};
 </script>
 </body>
 </html>
