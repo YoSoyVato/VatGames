@@ -1,249 +1,127 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>The Last Exam</title>
+  <meta charset="UTF-8">
+  <title>Detroit 2D</title>
   <style>
     body {
       margin: 0;
-      font-family: Arial;
-      color: white;
-      text-align: center;
-
-      background: url('https://i.pinimg.com/736x/bb/11/ab/bb11abc76809ac2b7426d682bb6b0634.jpg') no-repeat center center;
-      background-size: cover;
-      background-attachment: fixed;
+      overflow: hidden;
+      background: #111;
     }
-
-    body::before {
-      content: "";
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(2px);
-      z-index: -1;
-    }
-
-    .screen {
-      display: none;
-      padding: 40px;
-    }
-
-    #menu { display: block; }
-
-    #game {
-      background: rgba(255,255,255,0.95);
-      color: black;
-      max-width: 600px;
+    canvas {
+      display: block;
       margin: auto;
-      border-radius: 10px;
-      padding: 20px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.7);
-    }
-
-    button {
-      padding: 10px 20px;
-      margin: 10px;
-      cursor: pointer;
-      border: none;
-      border-radius: 5px;
-      background: #444;
-      color: white;
-      font-size: 16px;
-    }
-
-    button:hover {
-      background: #666;
-    }
-
-    #timer {
-      font-size: 30px;
-      margin-bottom: 20px;
-      color: red;
-    }
-
-    .question {
-      margin: 20px 0;
-    }
-
-    .danger {
-      animation: flash 0.2s;
-    }
-
-    @keyframes flash {
-      0% { background: #400; }
-      100% { background: transparent; }
-    }
-
-    #paperStart {
-      display: none;
-    }
-
-    .paper {
-      background: white;
-      color: black;
-      width: 400px;
-      margin: auto;
-      padding: 30px;
-      border-radius: 10px;
-      box-shadow: 0 0 20px rgba(0,0,0,0.8);
-      cursor: pointer;
-    }
-
-    .paper input {
-      padding: 10px;
-      width: 80%;
-      margin-top: 10px;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      background: #1a1a1a;
     }
   </style>
 </head>
 <body>
-
-<!-- MENÚ -->
-<div id="menu" class="screen">
-  <h1>📄 The Last Exam</h1>
-  <p>Termina el examen antes de que el tiempo se acabe...</p>
-  <button onclick="startGame()">Empezar</button>
-</div>
-
-<!-- HOJA INTERACTIVA -->
-<div id="paperStart" class="screen">
-  <div class="paper" id="paperBox" onclick="activatePaper()">
-    <h2>📄 Examen Final</h2>
-    <p id="paperText">(Haz click en la hoja para comenzar)</p>
-
-    <div id="nameSection" style="display:none;">
-      <p>Nombre:</p>
-      <input type="text" id="playerName" placeholder="Escribe tu nombre..." onclick="event.stopPropagation()">
-      <br><br>
-      <button onclick="beginExam(event)">Comenzar Examen</button>
-    </div>
-  </div>
-</div>
-
-<!-- JUEGO -->
-<div id="game" class="screen">
-  <h3 id="playerDisplay"></h3>
-  <div id="timer">60</div>
-  <div id="questionBox"></div>
-</div>
-
-<!-- GAME OVER -->
-<div id="gameover" class="screen">
-  <h1>💀 Game Over</h1>
-  <p>No terminaste a tiempo...</p>
-  <button onclick="location.reload()">Reintentar</button>
-</div>
-
-<!-- VICTORIA -->
-<div id="win" class="screen">
-  <h1>🎉 Aprobaste</h1>
-  <p>Completaste el examen a tiempo</p>
-  <button onclick="location.reload()">Jugar otra vez</button>
-</div>
+<canvas id="gameCanvas"></canvas>
 
 <script>
-let time = 60;
-let current = 0;
-let player = "";
-let paperActivated = false;
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-const questions = [
-  { q: "¿2 + 2?", a: ["3","4","5"], correct: 1 },
-  { q: "Capital de Francia", a: ["Madrid","París","Roma"], correct: 1 },
-  { q: "¿5 x 3?", a: ["15","10","20"], correct: 0 },
-  { q: "Color del cielo", a: ["Azul","Rojo","Verde"], correct: 0 }
-];
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 
-function startGame() {
-  document.getElementById("menu").style.display = "none";
-  document.getElementById("paperStart").style.display = "block";
-}
+// Tamaño de tiles
+const TILE_SIZE = 32;
+const ROWS = Math.floor(canvas.height / TILE_SIZE);
+const COLS = Math.floor(canvas.width / TILE_SIZE);
 
-function activatePaper() {
-  if (paperActivated) return;
+// Tipos de terreno
+const TILE = {
+  ROAD: 0,
+  BUILDING: 1,
+  PARK: 2,
+  WATER: 3
+};
 
-  paperActivated = true;
+// Generar ciudad procedural
+function generateCity() {
+  let map = [];
 
-  document.getElementById("paperText").innerText = "Completa el examen:";
-  document.getElementById("nameSection").style.display = "block";
-}
-
-function beginExam(e) {
-  e.stopPropagation();
-
-  player = document.getElementById("playerName").value;
-
-  if (player.trim() === "") {
-    alert("Escribe tu nombre primero");
-    return;
-  }
-
-  document.getElementById("paperStart").style.display = "none";
-  document.getElementById("game").style.display = "block";
-
-  document.getElementById("playerDisplay").innerText = "Nombre: " + player;
-
-  showQuestion();
-  timer();
-}
-
-function timer() {
-  const interval = setInterval(() => {
-    time--;
-    document.getElementById("timer").innerText = time;
-
-    if (time <= 0) {
-      clearInterval(interval);
-      gameOver();
+  for (let y = 0; y < ROWS; y++) {
+    let row = [];
+    for (let x = 0; x < COLS; x++) {
+      // Calles principales
+      if (x % 6 === 0 || y % 6 === 0) {
+        row.push(TILE.ROAD);
+      } else {
+        // Zonas
+        let rand = Math.random();
+        if (rand < 0.7) row.push(TILE.BUILDING);
+        else if (rand < 0.85) row.push(TILE.PARK);
+        else row.push(TILE.WATER);
+      }
     }
-  }, 1000);
-}
-
-function showQuestion() {
-  if (current >= questions.length) {
-    winGame();
-    return;
+    map.push(row);
   }
 
-  const q = questions[current];
-  let html = `<div class="question"><h2>${q.q}</h2>`;
-
-  q.a.forEach((ans, i) => {
-    html += `<button onclick="answer(${i})">${ans}</button>`;
-  });
-
-  html += `</div>`;
-  document.getElementById("questionBox").innerHTML = html;
+  return map;
 }
 
-function answer(i) {
-  const q = questions[current];
+let cityMap = generateCity();
 
-  if (i === q.correct) {
-    current++;
-    showQuestion();
-  } else {
-    time -= 5;
-    document.body.classList.add("danger");
-    setTimeout(()=>document.body.classList.remove("danger"), 100);
+// Dibujar ciudad
+function drawCity() {
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      let tile = cityMap[y][x];
+
+      switch(tile) {
+        case TILE.ROAD:
+          ctx.fillStyle = "#444";
+          break;
+        case TILE.BUILDING:
+          ctx.fillStyle = "#2c3e50";
+          break;
+        case TILE.PARK:
+          ctx.fillStyle = "#2ecc71";
+          break;
+        case TILE.WATER:
+          ctx.fillStyle = "#3498db";
+          break;
+      }
+
+      ctx.fillRect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE);
+    }
   }
 }
 
-function gameOver() {
-  document.getElementById("game").style.display = "none";
-  document.getElementById("gameover").style.display = "block";
+// Detalles de edificios
+function drawDetails() {
+  for (let y = 0; y < ROWS; y++) {
+    for (let x = 0; x < COLS; x++) {
+      if (cityMap[y][x] === TILE.BUILDING) {
+        ctx.fillStyle = "#ecf0f1";
+        ctx.fillRect(x * TILE_SIZE + 8, y * TILE_SIZE + 8, 6, 6);
+        ctx.fillRect(x * TILE_SIZE + 18, y * TILE_SIZE + 8, 6, 6);
+      }
+    }
+  }
 }
 
-function winGame() {
-  document.getElementById("game").style.display = "none";
-  document.getElementById("win").style.display = "block";
+// Loop principal
+function gameLoop() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  drawCity();
+  drawDetails();
+
+  requestAnimationFrame(gameLoop);
 }
+
+// Resize
+window.addEventListener("resize", () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+
+// Start
+gameLoop();
 </script>
-
 </body>
 </html>
