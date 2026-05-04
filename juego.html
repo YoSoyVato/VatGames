@@ -1,140 +1,151 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Detroit Ciudad PRO</title>
-  <style>
-    body { margin:0; overflow:hidden; background:#111; }
-    canvas { display:block; margin:auto; }
-  </style>
+<meta charset="UTF-8">
+<title>Detroit PRO 2D (Sin Sprites)</title>
+<style>
+body{margin:0;overflow:hidden;background:#0e1116}
+canvas{display:block}
+</style>
 </head>
 <body>
-<canvas id="gameCanvas"></canvas>
-
+<canvas id="game"></canvas>
 <script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
 
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-const TILE_SIZE = 32;
-const ROWS = Math.floor(canvas.height / TILE_SIZE);
-const COLS = Math.floor(canvas.width / TILE_SIZE);
-
-// Cargar tileset
-const tileset = new Image();
-tileset.src = "assets/tileset.png"; // <- usa la imagen que mandaste
+const TILE=32;
+const rows=Math.floor(canvas.height/TILE);
+const cols=Math.floor(canvas.width/TILE);
 
 // Tipos
-const TILE = { ROAD:0, BUILDING:1, PARK:2 };
+const T={ROAD:0,BUILDING:1,PARK:2};
 
-// Generación más estética
-function generateCity() {
-  let map = [];
-  for (let y=0;y<ROWS;y++){
-    let row=[];
-    for (let x=0;x<COLS;x++){
-      if (x%8===0 || y%8===0) row.push(TILE.ROAD);
-      else {
-        let r=Math.random();
-        if (r<0.75) row.push(TILE.BUILDING);
-        else row.push(TILE.PARK);
-      }
-    }
-    map.push(row);
+// Mapa más realista (bloques urbanos)
+function generateCity(){
+ let map=[];
+ for(let y=0;y<rows;y++){
+  let row=[];
+  for(let x=0;x<cols;x++){
+   if(x%10===0||y%10===0) row.push(T.ROAD);
+   else{
+    let r=Math.random();
+    if(r<0.8) row.push(T.BUILDING);
+    else row.push(T.PARK);
+   }
   }
-  return map;
+  map.push(row);
+ }
+ return map;
 }
 
-let cityMap = generateCity();
+let city=generateCity();
 
-// Dibujar suelo
-function drawGround(x,y,tile){
-  if(tile===TILE.ROAD){
-    ctx.fillStyle="#3a3a3a";
-    ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
+// Suelo
+function drawGround(x,y,t){
+ if(t===T.ROAD){
+  ctx.fillStyle="#2b2f36";
+  ctx.fillRect(x,y,TILE,TILE);
 
-    // líneas calle
-    ctx.strokeStyle="#555";
-    ctx.beginPath();
-    ctx.moveTo(x,y+16);
-    ctx.lineTo(x+32,y+16);
-    ctx.stroke();
-  }
+  // líneas
+  ctx.strokeStyle="#444";
+  ctx.lineWidth=2;
+  ctx.beginPath();
+  ctx.moveTo(x,y+TILE/2);
+  ctx.lineTo(x+TILE,y+TILE/2);
+  ctx.stroke();
+ }
 
-  if(tile===TILE.PARK){
-    ctx.fillStyle="#2ecc71";
-    ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
-  }
+ if(t===T.PARK){
+  ctx.fillStyle="#1f5f3a";
+  ctx.fillRect(x,y,TILE,TILE);
+ }
 
-  if(tile===TILE.BUILDING){
-    ctx.fillStyle="#2c3e50";
-    ctx.fillRect(x,y,TILE_SIZE,TILE_SIZE);
-  }
+ if(t===T.BUILDING){
+  ctx.fillStyle="#1c222b";
+  ctx.fillRect(x,y,TILE,TILE);
+ }
 }
 
-// Dibujar edificios (con profundidad)
-function drawBuildings(x,y,tile){
-  if(tile===TILE.BUILDING){
-    // ejemplo: edificio del tileset (ajusta coords si querés)
-    ctx.drawImage(
-      tileset,
-      0,0,64,128,   // área del sprite
-      x, y-96,64,128 // posición en juego
-    );
+// Edificios PRO (sin sprites)
+function drawBuilding(x,y){
+ let h=60+Math.random()*60;
+
+ // sombra
+ ctx.fillStyle="rgba(0,0,0,0.4)";
+ ctx.fillRect(x+6,y-h+6,32, h);
+
+ // cuerpo
+ ctx.fillStyle="#2f3642";
+ ctx.fillRect(x,y-h,32,h);
+
+ // borde luz
+ ctx.fillStyle="#3d4452";
+ ctx.fillRect(x,y-h,32,4);
+
+ // ventanas
+ for(let wy=0;wy<h-10;wy+=10){
+  for(let wx=4;wx<28;wx+=10){
+   if(Math.random()>0.3){
+    ctx.fillStyle="#f1c40f";
+    ctx.fillRect(x+wx,y-h+wy+6,4,6);
+   }
   }
+ }
 }
 
-// Decoración
-function drawDetails(x,y,tile){
-  if(tile===TILE.PARK && Math.random()<0.02){
-    ctx.fillStyle="#27ae60";
-    ctx.beginPath();
-    ctx.arc(x+16,y+16,6,0,Math.PI*2);
-    ctx.fill();
-  }
+// Árboles
+function drawTree(x,y){
+ ctx.fillStyle="#145a32";
+ ctx.beginPath();
+ ctx.arc(x+16,y+16,8,0,Math.PI*2);
+ ctx.fill();
 }
 
 function drawCity(){
-  for(let y=0;y<ROWS;y++){
-    for(let x=0;x<COLS;x++){
-      let tile=cityMap[y][x];
-      let dx=x*TILE_SIZE;
-      let dy=y*TILE_SIZE;
+ for(let y=0;y<rows;y++){
+  for(let x=0;x<cols;x++){
+   let t=city[y][x];
+   let dx=x*TILE;
+   let dy=y*TILE;
 
-      drawGround(dx,dy,tile);
-    }
+   drawGround(dx,dy,t);
   }
+ }
 
-  // capa edificios (encima)
-  for(let y=0;y<ROWS;y++){
-    for(let x=0;x<COLS;x++){
-      let tile=cityMap[y][x];
-      let dx=x*TILE_SIZE;
-      let dy=y*TILE_SIZE;
+ // capa superior
+ for(let y=0;y<rows;y++){
+  for(let x=0;x<cols;x++){
+   let t=city[y][x];
+   let dx=x*TILE;
+   let dy=y*TILE;
 
-      drawBuildings(dx,dy,tile);
-      drawDetails(dx,dy,tile);
-    }
+   if(t===T.BUILDING && Math.random()>0.2){
+    drawBuilding(dx,dy);
+   }
+
+   if(t===T.PARK && Math.random()>0.7){
+    drawTree(dx,dy);
+   }
   }
+ }
 }
 
-function gameLoop(){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
-  drawCity();
-  requestAnimationFrame(gameLoop);
+function loop(){
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+ drawCity();
+ requestAnimationFrame(loop);
 }
+
+loop();
 
 window.addEventListener("resize",()=>{
-  canvas.width=window.innerWidth;
-  canvas.height=window.innerHeight;
+ canvas.width=window.innerWidth;
+ canvas.height=window.innerHeight;
 });
-
-// Esperar imagen
-tileset.onload = ()=>{
-  gameLoop();
-};
 </script>
 </body>
 </html>
