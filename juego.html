@@ -2,10 +2,10 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (MAPA DEFINITIVO)</title>
+<title>Detroit PRO 2D (90s EDITION)</title>
 
 <style>
-body{margin:0;overflow:hidden;background:#0e1116}
+body{margin:0;overflow:hidden;background:#0b0d12}
 canvas{display:block}
 
 #zoneName{
@@ -13,12 +13,13 @@ canvas{display:block}
  top:10px;
  left:50%;
  transform:translateX(-50%);
- color:white;
- font-family:Arial;
- font-size:20px;
- background:rgba(0,0,0,0.5);
- padding:5px 15px;
- border-radius:10px;
+ color:#e0e0e0;
+ font-family:monospace;
+ font-size:18px;
+ background:rgba(0,0,0,0.6);
+ padding:6px 18px;
+ border-radius:8px;
+ letter-spacing:2px;
 }
 </style>
 </head>
@@ -35,50 +36,20 @@ const zoneUI=document.getElementById("zoneName");
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
-/* =========================
-   CONFIGURACIÓN GENERAL
-========================= */
 const TILE=32;
 const WORLD_ROWS=500;
 const WORLD_COLS=500;
 
-/*
-TIPOS DE TERRENO
-Puedes agregar más si quieres (ej: arena, nieve, etc)
-*/
-const T={
- ROAD:0,
- BUILDING:1,
- GRASS:2,
- WATER:3,
- BRIDGE:4
-};
+const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
-/* =========================
-   ZONAS DEL MAPA
-========================= */
-/*
-EDITA ESTO para cambiar el mapa fácilmente
-(x, y = posición)
-(w, h = tamaño)
-*/
 const ZONES=[];
 
 function defineZones(){
-
- // 🏙️ Ciudad 1 (100x100)
- ZONES.push({name:"Ciudad", x:80, y:200, w:70, h:100});
-
- // 🏙️ Ciudad 2 (100x100)
+ ZONES.push({name:"Ciudad", x:80, y:200, w:100, h:100});
  ZONES.push({name:"Ciudad Norte", x:320, y:200, w:100, h:100});
-
- // 🌊 Lago (200x200)
  ZONES.push({name:"Lago", x:150, y:150, w:200, h:200});
 }
 
-/*
-Detecta en qué zona estás
-*/
 function getZone(x,y){
  for(let z of ZONES){
   if(x>=z.x && x<z.x+z.w && y>=z.y && y<z.y+z.h){
@@ -89,10 +60,9 @@ function getZone(x,y){
 }
 
 /* =========================
-   GENERACIÓN DEL MUNDO
+   GENERACIÓN
 ========================= */
 function generateWorld(){
-
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
 
  for(let y=0;y<WORLD_ROWS;y++){
@@ -100,33 +70,23 @@ function generateWorld(){
 
    let zone=getZone(x,y);
 
-   // 🌊 LAGO (prioridad máxima)
    if(zone==="Lago"){
      map[y][x]=T.WATER;
      continue;
    }
 
-   // 🏙️ CIUDADES
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
-
      map[y][x]=T.BUILDING;
 
-     // Calles
-     if(x%6===0 || y%6===0){
+     if(x%5===0 || y%5===0){
        map[y][x]=T.ROAD;
      }
    }
   }
  }
 
- /* =========================
-    🌉 PUENTE (EDITABLE)
- ========================= */
- /*
-  Cambia bridgeY para subir/bajar el puente
- */
+ // puente
  let bridgeY = 250;
-
  for(let x=150;x<350;x++){
    map[bridgeY][x]=T.BRIDGE;
    map[bridgeY+1][x]=T.BRIDGE;
@@ -139,10 +99,9 @@ defineZones();
 let city=generateWorld();
 
 /* =========================
-   INPUT (WASD)
+   INPUT
 ========================= */
 let keys={};
-
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
@@ -156,26 +115,21 @@ let speed=5;
 let lastTime=performance.now();
 
 function updateCamera(delta){
-
  if(keys["KeyW"]) camY-=speed*delta;
  if(keys["KeyS"]) camY+=speed*delta;
  if(keys["KeyA"]) camX-=speed*delta;
  if(keys["KeyD"]) camX+=speed*delta;
 
- // 🔥 evita temblores
  camX=Math.round(camX);
  camY=Math.round(camY);
 
- // límites del mundo
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
 /* =========================
-   DATOS PERSISTENTES
+   DATOS
 ========================= */
-
-// 🏢 edificios
 let buildingsData={};
 
 function getBuildingData(x,y){
@@ -183,35 +137,40 @@ function getBuildingData(x,y){
 
  if(!buildingsData[key]){
   let windows=[];
-  let h=60+Math.random()*40;
+  let h=60+Math.random()*50;
+
+  let style=Math.floor(Math.random()*3);
 
   for(let wy=10;wy<h-10;wy+=12){
     for(let wx=6;wx<26;wx+=10){
-      windows.push({x:wx,y:wy,on:Math.random()>0.2});
+      windows.push({
+        x:wx,
+        y:wy,
+        on:Math.random()>0.3
+      });
     }
   }
 
-  buildingsData[key]={height:h,windows};
+  buildingsData[key]={
+    height:h,
+    windows,
+    style
+  };
  }
 
  return buildingsData[key];
 }
 
-// 🌳 árboles (NO se regeneran cada frame)
 let treesData={};
 
 function hasTree(x,y){
  let key=x+","+y;
 
  if(!treesData[key]){
-  let zone=getZone(x,y);
-
-  treesData[key]={
-    exists:(zone==="Bosque") && Math.random()>0.85
-  };
+  treesData[key]=Math.random()>0.85;
  }
 
- return treesData[key].exists;
+ return treesData[key];
 }
 
 /* =========================
@@ -223,30 +182,31 @@ function drawTile(x,y,t){
  x=Math.round(x);
  y=Math.round(y);
 
- if(t===T.ROAD) ctx.fillStyle="#2b2f36";
- if(t===T.BUILDING) ctx.fillStyle="#1c222b";
- if(t===T.GRASS) ctx.fillStyle="#1f5f3a";
- if(t===T.WATER) ctx.fillStyle="#1e90ff";
- if(t===T.BRIDGE) ctx.fillStyle="#a9825a";
+ // colores 90s
+ if(t===T.ROAD) ctx.fillStyle="#3a3a3a";
+ if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
+ if(t===T.GRASS) ctx.fillStyle="#355c3a";
+ if(t===T.WATER) ctx.fillStyle="#2c6fa3";
+ if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
 
  ctx.fillRect(x,y,TILE,TILE);
 
- // calles
+ // 🛣️ carretera estilo USA
  if(t===T.ROAD){
-  ctx.strokeStyle="#ffffff55";
+  ctx.strokeStyle="#d4c76b";
   ctx.beginPath();
   ctx.moveTo(x,y+16);
   ctx.lineTo(x+32,y+16);
-  ctx.moveTo(x+16,y);
-  ctx.lineTo(x+16,y+32);
   ctx.stroke();
+
+  ctx.strokeStyle="#ffffff22";
+  ctx.strokeRect(x,y,32,32);
  }
 
- // puente mejorado
+ // 🌉 puente
  if(t===T.BRIDGE){
+  ctx.strokeStyle="#5c3b1e";
 
-  // tablones
-  ctx.strokeStyle="#6e4f32";
   for(let i=0;i<32;i+=8){
     ctx.beginPath();
     ctx.moveTo(x+i,y);
@@ -254,8 +214,7 @@ function drawTile(x,y,t){
     ctx.stroke();
   }
 
-  // barandas
-  ctx.strokeStyle="#3e2c1c";
+  ctx.strokeStyle="#2b1a0d";
   ctx.beginPath();
   ctx.moveTo(x,y+4);
   ctx.lineTo(x+32,y+4);
@@ -273,17 +232,19 @@ function drawBuilding(x,y){
  x=Math.round(x);
  y=Math.round(y);
 
- ctx.fillStyle="rgba(0,0,0,0.3)";
- ctx.fillRect(x+5,y-h+5,32,h);
+ // colores viejos
+ let colors=["#5a4a3f","#4b5a3f","#3f4a5a"];
+ ctx.fillStyle=colors[d.style];
 
- ctx.fillStyle="#c0392b";
  ctx.fillRect(x,y-h,32,h);
 
- ctx.fillStyle="#ecf0f1";
- ctx.fillRect(x,y-h,32,6);
+ // techo
+ ctx.fillStyle="#222";
+ ctx.fillRect(x,y-h,32,4);
 
+ // ventanas
  for(let w of d.windows){
-  ctx.fillStyle = w.on ? "#f7dc6f" : "#2c3e50";
+  ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
   ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
  }
 }
@@ -293,23 +254,21 @@ function drawTree(x,y){
  x=Math.round(x);
  y=Math.round(y);
 
- // tronco
- ctx.fillStyle="#5a3e1b";
- ctx.fillRect(x+13,y+20,6,10);
+ ctx.fillStyle="#4a2f1b";
+ ctx.fillRect(x+14,y+20,4,10);
 
- // hojas
- ctx.fillStyle="#2ecc71";
+ ctx.fillStyle="#2f7a3f";
  ctx.beginPath();
- ctx.arc(x+16,y+14,10,0,Math.PI*2);
+ ctx.arc(x+16,y+14,9,0,Math.PI*2);
  ctx.fill();
 
- ctx.fillStyle="#27ae60";
+ ctx.fillStyle="#255f32";
  ctx.beginPath();
- ctx.arc(x+10,y+14,6,0,Math.PI*2);
+ ctx.arc(x+12,y+14,5,0,Math.PI*2);
  ctx.fill();
 
  ctx.beginPath();
- ctx.arc(x+22,y+14,6,0,Math.PI*2);
+ ctx.arc(x+20,y+14,5,0,Math.PI*2);
  ctx.fill();
 }
 
@@ -339,13 +298,12 @@ function drawWorld(){
     drawBuilding(dx,dy);
    }
 
-   if(hasTree(x,y)){
+   if(getZone(x,y)==="Bosque" && hasTree(x,y)){
     drawTree(dx,dy);
    }
   }
  }
 
- // texto zona
  let px=Math.floor((camX+canvas.width/2)/TILE);
  let py=Math.floor((camY+canvas.height/2)/TILE);
 
@@ -372,9 +330,6 @@ function loop(time){
 
 requestAnimationFrame(loop);
 
-/* =========================
-   RESIZE
-========================= */
 window.addEventListener("resize",()=>{
  canvas.width=window.innerWidth;
  canvas.height=window.innerHeight;
