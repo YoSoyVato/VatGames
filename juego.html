@@ -36,6 +36,7 @@ const zoneUI=document.getElementById("zoneName");
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
+/* ========================= */
 const CONFIG = {
   CITY_WIDTH:90,
   CITY_HEIGHT:60,
@@ -52,6 +53,7 @@ const WORLD_COLS=500;
 
 const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
+/* ========================= */
 const ZONES=[];
 
 function rectsOverlap(a,b){
@@ -67,7 +69,13 @@ function defineZones(){
 
  ZONES.length=0;
 
- let lake = { name:"Lago", x:150, y:150, w:CONFIG.LAKE_SIZE, h:CONFIG.LAKE_SIZE };
+ let lake = {
+   name:"Lago",
+   x:150,
+   y:150,
+   w:CONFIG.LAKE_SIZE,
+   h:CONFIG.LAKE_SIZE
+ };
 
  let city1 = {
    name:"Ciudad",
@@ -94,33 +102,41 @@ function defineZones(){
  fixCity(city1);
  fixCity(city2);
 
- ZONES.push(city1,city2,lake);
+ ZONES.push(city1);
+ ZONES.push(city2);
+ ZONES.push(lake);
 
  let roadX1 = Math.floor(city1.x + city1.w/2);
  let roadX2 = Math.floor(city2.x + city2.w/2);
 
  /* 🔥 PUEBLOS ARRIBA */
  for(let i=1;i<=5;i++){
-   let y1 = city1.y - i*60;
-   let y2 = city2.y - i*60;
+   let yPos = city1.y - i*60;
 
-   ZONES.push({ name:"Pueblo", x: roadX1-40, y:y1, w:15, h:15 });
-   ZONES.push({ name:"Pueblo", x: roadX1+25, y:y1, w:15, h:15 });
-
-   ZONES.push({ name:"Pueblo", x: roadX2-40, y:y2, w:15, h:15 });
-   ZONES.push({ name:"Pueblo", x: roadX2+25, y:y2, w:15, h:15 });
+   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 
- /* 🔥 PUEBLOS ABAJO (NUEVO) */
  for(let i=1;i<=5;i++){
-   let y1 = city1.y + city1.h + i*60;
-   let y2 = city2.y + city2.h + i*60;
+   let yPos = city2.y - i*60;
 
-   ZONES.push({ name:"Pueblo", x: roadX1-40, y:y1, w:15, h:15 });
-   ZONES.push({ name:"Pueblo", x: roadX1+25, y:y1, w:15, h:15 });
+   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+ }
 
-   ZONES.push({ name:"Pueblo", x: roadX2-40, y:y2, w:15, h:15 });
-   ZONES.push({ name:"Pueblo", x: roadX2+25, y:y2, w:15, h:15 });
+ /* 🔥 NUEVO: PUEBLOS ABAJO */
+ for(let i=1;i<=5;i++){
+   let yPos = city1.y + city1.h + i*60;
+
+   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+ }
+
+ for(let i=1;i<=5;i++){
+   let yPos = city2.y + city2.h + i*60;
+
+   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 }
 
@@ -133,6 +149,7 @@ function getZone(x,y){
  return "Bosque";
 }
 
+/* ========================= */
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
  let lake = ZONES.find(z=>z.name==="Lago");
@@ -141,27 +158,37 @@ function generateWorld(){
 
  for(let y=0;y<WORLD_ROWS;y++){
   for(let x=0;x<WORLD_COLS;x++){
+
    let zone=getZone(x,y);
 
-   if(zone==="Lago"){ map[y][x]=T.WATER; continue; }
-   if(zone==="Ciudad"||zone==="Ciudad Norte") map[y][x]=T.BUILDING;
+   if(zone==="Lago"){
+     map[y][x]=T.WATER;
+     continue;
+   }
+
+   if(zone==="Ciudad" || zone==="Ciudad Norte"){
+     map[y][x]=T.BUILDING;
+   }
 
    if(zone==="Pueblo"){
-     if(x%5===0||y%5===0) map[y][x]=T.ROAD;
+     let isRoad = (x % 5 === 0 || y % 5 === 0);
+     if(isRoad) map[y][x]=T.ROAD;
      else map[y][x]=T.BUILDING;
    }
   }
  }
 
  /* PUENTE */
- for(let x=lake.x;x<lake.x+lake.w;x++){
-  for(let i=-1;i<=1;i++) map[CONFIG.BRIDGE_Y+i][x]=T.BRIDGE;
+ for(let x=lake.x; x<lake.x+lake.w; x++){
+   for(let i=-1;i<=1;i++){
+     map[CONFIG.BRIDGE_Y+i][x]=T.BRIDGE;
+   }
  }
 
- let roadX1=Math.floor(city1.x+city1.w/2);
- let roadX2=Math.floor(city2.x+city2.w/2);
+ let roadX1 = Math.floor(city1.x + city1.w/2);
+ let roadX2 = Math.floor(city2.x + city2.w/2);
 
- /* 🔥 RUTAS VERTICALES COMPLETAS (ARRIBA Y ABAJO) */
+ /* 🔥 RUTAS COMPLETAS (ARRIBA + ABAJO) */
  for(let y=0;y<WORLD_ROWS;y++){
    for(let i=-1;i<=1;i++){
      map[y][roadX1+i]=T.ROAD;
@@ -169,23 +196,29 @@ function generateWorld(){
    }
  }
 
- /* 🔥 CONEXIÓN A PUENTE */
- for(let x=roadX1;x<lake.x;x++){
-   for(let i=-1;i<=1;i++) map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+ /* conexión al puente */
+ for(let x=roadX1; x<lake.x; x++){
+   for(let i=-1;i<=1;i++){
+     map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+   }
  }
 
- for(let x=lake.x+lake.w;x<=roadX2;x++){
-   for(let i=-1;i<=1;i++) map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+ for(let x=lake.x+lake.w; x<=roadX2; x++){
+   for(let i=-1;i<=1;i++){
+     map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+   }
  }
 
- /* 🔥 CONEXIÓN A PUEBLOS */
+ /* 🔥 CONEXIONES PUEBLOS */
  for(let z of ZONES){
    if(z.name==="Pueblo"){
-     let cy=Math.floor(z.y+z.h/2);
-     let cx=Math.floor(z.x+z.w/2);
-     let targetX = cx < WORLD_COLS/2 ? roadX1 : roadX2;
 
-     for(let x=Math.min(cx,targetX);x<=Math.max(cx,targetX);x++){
+     let cy = Math.floor(z.y + z.h/2);
+     let cx = Math.floor(z.x + z.w/2);
+
+     let targetX = (cx < WORLD_COLS/2) ? roadX1 : roadX2;
+
+     for(let x=Math.min(cx,targetX); x<=Math.max(cx,targetX); x++){
        for(let i=-1;i<=1;i++){
          map[cy+i][x]=T.ROAD;
        }
@@ -199,11 +232,12 @@ function generateWorld(){
 defineZones();
 let city=generateWorld();
 
-/* CONTROLES Y RENDER IGUAL */
+/* ========================= INPUT */
 let keys={};
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
+/* ========================= CÁMARA */
 let camX=100*TILE;
 let camY=220*TILE;
 let speed=5;
@@ -217,6 +251,25 @@ function updateCamera(delta){
 
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
+}
+
+/* ========================= RESTO IGUAL */
+let buildingsData={};
+function getBuildingData(x,y){
+ let key=x+","+y;
+ if(!buildingsData[key]){
+  let zone=getZone(x,y);
+  let h = zone==="Pueblo" ? 20+Math.random()*10 : 60+Math.random()*50;
+  let windows=[];
+  let style=Math.floor(Math.random()*3);
+  for(let wy=10;wy<h-10;wy+=12){
+    for(let wx=6;wx<26;wx+=10){
+      windows.push({x:wx,y:wy,on:Math.random()>0.5});
+    }
+  }
+  buildingsData[key]={height:h,windows,style};
+ }
+ return buildingsData[key];
 }
 
 let treesData={};
@@ -243,6 +296,32 @@ function drawTile(x,y,t){
  ctx.fillRect(x,y,TILE,TILE);
 }
 
+function drawBuilding(x,y,wx,wy){
+ let d=getBuildingData(wx,wy);
+ let h=d.height;
+ let zone=getZone(wx,wy);
+ let colors = zone==="Pueblo"
+   ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
+   : ["#5a4a3f","#4b5a3f","#3f4a5a"];
+ ctx.fillStyle=colors[d.style];
+ ctx.fillRect(x,y-h,32,h);
+ ctx.fillStyle="#222";
+ ctx.fillRect(x,y-h,32,4);
+ for(let w of d.windows){
+  ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
+  ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
+ }
+}
+
+function drawTree(x,y){
+ ctx.fillStyle="#4a2f1b";
+ ctx.fillRect(x+14,y+20,4,10);
+ ctx.fillStyle="#2f7a3f";
+ ctx.beginPath();
+ ctx.arc(x+16,y+14,9,0,Math.PI*2);
+ ctx.fill();
+}
+
 function drawWorld(){
  let startCol=Math.floor(camX/TILE);
  let startRow=Math.floor(camY/TILE);
@@ -256,18 +335,14 @@ function drawWorld(){
    let dx=(x*TILE-camX);
    let dy=(y*TILE-camY);
    drawTile(dx,dy,t);
+   if(t===T.BUILDING) drawBuilding(dx,dy,x,y);
    if(hasTree(x,y)) drawTree(dx,dy);
   }
  }
-}
 
-function drawTree(x,y){
- ctx.fillStyle="#4a2f1b";
- ctx.fillRect(x+14,y+20,4,10);
- ctx.fillStyle="#2f7a3f";
- ctx.beginPath();
- ctx.arc(x+16,y+14,9,0,Math.PI*2);
- ctx.fill();
+ let px=Math.floor((camX+canvas.width/2)/TILE);
+ let py=Math.floor((camY+canvas.height/2)/TILE);
+ zoneUI.innerText=getZone(px,py);
 }
 
 function loop(time){
