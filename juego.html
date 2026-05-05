@@ -109,7 +109,7 @@ function defineZones(){
  let roadX1 = Math.floor(city1.x + city1.w/2);
  let roadX2 = Math.floor(city2.x + city2.w/2);
 
- /* 🔥 PUEBLOS ARRIBA */
+ /* 🔥 PUEBLOS CIUDAD SUR */
  for(let i=1;i<=5;i++){
    let yPos = city1.y - i*60;
 
@@ -117,23 +117,9 @@ function defineZones(){
    ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 
+ /* 🔥 PUEBLOS CIUDAD NORTE */
  for(let i=1;i<=5;i++){
    let yPos = city2.y - i*60;
-
-   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
- }
-
- /* 🔥 NUEVO: PUEBLOS ABAJO */
- for(let i=1;i<=5;i++){
-   let yPos = city1.y + city1.h + i*60;
-
-   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
- }
-
- for(let i=1;i<=5;i++){
-   let yPos = city2.y + city2.h + i*60;
 
    ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
    ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
@@ -178,7 +164,7 @@ function generateWorld(){
   }
  }
 
- /* PUENTE */
+ /* 🔥 PUENTE ANCHO CORRECTO */
  for(let x=lake.x; x<lake.x+lake.w; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.BRIDGE;
@@ -188,28 +174,52 @@ function generateWorld(){
  let roadX1 = Math.floor(city1.x + city1.w/2);
  let roadX2 = Math.floor(city2.x + city2.w/2);
 
- /* 🔥 RUTAS COMPLETAS (ARRIBA + ABAJO) */
- for(let y=0;y<WORLD_ROWS;y++){
+ /* ========================= */
+ /* 🔥 CIUDAD SUR */
+
+ for(let y=0;y<city1.y;y++){
    for(let i=-1;i<=1;i++){
      map[y][roadX1+i]=T.ROAD;
-     map[y][roadX2+i]=T.ROAD;
    }
  }
 
- /* conexión al puente */
+ for(let y=city1.y; y<city1.y+city1.h; y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX1+i]=T.ROAD;
+   }
+ }
+
  for(let x=roadX1; x<lake.x; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
    }
  }
 
+ /* ========================= */
+ /* 🔥 CIUDAD NORTE (NUEVO) */
+
+ for(let y=0;y<city2.y;y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX2+i]=T.ROAD;
+   }
+ }
+
+ for(let y=city2.y; y<city2.y+city2.h; y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX2+i]=T.ROAD;
+   }
+ }
+
+ /* conexión al puente */
  for(let x=lake.x+lake.w; x<=roadX2; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
    }
  }
 
+ /* ========================= */
  /* 🔥 CONEXIONES PUEBLOS */
+
  for(let z of ZONES){
    if(z.name==="Pueblo"){
 
