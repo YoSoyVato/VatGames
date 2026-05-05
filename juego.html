@@ -41,9 +41,13 @@ const CONFIG = {
   CITY_WIDTH:90,
   CITY_HEIGHT:60,
   LAKE_SIZE:200,
+  ROAD_SPACING:6,
+  AVENUE_SPACING:12,
   TREE_DENSITY:0.85,
   BRIDGE_Y:250,
-  TOWN_SIZE:15
+  SAFE_MARGIN:20,
+  TOWN_SIZE:15,
+  ROAD_LINE_LENGTH:100
 };
 
 const TILE=32;
@@ -54,6 +58,15 @@ const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
 /* ========================= */
 const ZONES=[];
+
+function rectsOverlap(a,b){
+ return !(
+  a.x + a.w + CONFIG.SAFE_MARGIN < b.x ||
+  a.x > b.x + b.w + CONFIG.SAFE_MARGIN ||
+  a.y + a.h + CONFIG.SAFE_MARGIN < b.y ||
+  a.y > b.y + b.h + CONFIG.SAFE_MARGIN
+ );
+}
 
 function defineZones(){
 
@@ -69,7 +82,7 @@ function defineZones(){
 
  let city1 = {
    name:"Ciudad",
-   x: lake.x - CONFIG.CITY_WIDTH - 20,
+   x: lake.x - CONFIG.CITY_WIDTH - 10,
    y: CONFIG.BRIDGE_Y - CONFIG.CITY_HEIGHT/2,
    w: CONFIG.CITY_WIDTH,
    h: CONFIG.CITY_HEIGHT
@@ -77,41 +90,47 @@ function defineZones(){
 
  let city2 = {
    name:"Ciudad Norte",
-   x: lake.x + lake.w + 20,
+   x: lake.x + lake.w + 10,
    y: CONFIG.BRIDGE_Y - CONFIG.CITY_HEIGHT/2,
    w: CONFIG.CITY_WIDTH,
    h: CONFIG.CITY_HEIGHT
  };
 
+ function fixCity(city){
+  while(rectsOverlap(city,lake)){
+    city.y += 10;
+  }
+ }
+
+ fixCity(city1);
+ fixCity(city2);
+
  ZONES.push(city1);
  ZONES.push(city2);
  ZONES.push(lake);
 
- /* 🔥 CARRETERA CENTRAL */
- let highwayY = CONFIG.BRIDGE_Y;
-
- /* 🔥 PUEBLOS LEJANOS Y ALINEADOS */
+ /* 🔥 PUEBLOS ALINEADOS (NO RANDOM) */
  let spacing = 60;
 
  for(let i=1;i<=5;i++){
 
-  // izquierda
-  ZONES.push({
-    name:"Pueblo",
-    x: lake.x - (i*spacing) - 80,
-    y: highwayY - CONFIG.TOWN_SIZE/2,
-    w: CONFIG.TOWN_SIZE,
-    h: CONFIG.TOWN_SIZE
-  });
+   // izquierda
+   ZONES.push({
+     name:"Pueblo",
+     x: lake.x - (i*spacing) - 120,
+     y: CONFIG.BRIDGE_Y - CONFIG.TOWN_SIZE/2,
+     w: CONFIG.TOWN_SIZE,
+     h: CONFIG.TOWN_SIZE
+   });
 
-  // derecha
-  ZONES.push({
-    name:"Pueblo",
-    x: lake.x + lake.w + (i*spacing) + 80,
-    y: highwayY - CONFIG.TOWN_SIZE/2,
-    w: CONFIG.TOWN_SIZE,
-    h: CONFIG.TOWN_SIZE
-  });
+   // derecha
+   ZONES.push({
+     name:"Pueblo",
+     x: lake.x + lake.w + (i*spacing) + 120,
+     y: CONFIG.BRIDGE_Y - CONFIG.TOWN_SIZE/2,
+     w: CONFIG.TOWN_SIZE,
+     h: CONFIG.TOWN_SIZE
+   });
  }
 }
 
@@ -126,7 +145,6 @@ function getZone(x,y){
 
 /* ========================= */
 function generateWorld(){
-
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
  let lake = ZONES.find(z=>z.name==="Lago");
 
@@ -141,12 +159,20 @@ function generateWorld(){
    }
 
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
-     if(x%6===0 || y%6===0) map[y][x]=T.ROAD;
+     let isRoadLine = (
+       x % CONFIG.ROAD_LINE_LENGTH === 0 ||
+       y % CONFIG.ROAD_LINE_LENGTH === 0
+     );
+     if(isRoadLine) map[y][x]=T.ROAD;
      else map[y][x]=T.BUILDING;
    }
 
    if(zone==="Pueblo"){
-     if(x%4===0 || y%4===0) map[y][x]=T.ROAD;
+     let isRoad = (
+       x % 5 === 0 ||
+       y % 5 === 0
+     );
+     if(isRoad) map[y][x]=T.ROAD;
      else map[y][x]=T.BUILDING;
    }
   }
@@ -158,23 +184,21 @@ function generateWorld(){
    map[CONFIG.BRIDGE_Y+1][x]=T.BRIDGE;
  }
 
- /* 🔥 HIGHWAY PRINCIPAL (recta infinita) */
+ /* 🔥 CARRETERA PRINCIPAL (larga) */
  for(let x=0;x<WORLD_COLS;x++){
    map[CONFIG.BRIDGE_Y][x]=T.ROAD;
    map[CONFIG.BRIDGE_Y+1][x]=T.ROAD;
  }
 
- /* 🔥 CONEXIÓN PERFECTA A PUEBLOS */
+ /* 🔥 CONECTAR PUEBLOS A LA CARRETERA */
  for(let z of ZONES){
-  if(z.name==="Pueblo"){
+   if(z.name==="Pueblo"){
+     let cx = Math.floor(z.x + z.w/2);
 
-    let centerX = Math.floor(z.x + z.w/2);
-
-    // conectar verticalmente con la ruta
-    for(let y=z.y; y<=CONFIG.BRIDGE_Y; y++){
-      map[y][centerX]=T.ROAD;
-    }
-  }
+     for(let y=z.y; y<=CONFIG.BRIDGE_Y; y++){
+       map[y][cx]=T.ROAD;
+     }
+   }
  }
 
  return map;
@@ -192,6 +216,7 @@ document.addEventListener("keyup",e=>keys[e.code]=false);
 let camX=100*TILE;
 let camY=220*TILE;
 let speed=5;
+
 let lastTime=performance.now();
 
 function updateCamera(delta){
@@ -200,11 +225,14 @@ function updateCamera(delta){
  if(keys["KeyA"]) camX-=speed*delta;
  if(keys["KeyD"]) camX+=speed*delta;
 
+ camX=Math.round(camX);
+ camY=Math.round(camY);
+
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-/* ========================= DATA */
+/* ========================= DATOS */
 let buildingsData={};
 
 function getBuildingData(x,y){
@@ -251,11 +279,11 @@ function drawTile(x,y,t){
  ctx.fillRect(x,y,TILE,TILE);
 }
 
-function drawBuilding(x,y,wx,wy){
- let d=getBuildingData(wx,wy);
+function drawBuilding(x,y,worldX,worldY){
+ let d=getBuildingData(worldX,worldY);
  let h=d.height;
 
- let zone=getZone(wx,wy);
+ let zone=getZone(worldX,worldY);
 
  let colors = zone==="Pueblo"
    ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
@@ -283,7 +311,7 @@ function drawTree(x,y){
  ctx.fill();
 }
 
-/* ========================= RENDER (ARREGLADO) */
+/* ========================= RENDER */
 function drawWorld(){
 
  let startCol=Math.floor(camX/TILE);
@@ -322,6 +350,8 @@ function drawWorld(){
 function loop(time){
  let delta=(time-lastTime)/16;
  lastTime=time;
+
+ if(delta>2) delta=1;
 
  ctx.clearRect(0,0,canvas.width,canvas.height);
 
