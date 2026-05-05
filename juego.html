@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (FIX FINAL)</title>
+<title>Detroit PRO 2D (BIOMAS PRO)</title>
 <style>
 body{margin:0;overflow:hidden;background:#0e1116}
 canvas{display:block}
@@ -37,15 +37,15 @@ const TILE=32;
 const WORLD_ROWS=500;
 const WORLD_COLS=500;
 
-const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3};
+const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
 const ZONES=[];
 
 function defineZones(){
- ZONES.push({name:"Ciudad", x:100,y:100,w:300,h:300});
+ ZONES.push({name:"Ciudad", x:100,y:100,w:200,h:200});
+ ZONES.push({name:"Ciudad Norte", x:350,y:50,w:120,h:120});
+ ZONES.push({name:"Lago", x:280,y:80,w:120,h:120});
  ZONES.push({name:"Parque", x:50,y:50,w:80,h:80});
- ZONES.push({name:"Lago", x:350,y:50,w:100,h:100});
- ZONES.push({name:"Suburbio", x:0,y:300,w:150,h:200});
 }
 
 function getZone(x,y){
@@ -57,7 +57,7 @@ function getZone(x,y){
  return "Exterior";
 }
 
-// 🌍 GENERACIÓN MEJORADA (calles más visibles)
+// 🌍 GENERACIÓN PRO
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
 
@@ -66,26 +66,29 @@ function generateWorld(){
 
    let zone=getZone(x,y);
 
-   if(zone==="Ciudad"){
+   if(zone==="Ciudad" || zone==="Ciudad Norte"){
      map[y][x]=T.BUILDING;
 
-     // 🔥 MÁS CALLES
      if(x%6===0 || y%6===0){
        map[y][x]=T.ROAD;
      }
    }
 
-   if(zone==="Suburbio"){
-     map[y][x]=Math.random()>0.4 ? T.BUILDING : T.GRASS;
-
-     if(x%8===0 || y%8===0){
-       map[y][x]=T.ROAD;
-     }
+   if(zone==="Lago"){
+     map[y][x]=T.WATER;
    }
 
-   if(zone==="Parque") map[y][x]=T.GRASS;
-   if(zone==="Lago") map[y][x]=T.WATER;
+   if(zone==="Parque"){
+     map[y][x]=T.GRASS;
+   }
   }
+ }
+
+ // 🌉 PUENTE SOBRE EL LAGO
+ let bridgeY = 140;
+ for(let x=280;x<400;x++){
+   map[bridgeY][x]=T.BRIDGE;
+   map[bridgeY+1][x]=T.BRIDGE;
  }
 
  return map;
@@ -99,7 +102,7 @@ let keys={};
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
-// 🎥 CÁMARA (🔥 EMPIEZAS EN LA CIUDAD)
+// 🎥 CÁMARA
 let camX=100*TILE;
 let camY=100*TILE;
 let speed=5;
@@ -107,7 +110,6 @@ let speed=5;
 let lastTime=performance.now();
 
 function updateCamera(delta){
-
  if(keys["KeyW"]||keys["ArrowUp"]) camY-=speed*delta;
  if(keys["KeyS"]||keys["ArrowDown"]) camY+=speed*delta;
  if(keys["KeyA"]||keys["ArrowLeft"]) camX-=speed*delta;
@@ -120,7 +122,7 @@ function updateCamera(delta){
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-// 🏢 EDIFICIOS ESTABLES
+// 🏢 EDIFICIOS
 let buildingsData={};
 
 function getBuildingData(x,y){
@@ -140,6 +142,28 @@ function getBuildingData(x,y){
  return buildingsData[key];
 }
 
+// 🌳 ÁRBOLES PRO
+function drawTree(x,y){
+ // tronco
+ ctx.fillStyle="#5a3e1b";
+ ctx.fillRect(x+12,y+18,8,10);
+
+ // hojas
+ ctx.fillStyle="#2ecc71";
+ ctx.beginPath();
+ ctx.arc(x+16,y+16,10,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#27ae60";
+ ctx.beginPath();
+ ctx.arc(x+10,y+14,6,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.beginPath();
+ ctx.arc(x+22,y+14,6,0,Math.PI*2);
+ ctx.fill();
+}
+
 // 🎨 TILES
 function drawTile(x,y,t){
 
@@ -147,14 +171,13 @@ function drawTile(x,y,t){
  if(t===T.BUILDING) ctx.fillStyle="#1c222b";
  if(t===T.GRASS) ctx.fillStyle="#1f5f3a";
  if(t===T.WATER) ctx.fillStyle="#1e90ff";
+ if(t===T.BRIDGE) ctx.fillStyle="#8e6e53";
 
  ctx.fillRect(x,y,TILE,TILE);
 
- // 🛣️ calles más visibles
+ // calles
  if(t===T.ROAD){
   ctx.strokeStyle="#ffffff55";
-  ctx.lineWidth=2;
-
   ctx.beginPath();
   ctx.moveTo(x,y+16);
   ctx.lineTo(x+32,y+16);
@@ -162,9 +185,18 @@ function drawTile(x,y,t){
   ctx.lineTo(x+16,y+32);
   ctx.stroke();
  }
+
+ // puente detalles
+ if(t===T.BRIDGE){
+  ctx.strokeStyle="#5d4037";
+  ctx.beginPath();
+  ctx.moveTo(x,y+16);
+  ctx.lineTo(x+32,y+16);
+  ctx.stroke();
+ }
 }
 
-// 🏢 DIBUJO EDIFICIOS
+// 🏢 EDIFICIOS
 function drawBuilding(x,y){
  let d=getBuildingData(x,y);
  let h=d.height;
@@ -203,8 +235,15 @@ function drawWorld(){
 
    drawTile(dx,dy,t);
 
+   let zone=getZone(x,y);
+
    if(t===T.BUILDING){
     drawBuilding(dx,dy);
+   }
+
+   // 🌳 árboles SOLO en exterior/parque
+   if((zone==="Exterior" || zone==="Parque") && Math.random()>0.97){
+    drawTree(dx,dy);
    }
   }
  }
@@ -214,12 +253,10 @@ function drawWorld(){
  zoneUI.innerText=getZone(px,py);
 }
 
-// 🔁 LOOP
+// LOOP
 function loop(time){
-
  let delta=(time-lastTime)/16;
  lastTime=time;
-
  if(delta>2) delta=1;
 
  ctx.clearRect(0,0,canvas.width,canvas.height);
