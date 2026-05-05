@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -23,6 +23,7 @@ canvas{display:block}
 }
 </style>
 </head>
+
 <body>
 
 <div id="zoneName">Zona</div>
@@ -48,8 +49,8 @@ const CONFIG = {
 };
 
 const TILE=32;
-const WORLD_ROWS=300;
-const WORLD_COLS=300;
+const WORLD_ROWS=500;
+const WORLD_COLS=500;
 
 const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
@@ -71,8 +72,8 @@ function defineZones(){
 
  let lake = {
    name:"Lago",
-   x:120,
-   y:100,
+   x:150,
+   y:150,
    w:CONFIG.LAKE_SIZE,
    h:CONFIG.LAKE_SIZE
  };
@@ -198,35 +199,30 @@ function generateWorld(){
 defineZones();
 let city=generateWorld();
 
-/* 🔥 FIX PANTALLA NEGRA */
-let camX, camY;
-let citySpawn = ZONES.find(z=>z.name==="Ciudad");
-camX = (citySpawn.x * TILE) - canvas.width/2;
-camY = (citySpawn.y * TILE) - canvas.height/2;
-
 /* ========================= INPUT */
 let keys={};
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
 /* ========================= CÁMARA */
+let camX=100*TILE;
+let camY=220*TILE;
 let speed=5;
 let lastTime=performance.now();
 
 function updateCamera(delta){
- let currentSpeed = (keys["ShiftLeft"] || keys["ShiftRight"]) ? speed*2 : speed;
-
- if(keys["KeyW"]) camY-=currentSpeed*delta;
- if(keys["KeyS"]) camY+=currentSpeed*delta;
- if(keys["KeyA"]) camX-=currentSpeed*delta;
- if(keys["KeyD"]) camX+=currentSpeed*delta;
+ if(keys["KeyW"]) camY-=speed*delta;
+ if(keys["KeyS"]) camY+=speed*delta;
+ if(keys["KeyA"]) camX-=speed*delta;
+ if(keys["KeyD"]) camX+=speed*delta;
 
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-/* resto igual */
+/* ========================= RESTO IGUAL */
 let buildingsData={};
+
 function getBuildingData(x,y){
  let key=x+","+y;
  if(!buildingsData[key]){
@@ -234,17 +230,20 @@ function getBuildingData(x,y){
   let h = zone==="Pueblo" ? 20+Math.random()*10 : 60+Math.random()*50;
   let windows=[];
   let style=Math.floor(Math.random()*3);
+
   for(let wy=10;wy<h-10;wy+=12){
     for(let wx=6;wx<26;wx+=10){
       windows.push({x:wx,y:wy,on:Math.random()>0.5});
     }
   }
+
   buildingsData[key]={height:h,windows,style};
  }
  return buildingsData[key];
 }
 
 let treesData={};
+
 function hasTree(x,y){
  let key=x+","+y;
  if(!treesData[key]){
@@ -272,13 +271,17 @@ function drawBuilding(x,y,wx,wy){
  let d=getBuildingData(wx,wy);
  let h=d.height;
  let zone=getZone(wx,wy);
+
  let colors = zone==="Pueblo"
    ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
    : ["#5a4a3f","#4b5a3f","#3f4a5a"];
+
  ctx.fillStyle=colors[d.style];
  ctx.fillRect(x,y-h,32,h);
+
  ctx.fillStyle="#222";
  ctx.fillRect(x,y-h,32,4);
+
  for(let w of d.windows){
   ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
   ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
@@ -288,6 +291,7 @@ function drawBuilding(x,y,wx,wy){
 function drawTree(x,y){
  ctx.fillStyle="#4a2f1b";
  ctx.fillRect(x+14,y+20,4,10);
+
  ctx.fillStyle="#2f7a3f";
  ctx.beginPath();
  ctx.arc(x+16,y+14,9,0,Math.PI*2);
@@ -304,9 +308,12 @@ function drawWorld(){
   for(let x=startCol;x<endCol;x++){
    let t=city[y]?.[x];
    if(t===undefined) continue;
+
    let dx=(x*TILE-camX);
    let dy=(y*TILE-camY);
+
    drawTile(dx,dy,t);
+
    if(t===T.BUILDING) drawBuilding(dx,dy,x,y);
    if(hasTree(x,y)) drawTree(dx,dy);
   }
@@ -320,9 +327,12 @@ function drawWorld(){
 function loop(time){
  let delta=(time-lastTime)/16;
  lastTime=time;
+
  ctx.clearRect(0,0,canvas.width,canvas.height);
+
  updateCamera(delta);
  drawWorld();
+
  requestAnimationFrame(loop);
 }
 
@@ -333,5 +343,6 @@ window.addEventListener("resize",()=>{
  canvas.height=window.innerHeight;
 });
 </script>
+
 </body>
 </html>
