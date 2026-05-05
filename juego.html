@@ -109,20 +109,28 @@ function defineZones(){
  let roadX1 = Math.floor(city1.x + city1.w/2);
  let roadX2 = Math.floor(city2.x + city2.w/2);
 
- /* 🔥 PUEBLOS CIUDAD SUR */
+ /* 🔥 PUEBLOS ARRIBA */
  for(let i=1;i<=5;i++){
-   let yPos = city1.y - i*60;
+   let y1 = city1.y - i*60;
+   let y2 = city2.y - i*60;
 
-   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+
+   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 
- /* 🔥 PUEBLOS CIUDAD NORTE */
+ /* 🔥 PUEBLOS ABAJO (NUEVO) */
  for(let i=1;i<=5;i++){
-   let yPos = city2.y - i*60;
+   let y1 = city1.y + city1.h + i*60;
+   let y2 = city2.y + city2.h + i*60;
 
-   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+
+   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 }
 
@@ -164,7 +172,7 @@ function generateWorld(){
   }
  }
 
- /* 🔥 PUENTE ANCHO CORRECTO */
+ /* 🔥 PUENTE */
  for(let x=lake.x; x<lake.x+lake.w; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.BRIDGE;
@@ -174,58 +182,32 @@ function generateWorld(){
  let roadX1 = Math.floor(city1.x + city1.w/2);
  let roadX2 = Math.floor(city2.x + city2.w/2);
 
- /* ========================= */
- /* 🔥 CIUDAD SUR */
-
- for(let y=0;y<city1.y;y++){
+ /* 🔥 RUTAS COMPLETAS (ARRIBA + CIUDAD + ABAJO) */
+ for(let y=0;y<WORLD_ROWS;y++){
    for(let i=-1;i<=1;i++){
      map[y][roadX1+i]=T.ROAD;
+     map[y][roadX2+i]=T.ROAD;
    }
  }
 
- for(let y=city1.y; y<city1.y+city1.h; y++){
-   for(let i=-1;i<=1;i++){
-     map[y][roadX1+i]=T.ROAD;
-   }
- }
-
+ /* 🔥 CONEXIÓN A PUENTE */
  for(let x=roadX1; x<lake.x; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
    }
  }
 
- /* ========================= */
- /* 🔥 CIUDAD NORTE (NUEVO) */
-
- for(let y=0;y<city2.y;y++){
-   for(let i=-1;i<=1;i++){
-     map[y][roadX2+i]=T.ROAD;
-   }
- }
-
- for(let y=city2.y; y<city2.y+city2.h; y++){
-   for(let i=-1;i<=1;i++){
-     map[y][roadX2+i]=T.ROAD;
-   }
- }
-
- /* conexión al puente */
  for(let x=lake.x+lake.w; x<=roadX2; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
    }
  }
 
- /* ========================= */
  /* 🔥 CONEXIONES PUEBLOS */
-
  for(let z of ZONES){
    if(z.name==="Pueblo"){
-
      let cy = Math.floor(z.y + z.h/2);
      let cx = Math.floor(z.x + z.w/2);
-
      let targetX = (cx < WORLD_COLS/2) ? roadX1 : roadX2;
 
      for(let x=Math.min(cx,targetX); x<=Math.max(cx,targetX); x++){
@@ -254,16 +236,19 @@ let speed=5;
 let lastTime=performance.now();
 
 function updateCamera(delta){
- if(keys["KeyW"]) camY-=speed*delta;
- if(keys["KeyS"]) camY+=speed*delta;
- if(keys["KeyA"]) camX-=speed*delta;
- if(keys["KeyD"]) camX+=speed*delta;
+
+ let currentSpeed = keys["ShiftLeft"] || keys["ShiftRight"] ? speed*2 : speed;
+
+ if(keys["KeyW"]) camY-=currentSpeed*delta;
+ if(keys["KeyS"]) camY+=currentSpeed*delta;
+ if(keys["KeyA"]) camX-=currentSpeed*delta;
+ if(keys["KeyD"]) camX+=currentSpeed*delta;
 
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-/* ========================= RESTO IGUAL */
+/* ========================= RENDER IGUAL */
 let buildingsData={};
 function getBuildingData(x,y){
  let key=x+","+y;
