@@ -37,17 +37,17 @@ canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
 /* =========================
-   ⚙️ CONFIG EDITABLE (TOCA SOLO ESTO)
+   ⚙️ CONFIG EDITABLE
 ========================= */
 const CONFIG = {
   CITY_SIZE:100,
   LAKE_SIZE:200,
-  ROAD_SPACING:6, // 🔥 más alto = menos calles
+  ROAD_SPACING:6,
   TREE_DENSITY:0.85,
-  BRIDGE_Y:250
+  BRIDGE_Y:250,
+  SAFE_MARGIN:20 // 🔥 distancia mínima entre ciudad y lago
 };
 
-/* ========================= */
 const TILE=32;
 const WORLD_ROWS=500;
 const WORLD_COLS=500;
@@ -55,16 +55,49 @@ const WORLD_COLS=500;
 const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
 /* =========================
-   🌍 ZONAS (EDITABLES)
+   🌍 ZONAS
 ========================= */
 const ZONES=[];
 
+function rectsOverlap(a,b){
+ return !(
+  a.x + a.w + CONFIG.SAFE_MARGIN < b.x ||
+  a.x > b.x + b.w + CONFIG.SAFE_MARGIN ||
+  a.y + a.h + CONFIG.SAFE_MARGIN < b.y ||
+  a.y > b.y + b.h + CONFIG.SAFE_MARGIN
+ );
+}
+
 function defineZones(){
+
  ZONES.length=0;
 
- ZONES.push({name:"Ciudad", x:80, y:200, w:CONFIG.CITY_SIZE = 70;, h:CONFIG.CITY_SIZE = 100;});
- ZONES.push({name:"Ciudad Norte", x:80, y:200, w:CONFIG.CITY_SIZE = 70;, h:CONFIG.CITY_SIZE = 100;});
- ZONES.push({name:"Lago", x:150, y:150, w:CONFIG.LAKE_SIZE, h:CONFIG.LAKE_SIZE});
+ // 🌊 LAGO (primero para usarlo como referencia)
+ let lake = {
+   name:"Lago",
+   x:150,
+   y:150,
+   w:CONFIG.LAKE_SIZE,
+   h:CONFIG.LAKE_SIZE
+ };
+
+ // 🏙️ ciudades (se ajustan solas si chocan)
+ let city1 = {name:"Ciudad", x:80, y:200, w:CONFIG.CITY_SIZE, h:CONFIG.CITY_SIZE};
+ let city2 = {name:"Ciudad Norte", x:320, y:200, w:CONFIG.CITY_SIZE, h:CONFIG.CITY_SIZE};
+
+ // 🔥 evitar superposición con el lago
+ function fixCity(city){
+  while(rectsOverlap(city,lake)){
+    city.y += 10; // empuja hacia abajo
+  }
+ }
+
+ fixCity(city1);
+ fixCity(city2);
+
+ ZONES.push(city1);
+ ZONES.push(city2);
+ ZONES.push(lake);
 }
 
 function getZone(x,y){
@@ -82,6 +115,8 @@ function getZone(x,y){
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
 
+ let lake = ZONES.find(z=>z.name==="Lago");
+
  for(let y=0;y<WORLD_ROWS;y++){
   for(let x=0;x<WORLD_COLS;x++){
 
@@ -93,8 +128,6 @@ function generateWorld(){
    }
 
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
-
-     // 🔥 GRID REAL (ARREGLADO)
      if(x % CONFIG.ROAD_SPACING === 0 || y % CONFIG.ROAD_SPACING === 0){
        map[y][x]=T.ROAD;
      } else {
@@ -104,11 +137,11 @@ function generateWorld(){
   }
  }
 
- // 🌉 PUENTE
- let startX=150;
- let endX=150+CONFIG.LAKE_SIZE;
+ /* 🌉 PUENTE INTELIGENTE (TAMAÑO EXACTO DEL LAGO) */
+ let startX = lake.x;
+ let endX = lake.x + lake.w;
 
- for(let x=startX;x<endX;x++){
+ for(let x=startX; x<endX; x++){
    map[CONFIG.BRIDGE_Y][x]=T.BRIDGE;
    map[CONFIG.BRIDGE_Y+1][x]=T.BRIDGE;
  }
@@ -149,7 +182,7 @@ function updateCamera(delta){
 }
 
 /* =========================
-   🧠 DATOS ESTABLES
+   🧠 DATOS
 ========================= */
 let buildingsData={};
 
@@ -200,19 +233,15 @@ function drawTile(x,y,t){
 
  ctx.fillRect(x,y,TILE,TILE);
 
- // 🛣️ CALLE 90s (ARREGLADA)
  if(t===T.ROAD){
-
   ctx.strokeStyle="#d4c76b";
   ctx.lineWidth=2;
 
-  // horizontal
   ctx.beginPath();
   ctx.moveTo(x,y+16);
   ctx.lineTo(x+32,y+16);
   ctx.stroke();
 
-  // vertical
   ctx.beginPath();
   ctx.moveTo(x+16,y);
   ctx.lineTo(x+16,y+32);
@@ -221,7 +250,6 @@ function drawTile(x,y,t){
   ctx.lineWidth=1;
  }
 
- // 🌉 puente
  if(t===T.BRIDGE){
   ctx.strokeStyle="#5c3b1e";
 
@@ -242,9 +270,7 @@ function drawTile(x,y,t){
  }
 }
 
-/* 🔥 FIX REAL: edificios ya NO vibran */
 function drawBuilding(x,y,worldX,worldY){
-
  let d=getBuildingData(worldX,worldY);
  let h=d.height;
 
@@ -310,7 +336,7 @@ function drawWorld(){
    drawTile(dx,dy,t);
 
    if(t===T.BUILDING){
-    drawBuilding(dx,dy,x,y); // 🔥 FIX CLAVE
+    drawBuilding(dx,dy,x,y);
    }
 
    if(hasTree(x,y)){
@@ -326,7 +352,7 @@ function drawWorld(){
 }
 
 /* =========================
-   🔁 LOOP
+   LOOP
 ========================= */
 function loop(time){
  let delta=(time-lastTime)/16;
