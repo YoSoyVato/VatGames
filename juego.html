@@ -42,10 +42,9 @@ const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 const ZONES=[];
 
 function defineZones(){
- ZONES.push({name:"Ciudad", x:100,y:100,w:200,h:200});
- ZONES.push({name:"Ciudad Norte", x:350,y:50,w:120,h:120});
- ZONES.push({name:"Lago", x:280,y:80,w:120,h:120});
- ZONES.push({name:"Parque", x:50,y:50,w:80,h:80});
+ ZONES.push({name:"Ciudad", x:100,y:100,w:100,h:100});
+ ZONES.push({name:"Ciudad Norte", x:150,y:150,w:120,h:150});
+ ZONES.push({name:"Lago", x:280,y:280,w:280,h:280});
 }
 
 function getZone(x,y){
@@ -88,7 +87,7 @@ function generateWorld(){
 
  // 🌉 PUENTE PRO
  let bridgeY = 140;
- for(let x=280;x<400;x++){
+ for(let x=80;x<80;x++){
    map[bridgeY][x]=T.BRIDGE;
    map[bridgeY+1][x]=T.BRIDGE;
  }
