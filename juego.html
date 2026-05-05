@@ -102,33 +102,26 @@ function defineZones(){
  fixCity(city1);
  fixCity(city2);
 
- ZONES.push(city1, city2, lake);
+ ZONES.push(city1);
+ ZONES.push(city2);
+ ZONES.push(lake);
 
- let roadX1 = Math.floor(city1.x + city1.w/2);
- let roadX2 = Math.floor(city2.x + city2.w/2);
+ let roadX = Math.floor(city1.x + city1.w/2);
 
- /* 🔥 PUEBLOS ARRIBA */
+ /* PUEBLOS ARRIBA */
  for(let i=1;i<=5;i++){
-   let y1 = city1.y - i*60;
-   let y2 = city2.y - i*60;
+   let yPos = city1.y - i*60;
 
-   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-
-   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 
- /* 🔥 PUEBLOS ABAJO */
+ /* 🔥 PUEBLOS ABAJO (NUEVO) */
  for(let i=1;i<=5;i++){
-   let y1 = city1.y + city1.h + i*60;
-   let y2 = city2.y + city2.h + i*60;
+   let yPos = city1.y + city1.h + i*60;
 
-   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: y1, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-
-   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: y2, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 }
 
@@ -145,25 +138,26 @@ function getZone(x,y){
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
  let lake = ZONES.find(z=>z.name==="Lago");
- let city1 = ZONES.find(z=>z.name==="Ciudad");
- let city2 = ZONES.find(z=>z.name==="Ciudad Norte");
-
- let roadX1 = Math.floor(city1.x + city1.w/2);
- let roadX2 = Math.floor(city2.x + city2.w/2);
+ let city = ZONES.find(z=>z.name==="Ciudad");
 
  for(let y=0;y<WORLD_ROWS;y++){
   for(let x=0;x<WORLD_COLS;x++){
 
    let zone=getZone(x,y);
 
-   if(zone==="Lago"){ map[y][x]=T.WATER; continue; }
+   if(zone==="Lago"){
+     map[y][x]=T.WATER;
+     continue;
+   }
 
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
      map[y][x]=T.BUILDING;
    }
 
    if(zone==="Pueblo"){
-     map[y][x]=(x%5===0||y%5===0)?T.ROAD:T.BUILDING;
+     let isRoad = (x % 5 === 0 || y % 5 === 0);
+     if(isRoad) map[y][x]=T.ROAD;
+     else map[y][x]=T.BUILDING;
    }
   }
  }
@@ -175,38 +169,46 @@ function generateWorld(){
    }
  }
 
- /* 🔥 RUTAS SOLO DONDE DEBEN */
- for(let y=0;y<WORLD_ROWS;y++){
+ let roadX = Math.floor(city.x + city.w/2);
+
+ /* RUTA ARRIBA */
+ for(let y=0;y<city.y;y++){
    for(let i=-1;i<=1;i++){
-
-     if(map[y][roadX1+i]!==T.WATER)
-       map[y][roadX1+i]=T.ROAD;
-
-     if(map[y][roadX2+i]!==T.WATER)
-       map[y][roadX2+i]=T.ROAD;
+     map[y][roadX+i]=T.ROAD;
    }
  }
 
- /* CONEXIÓN PUENTE */
- for(let x=roadX1; x<lake.x; x++){
-   for(let i=-1;i<=1;i++) map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+ /* ATRAVESAR CIUDAD */
+ for(let y=city.y; y<city.y+city.h; y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX+i]=T.ROAD;
+   }
  }
 
- for(let x=lake.x+lake.w; x<=roadX2; x++){
-   for(let i=-1;i<=1;i++) map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+ /* 🔥 RUTA HACIA ABAJO (NUEVO) */
+ for(let y=city.y+city.h; y<WORLD_ROWS; y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX+i]=T.ROAD;
+   }
  }
 
- /* CONECTAR PUEBLOS */
+ /* HACIA PUENTE */
+ for(let x=roadX; x<lake.x; x++){
+   for(let i=-1;i<=1;i++){
+     map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+   }
+ }
+
+ /* CONEXIONES */
  for(let z of ZONES){
    if(z.name==="Pueblo"){
-     let cy=Math.floor(z.y+z.h/2);
-     let cx=Math.floor(z.x+z.w/2);
-     let targetX = (cx < WORLD_COLS/2)?roadX1:roadX2;
 
-     for(let x=Math.min(cx,targetX); x<=Math.max(cx,targetX); x++){
+     let cy = Math.floor(z.y + z.h/2);
+     let cx = Math.floor(z.x + z.w/2);
+
+     for(let x=Math.min(cx,roadX); x<=Math.max(cx,roadX); x++){
        for(let i=-1;i<=1;i++){
-         if(map[cy+i][x]!==T.WATER)
-           map[cy+i][x]=T.ROAD;
+         map[cy+i][x]=T.ROAD;
        }
      }
    }
@@ -231,7 +233,7 @@ let lastTime=performance.now();
 
 function updateCamera(delta){
 
- let currentSpeed = (keys["ShiftLeft"]||keys["ShiftRight"]) ? speed*2 : speed;
+ let currentSpeed = (keys["ShiftLeft"] || keys["ShiftRight"]) ? speed*2 : speed;
 
  if(keys["KeyW"]) camY-=currentSpeed*delta;
  if(keys["KeyS"]) camY+=currentSpeed*delta;
@@ -242,15 +244,73 @@ function updateCamera(delta){
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-/* RENDER */
-function drawTile(x,y,t){
- ctx.fillStyle =
-  t===T.ROAD?"#111":
-  t===T.BUILDING?"#2a2a2a":
-  t===T.GRASS?"#355c3a":
-  t===T.WATER?"#2c6fa3":"#8b6b4a";
+/* RESTO IGUAL */
+let buildingsData={};
+function getBuildingData(x,y){
+ let key=x+","+y;
+ if(!buildingsData[key]){
+  let zone=getZone(x,y);
+  let h = zone==="Pueblo" ? 20+Math.random()*10 : 60+Math.random()*50;
+  let windows=[];
+  let style=Math.floor(Math.random()*3);
+  for(let wy=10;wy<h-10;wy+=12){
+    for(let wx=6;wx<26;wx+=10){
+      windows.push({x:wx,y:wy,on:Math.random()>0.5});
+    }
+  }
+  buildingsData[key]={height:h,windows,style};
+ }
+ return buildingsData[key];
+}
 
+let treesData={};
+function hasTree(x,y){
+ let key=x+","+y;
+ if(!treesData[key]){
+   let tile = city[y]?.[x];
+   treesData[key]=(
+     getZone(x,y)==="Bosque" &&
+     tile!==T.ROAD &&
+     tile!==T.BRIDGE &&
+     Math.random()>CONFIG.TREE_DENSITY
+   );
+ }
+ return treesData[key];
+}
+
+function drawTile(x,y,t){
+ if(t===T.ROAD) ctx.fillStyle="#111";
+ if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
+ if(t===T.GRASS) ctx.fillStyle="#355c3a";
+ if(t===T.WATER) ctx.fillStyle="#2c6fa3";
+ if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
  ctx.fillRect(x,y,TILE,TILE);
+}
+
+function drawBuilding(x,y,wx,wy){
+ let d=getBuildingData(wx,wy);
+ let h=d.height;
+ let zone=getZone(wx,wy);
+ let colors = zone==="Pueblo"
+   ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
+   : ["#5a4a3f","#4b5a3f","#3f4a5a"];
+ ctx.fillStyle=colors[d.style];
+ ctx.fillRect(x,y-h,32,h);
+ ctx.fillStyle="#222";
+ ctx.fillRect(x,y-h,32,4);
+ for(let w of d.windows){
+  ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
+  ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
+ }
+}
+
+function drawTree(x,y){
+ ctx.fillStyle="#4a2f1b";
+ ctx.fillRect(x+14,y+20,4,10);
+ ctx.fillStyle="#2f7a3f";
+ ctx.beginPath();
+ ctx.arc(x+16,y+14,9,0,Math.PI*2);
+ ctx.fill();
 }
 
 function drawWorld(){
@@ -263,7 +323,11 @@ function drawWorld(){
   for(let x=startCol;x<endCol;x++){
    let t=city[y]?.[x];
    if(t===undefined) continue;
-   drawTile(x*TILE-camX,y*TILE-camY,t);
+   let dx=(x*TILE-camX);
+   let dy=(y*TILE-camY);
+   drawTile(dx,dy,t);
+   if(t===T.BUILDING) drawBuilding(dx,dy,x,y);
+   if(hasTree(x,y)) drawTree(dx,dy);
   }
  }
 
@@ -282,6 +346,11 @@ function loop(time){
 }
 
 requestAnimationFrame(loop);
+
+window.addEventListener("resize",()=>{
+ canvas.width=window.innerWidth;
+ canvas.height=window.innerHeight;
+});
 </script>
 </body>
 </html>
