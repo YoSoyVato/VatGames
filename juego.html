@@ -40,14 +40,18 @@ canvas.height=window.innerHeight;
    ⚙️ CONFIG EDITABLE
 ========================= */
 const CONFIG = {
-  CITY_WIDTH:90,   // 🔥 tamaño óptimo elegido
+  CITY_WIDTH:90,
   CITY_HEIGHT:60,
   LAKE_SIZE:200,
   ROAD_SPACING:6,
   AVENUE_SPACING:12,
   TREE_DENSITY:0.85,
   BRIDGE_Y:250,
-  SAFE_MARGIN:20
+  SAFE_MARGIN:20,
+
+  // 🔥 NUEVO
+  TOWN_SIZE:15,
+  ROAD_LINE_LENGTH:100
 };
 
 const TILE=32;
@@ -82,10 +86,9 @@ function defineZones(){
    h:CONFIG.LAKE_SIZE
  };
 
- /* 🔥 CIUDADES CERCA DEL PUENTE */
  let city1 = {
    name:"Ciudad",
-   x: lake.x - CONFIG.CITY_WIDTH - 10, // izquierda del lago
+   x: lake.x - CONFIG.CITY_WIDTH - 10,
    y: CONFIG.BRIDGE_Y - CONFIG.CITY_HEIGHT/2,
    w: CONFIG.CITY_WIDTH,
    h: CONFIG.CITY_HEIGHT
@@ -93,7 +96,7 @@ function defineZones(){
 
  let city2 = {
    name:"Ciudad Norte",
-   x: lake.x + lake.w + 10, // derecha del lago
+   x: lake.x + lake.w + 10,
    y: CONFIG.BRIDGE_Y - CONFIG.CITY_HEIGHT/2,
    w: CONFIG.CITY_WIDTH,
    h: CONFIG.CITY_HEIGHT
@@ -111,6 +114,17 @@ function defineZones(){
  ZONES.push(city1);
  ZONES.push(city2);
  ZONES.push(lake);
+
+ /* 🔥 GENERAR PUEBLOS EN EL BOSQUE */
+ for(let i=0;i<6;i++){
+   ZONES.push({
+     name:"Pueblo",
+     x: Math.random()* (WORLD_COLS-50),
+     y: Math.random()* (WORLD_ROWS-50),
+     w: CONFIG.TOWN_SIZE,
+     h: CONFIG.TOWN_SIZE
+   });
+ }
 }
 
 function getZone(x,y){
@@ -140,32 +154,39 @@ function generateWorld(){
      continue;
    }
 
+   /* 🔥 CIUDAD */
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
 
-     let isAvenue = (
-       x % CONFIG.AVENUE_SPACING === 0 ||
-       y % CONFIG.AVENUE_SPACING === 0
+     let isRoadLine = (
+       x % CONFIG.ROAD_LINE_LENGTH === 0 ||
+       y % CONFIG.ROAD_LINE_LENGTH === 0
      );
 
-     let isStreet = (
-       x % CONFIG.ROAD_SPACING === 0 ||
-       y % CONFIG.ROAD_SPACING === 0
+     if(isRoadLine){
+       map[y][x]=T.ROAD;
+     } else {
+       map[y][x]=T.BUILDING;
+     }
+   }
+
+   /* 🔥 PUEBLO */
+   if(zone==="Pueblo"){
+
+     let isRoad = (
+       x % 5 === 0 ||
+       y % 5 === 0
      );
 
-     if(isAvenue){
+     if(isRoad){
        map[y][x]=T.ROAD;
-     }
-     else if(isStreet){
-       map[y][x]=T.ROAD;
-     }
-     else{
+     } else {
        map[y][x]=T.BUILDING;
      }
    }
   }
  }
 
- /* 🌉 PUENTE EXACTO */
+ /* 🌉 PUENTE */
  let startX = lake.x;
  let endX = lake.x + lake.w;
 
@@ -218,13 +239,16 @@ function getBuildingData(x,y){
  let key=x+","+y;
 
  if(!buildingsData[key]){
+  let zone=getZone(x,y);
+
+  let h = zone==="Pueblo" ? 20+Math.random()*10 : 60+Math.random()*50; // 🔥 casas bajas
+
   let windows=[];
-  let h=60+Math.random()*50;
   let style=Math.floor(Math.random()*3);
 
-  for(let wy=10;wy<h-10;wy+=12){
+  for(let wy=10;wy<h-5;wy+=10){
     for(let wx=6;wx<26;wx+=10){
-      windows.push({x:wx,y:wy,on:Math.random()>0.3});
+      windows.push({x:wx,y:wy,on:Math.random()>0.5});
     }
   }
 
@@ -253,55 +277,14 @@ function drawTile(x,y,t){
  x=Math.round(x);
  y=Math.round(y);
 
- if(t===T.ROAD) ctx.fillStyle="#3a3a3a";
+ // 🔥 CALLES NEGRAS
+ if(t===T.ROAD) ctx.fillStyle="#111";
  if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
  if(t===T.GRASS) ctx.fillStyle="#355c3a";
  if(t===T.WATER) ctx.fillStyle="#2c6fa3";
  if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
 
  ctx.fillRect(x,y,TILE,TILE);
-
- if(t===T.ROAD){
-
-  ctx.lineWidth=2;
-
-  // 🔥 líneas dinámicas tipo ciudad real
-  ctx.strokeStyle="#d4c76b";
-  ctx.beginPath();
-  ctx.moveTo(x,y+16);
-  ctx.lineTo(x+32,y+16);
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.moveTo(x+16,y);
-  ctx.lineTo(x+16,y+32);
-  ctx.stroke();
-
-  // textura
-  ctx.strokeStyle="#ffffff08";
-  ctx.strokeRect(x,y,32,32);
-
-  ctx.lineWidth=1;
- }
-
- if(t===T.BRIDGE){
-  ctx.strokeStyle="#5c3b1e";
-
-  for(let i=0;i<32;i+=8){
-    ctx.beginPath();
-    ctx.moveTo(x+i,y);
-    ctx.lineTo(x+i,y+32);
-    ctx.stroke();
-  }
-
-  ctx.strokeStyle="#2b1a0d";
-  ctx.beginPath();
-  ctx.moveTo(x,y+4);
-  ctx.lineTo(x+32,y+4);
-  ctx.moveTo(x,y+28);
-  ctx.lineTo(x+32,y+28);
-  ctx.stroke();
- }
 }
 
 function drawBuilding(x,y,worldX,worldY){
@@ -311,7 +294,13 @@ function drawBuilding(x,y,worldX,worldY){
  x=Math.round(x);
  y=Math.round(y);
 
- let colors=["#5a4a3f","#4b5a3f","#3f4a5a"];
+ let zone=getZone(worldX,worldY);
+
+ // 🔥 casas diferentes en pueblo
+ let colors = zone==="Pueblo"
+   ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
+   : ["#5a4a3f","#4b5a3f","#3f4a5a"];
+
  ctx.fillStyle=colors[d.style];
 
  ctx.fillRect(x,y-h,32,h);
