@@ -109,25 +109,23 @@ function defineZones(){
  ZONES.push(city2);
  ZONES.push(lake);
 
- /* 🔥 PUEBLOS ALINEADOS (NO RANDOM) */
- let spacing = 60;
+ /* 🔥 PUEBLOS ALINEADOS (LADOS DE LA RUTA) */
+ let spacing = 80;
 
  for(let i=1;i<=5;i++){
 
-   // izquierda
    ZONES.push({
      name:"Pueblo",
-     x: lake.x - (i*spacing) - 120,
-     y: CONFIG.BRIDGE_Y - CONFIG.TOWN_SIZE/2,
+     x: lake.x - (i*spacing) - 150,
+     y: CONFIG.BRIDGE_Y - 40,
      w: CONFIG.TOWN_SIZE,
      h: CONFIG.TOWN_SIZE
    });
 
-   // derecha
    ZONES.push({
      name:"Pueblo",
-     x: lake.x + lake.w + (i*spacing) + 120,
-     y: CONFIG.BRIDGE_Y - CONFIG.TOWN_SIZE/2,
+     x: lake.x + lake.w + (i*spacing) + 150,
+     y: CONFIG.BRIDGE_Y + 40,
      w: CONFIG.TOWN_SIZE,
      h: CONFIG.TOWN_SIZE
    });
@@ -184,19 +182,32 @@ function generateWorld(){
    map[CONFIG.BRIDGE_Y+1][x]=T.BRIDGE;
  }
 
- /* 🔥 CARRETERA PRINCIPAL (larga) */
+ /* 🔥 CARRETERA PRINCIPAL PRO (ANCHA Y LIMPIA) */
  for(let x=0;x<WORLD_COLS;x++){
-   map[CONFIG.BRIDGE_Y][x]=T.ROAD;
-   map[CONFIG.BRIDGE_Y+1][x]=T.ROAD;
+   for(let i=-1;i<=1;i++){
+     map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+   }
  }
 
- /* 🔥 CONECTAR PUEBLOS A LA CARRETERA */
+ /* 🔥 CONEXIÓN LIMPIA A PUEBLOS (SIN ROMPER RUTA) */
  for(let z of ZONES){
    if(z.name==="Pueblo"){
-     let cx = Math.floor(z.x + z.w/2);
 
-     for(let y=z.y; y<=CONFIG.BRIDGE_Y; y++){
-       map[y][cx]=T.ROAD;
+     let cx = Math.floor(z.x + z.w/2);
+     let goingDown = z.y < CONFIG.BRIDGE_Y;
+
+     if(goingDown){
+       for(let y=z.y+z.h; y<CONFIG.BRIDGE_Y-2; y++){
+         map[y][cx]=T.ROAD;
+       }
+     }else{
+       for(let y=z.y; y>CONFIG.BRIDGE_Y+2; y--){
+         map[y][cx]=T.ROAD;
+       }
+     }
+
+     for(let i=-1;i<=1;i++){
+       map[CONFIG.BRIDGE_Y + (goingDown?-2:2)][cx+i]=T.ROAD;
      }
    }
  }
