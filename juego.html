@@ -109,28 +109,14 @@ function defineZones(){
  ZONES.push(city2);
  ZONES.push(lake);
 
- /* 🔥 PUEBLOS ALINEADOS A RUTA VERTICAL */
+ /* 🔥 PUEBLOS */
  let roadX = Math.floor(city1.x + city1.w/2);
 
  for(let i=1;i<=5;i++){
-
    let yPos = city1.y - i*60;
 
-   ZONES.push({
-     name:"Pueblo",
-     x: roadX - 40,
-     y: yPos,
-     w: CONFIG.TOWN_SIZE,
-     h: CONFIG.TOWN_SIZE
-   });
-
-   ZONES.push({
-     name:"Pueblo",
-     x: roadX + 25,
-     y: yPos,
-     w: CONFIG.TOWN_SIZE,
-     h: CONFIG.TOWN_SIZE
-   });
+   ZONES.push({ name:"Pueblo", x: roadX - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 }
 
@@ -169,46 +155,37 @@ function generateWorld(){
    }
 
    if(zone==="Pueblo"){
-     let isRoad = (
-       x % 5 === 0 ||
-       y % 5 === 0
-     );
+     let isRoad = (x % 5 === 0 || y % 5 === 0);
      if(isRoad) map[y][x]=T.ROAD;
      else map[y][x]=T.BUILDING;
    }
   }
  }
 
- /* 🌉 PUENTE (SE MANTIENE) */
+ /* PUENTE */
  for(let x=lake.x; x<lake.x+lake.w; x++){
    map[CONFIG.BRIDGE_Y][x]=T.BRIDGE;
    map[CONFIG.BRIDGE_Y+1][x]=T.BRIDGE;
  }
 
- /* 🔥 RUTA VERTICAL DESDE LA CIUDAD (NO TOCA EL LAGO) */
+ /* RUTA VERTICAL */
  let roadX = Math.floor(city.x + city.w/2);
-
  for(let y=0;y<city.y;y++){
    for(let i=-1;i<=1;i++){
      map[y][roadX+i]=T.ROAD;
    }
  }
 
- /* 🔥 CONEXIONES LATERALES A PUEBLOS */
+ /* CONEXIONES */
  for(let z of ZONES){
    if(z.name==="Pueblo"){
-
      let cy = Math.floor(z.y + z.h/2);
      let cx = Math.floor(z.x + z.w/2);
 
      if(cx < roadX){
-       for(let x=cx; x<roadX-2; x++){
-         map[cy][x]=T.ROAD;
-       }
+       for(let x=cx; x<roadX-2; x++) map[cy][x]=T.ROAD;
      }else{
-       for(let x=roadX+2; x<=cx; x++){
-         map[cy][x]=T.ROAD;
-       }
+       for(let x=roadX+2; x<=cx; x++) map[cy][x]=T.ROAD;
      }
    }
  }
@@ -228,7 +205,6 @@ document.addEventListener("keyup",e=>keys[e.code]=false);
 let camX=100*TILE;
 let camY=220*TILE;
 let speed=5;
-
 let lastTime=performance.now();
 
 function updateCamera(delta){
@@ -244,76 +220,120 @@ function updateCamera(delta){
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-/* ========================= RESTO IGUAL (no tocado) */
+/* ========================= DATOS */
 let buildingsData={};
+
 function getBuildingData(x,y){
  let key=x+","+y;
+
  if(!buildingsData[key]){
   let zone=getZone(x,y);
+
   let h = zone==="Pueblo" ? 20+Math.random()*10 : 60+Math.random()*50;
+
   let windows=[];
   let style=Math.floor(Math.random()*3);
-  for(let wy=10;wy<h-5;wy+=10){
+
+  for(let wy=10;wy<h-10;wy+=12){
     for(let wx=6;wx<26;wx+=10){
       windows.push({x:wx,y:wy,on:Math.random()>0.5});
     }
   }
+
   buildingsData[key]={height:h,windows,style};
  }
+
  return buildingsData[key];
 }
 
+/* 🔥 SIN ÁRBOLES EN CALLES */
 let treesData={};
 function hasTree(x,y){
  let key=x+","+y;
+
  if(!treesData[key]){
-  treesData[key]=(getZone(x,y)==="Bosque" && Math.random()>CONFIG.TREE_DENSITY);
+   let tile = city[y]?.[x];
+
+   treesData[key]=(
+     getZone(x,y)==="Bosque" &&
+     tile!==T.ROAD &&
+     tile!==T.BRIDGE &&
+     Math.random()>CONFIG.TREE_DENSITY
+   );
  }
+
  return treesData[key];
 }
 
+/* ========================= DRAW */
 function drawTile(x,y,t){
  if(t===T.ROAD) ctx.fillStyle="#111";
  if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
  if(t===T.GRASS) ctx.fillStyle="#355c3a";
  if(t===T.WATER) ctx.fillStyle="#2c6fa3";
  if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
+
  ctx.fillRect(x,y,TILE,TILE);
 }
 
-function drawBuilding(x,y,worldX,worldY){
- let d=getBuildingData(worldX,worldY);
+/* 🔥 EDIFICIOS PRO */
+function drawBuilding(x,y,wx,wy){
+ let d=getBuildingData(wx,wy);
  let h=d.height;
- let zone=getZone(worldX,worldY);
+ let zone=getZone(wx,wy);
+
  let colors = zone==="Pueblo"
    ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
    : ["#5a4a3f","#4b5a3f","#3f4a5a"];
+
  ctx.fillStyle=colors[d.style];
  ctx.fillRect(x,y-h,32,h);
+
+ // techo
+ ctx.fillStyle="#222";
+ ctx.fillRect(x,y-h,32,4);
+
+ // sombra lateral
+ ctx.fillStyle="rgba(0,0,0,0.2)";
+ ctx.fillRect(x+26,y-h,6,h);
+
+ // ventanas
+ for(let w of d.windows){
+  ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
+  ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
+ }
 }
 
 function drawTree(x,y){
  ctx.fillStyle="#4a2f1b";
  ctx.fillRect(x+14,y+20,4,10);
+
  ctx.fillStyle="#2f7a3f";
  ctx.beginPath();
  ctx.arc(x+16,y+14,9,0,Math.PI*2);
  ctx.fill();
 }
 
+/* ========================= RENDER */
 function drawWorld(){
+
  let startCol=Math.floor(camX/TILE);
  let startRow=Math.floor(camY/TILE);
+
  let endCol=startCol+Math.ceil(canvas.width/TILE)+2;
  let endRow=startRow+Math.ceil(canvas.height/TILE)+2;
 
  for(let y=startRow;y<endRow;y++){
   for(let x=startCol;x<endCol;x++){
+
    let t=city[y]?.[x];
    if(t===undefined) continue;
+
    let dx=(x*TILE-camX);
    let dy=(y*TILE-camY);
+
    drawTile(dx,dy,t);
+
    if(t===T.BUILDING) drawBuilding(dx,dy,x,y);
    if(hasTree(x,y)) drawTree(dx,dy);
   }
@@ -324,12 +344,16 @@ function drawWorld(){
  zoneUI.innerText=getZone(px,py);
 }
 
+/* ========================= LOOP */
 function loop(time){
  let delta=(time-lastTime)/16;
  lastTime=time;
+
  ctx.clearRect(0,0,canvas.width,canvas.height);
+
  updateCamera(delta);
  drawWorld();
+
  requestAnimationFrame(loop);
 }
 
