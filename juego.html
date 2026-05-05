@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="es">
 <head>
 <meta charset="UTF-8">
@@ -40,11 +40,11 @@ canvas.height=window.innerHeight;
    ⚙️ CONFIG EDITABLE
 ========================= */
 const CONFIG = {
-  CITY_WIDTH:75,   // 🔥 ancho ciudad
-  CITY_HEIGHT:50,  // 🔥 alto ciudad
+  CITY_WIDTH:90,   // 🔥 tamaño óptimo elegido
+  CITY_HEIGHT:60,
   LAKE_SIZE:200,
   ROAD_SPACING:6,
-  AVENUE_SPACING:12, // 🔥 avenidas grandes (nuevo)
+  AVENUE_SPACING:12,
   TREE_DENSITY:0.85,
   BRIDGE_Y:250,
   SAFE_MARGIN:20
@@ -82,9 +82,22 @@ function defineZones(){
    h:CONFIG.LAKE_SIZE
  };
 
- // 🔥 ciudades 75x50
- let city1 = {name:"Ciudad", x:60, y:260, w:CONFIG.CITY_WIDTH, h:CONFIG.CITY_HEIGHT};
- let city2 = {name:"Ciudad Norte", x:340, y:260, w:CONFIG.CITY_WIDTH, h:CONFIG.CITY_HEIGHT};
+ /* 🔥 CIUDADES CERCA DEL PUENTE */
+ let city1 = {
+   name:"Ciudad",
+   x: lake.x - CONFIG.CITY_WIDTH - 10, // izquierda del lago
+   y: CONFIG.BRIDGE_Y - CONFIG.CITY_HEIGHT/2,
+   w: CONFIG.CITY_WIDTH,
+   h: CONFIG.CITY_HEIGHT
+ };
+
+ let city2 = {
+   name:"Ciudad Norte",
+   x: lake.x + lake.w + 10, // derecha del lago
+   y: CONFIG.BRIDGE_Y - CONFIG.CITY_HEIGHT/2,
+   w: CONFIG.CITY_WIDTH,
+   h: CONFIG.CITY_HEIGHT
+ };
 
  function fixCity(city){
   while(rectsOverlap(city,lake)){
@@ -129,22 +142,21 @@ function generateWorld(){
 
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
 
-     // 🔥 SISTEMA PRO DE CALLES
-     let isStreet = (
-       x % CONFIG.ROAD_SPACING === 0 ||
-       y % CONFIG.ROAD_SPACING === 0
-     );
-
      let isAvenue = (
        x % CONFIG.AVENUE_SPACING === 0 ||
        y % CONFIG.AVENUE_SPACING === 0
      );
 
+     let isStreet = (
+       x % CONFIG.ROAD_SPACING === 0 ||
+       y % CONFIG.ROAD_SPACING === 0
+     );
+
      if(isAvenue){
-       map[y][x]=T.ROAD; // avenidas principales
+       map[y][x]=T.ROAD;
      }
      else if(isStreet){
-       map[y][x]=T.ROAD; // calles normales
+       map[y][x]=T.ROAD;
      }
      else{
        map[y][x]=T.BUILDING;
@@ -249,13 +261,12 @@ function drawTile(x,y,t){
 
  ctx.fillRect(x,y,TILE,TILE);
 
- // 🔥 CALLES PRO 90s
  if(t===T.ROAD){
 
-  // línea central
-  ctx.strokeStyle="#d4c76b";
   ctx.lineWidth=2;
 
+  // 🔥 líneas dinámicas tipo ciudad real
+  ctx.strokeStyle="#d4c76b";
   ctx.beginPath();
   ctx.moveTo(x,y+16);
   ctx.lineTo(x+32,y+16);
@@ -266,7 +277,7 @@ function drawTile(x,y,t){
   ctx.lineTo(x+16,y+32);
   ctx.stroke();
 
-  // desgaste visual
+  // textura
   ctx.strokeStyle="#ffffff08";
   ctx.strokeRect(x,y,32,32);
 
