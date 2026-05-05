@@ -2,10 +2,12 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (FINAL PRO FIX)</title>
+<title>Detroit PRO 2D (MAPA DEFINITIVO)</title>
+
 <style>
 body{margin:0;overflow:hidden;background:#0e1116}
 canvas{display:block}
+
 #zoneName{
  position:fixed;
  top:10px;
@@ -33,31 +35,64 @@ const zoneUI=document.getElementById("zoneName");
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
+/* =========================
+   CONFIGURACIÓN GENERAL
+========================= */
 const TILE=32;
 const WORLD_ROWS=500;
 const WORLD_COLS=500;
 
-const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
+/*
+TIPOS DE TERRENO
+Puedes agregar más si quieres (ej: arena, nieve, etc)
+*/
+const T={
+ ROAD:0,
+ BUILDING:1,
+ GRASS:2,
+ WATER:3,
+ BRIDGE:4
+};
 
+/* =========================
+   ZONAS DEL MAPA
+========================= */
+/*
+EDITA ESTO para cambiar el mapa fácilmente
+(x, y = posición)
+(w, h = tamaño)
+*/
 const ZONES=[];
 
 function defineZones(){
- ZONES.push({name:"Ciudad", x:100,y:100,w:100,h:100});
- ZONES.push({name:"Ciudad Norte", x:150,y:150,w:120,h:150});
- ZONES.push({name:"Lago", x:280,y:280,w:280,h:280});
+
+ // 🏙️ Ciudad 1 (100x100)
+ ZONES.push({name:"Ciudad", x:80, y:200, w:100, h:100});
+
+ // 🏙️ Ciudad 2 (100x100)
+ ZONES.push({name:"Ciudad Norte", x:320, y:200, w:100, h:100});
+
+ // 🌊 Lago (200x200)
+ ZONES.push({name:"Lago", x:150, y:150, w:200, h:200});
 }
 
+/*
+Detecta en qué zona estás
+*/
 function getZone(x,y){
  for(let z of ZONES){
   if(x>=z.x && x<z.x+z.w && y>=z.y && y<z.y+z.h){
     return z.name;
   }
  }
- return "Exterior";
+ return "Bosque";
 }
 
-// 🌍 GENERACIÓN
+/* =========================
+   GENERACIÓN DEL MUNDO
+========================= */
 function generateWorld(){
+
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
 
  for(let y=0;y<WORLD_ROWS;y++){
@@ -65,29 +100,34 @@ function generateWorld(){
 
    let zone=getZone(x,y);
 
-   // 🔥 LAGO PRIORIDAD
+   // 🌊 LAGO (prioridad máxima)
    if(zone==="Lago"){
      map[y][x]=T.WATER;
      continue;
    }
 
+   // 🏙️ CIUDADES
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
+
      map[y][x]=T.BUILDING;
 
+     // Calles
      if(x%6===0 || y%6===0){
        map[y][x]=T.ROAD;
      }
    }
-
-   if(zone==="Parque"){
-     map[y][x]=T.GRASS;
-   }
   }
  }
 
- // 🌉 PUENTE PRO
- let bridgeY = 140;
- for(let x=80;x<80;x++){
+ /* =========================
+    🌉 PUENTE (EDITABLE)
+ ========================= */
+ /*
+  Cambia bridgeY para subir/bajar el puente
+ */
+ let bridgeY = 250;
+
+ for(let x=150;x<350;x++){
    map[bridgeY][x]=T.BRIDGE;
    map[bridgeY+1][x]=T.BRIDGE;
  }
@@ -98,36 +138,49 @@ function generateWorld(){
 defineZones();
 let city=generateWorld();
 
-// 🎮 INPUT
+/* =========================
+   INPUT (WASD)
+========================= */
 let keys={};
+
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
-// 🎥 CÁMARA (empieza en ciudad)
-let camX=120*TILE;
-let camY=120*TILE;
+/* =========================
+   CÁMARA
+========================= */
+let camX=100*TILE;
+let camY=220*TILE;
 let speed=5;
 
 let lastTime=performance.now();
 
 function updateCamera(delta){
- if(keys["KeyW"]||keys["ArrowUp"]) camY-=speed*delta;
- if(keys["KeyS"]||keys["ArrowDown"]) camY+=speed*delta;
- if(keys["KeyA"]||keys["ArrowLeft"]) camX-=speed*delta;
- if(keys["KeyD"]||keys["ArrowRight"]) camX+=speed*delta;
 
- // 🔥 SNAP PERFECTO (adiós temblores)
+ if(keys["KeyW"]) camY-=speed*delta;
+ if(keys["KeyS"]) camY+=speed*delta;
+ if(keys["KeyA"]) camX-=speed*delta;
+ if(keys["KeyD"]) camX+=speed*delta;
+
+ // 🔥 evita temblores
  camX=Math.round(camX);
  camY=Math.round(camY);
 
+ // límites del mundo
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-// 🏢 DATOS ESTABLES
+/* =========================
+   DATOS PERSISTENTES
+========================= */
+
+// 🏢 edificios
 let buildingsData={};
+
 function getBuildingData(x,y){
  let key=x+","+y;
+
  if(!buildingsData[key]){
   let windows=[];
   let h=60+Math.random()*40;
@@ -140,11 +193,13 @@ function getBuildingData(x,y){
 
   buildingsData[key]={height:h,windows};
  }
+
  return buildingsData[key];
 }
 
-// 🌳 ÁRBOLES FIJOS
+// 🌳 árboles (NO se regeneran cada frame)
 let treesData={};
+
 function hasTree(x,y){
  let key=x+","+y;
 
@@ -152,38 +207,19 @@ function hasTree(x,y){
   let zone=getZone(x,y);
 
   treesData[key]={
-    exists:(zone==="Exterior"||zone==="Parque") && Math.random()>0.92
+    exists:(zone==="Bosque") && Math.random()>0.85
   };
  }
 
  return treesData[key].exists;
 }
 
-// 🌳 DIBUJO ÁRBOL
-function drawTree(x,y){
- x=Math.round(x);
- y=Math.round(y);
+/* =========================
+   DIBUJO
+========================= */
 
- ctx.fillStyle="#5a3e1b";
- ctx.fillRect(x+13,y+20,6,10);
-
- ctx.fillStyle="#2ecc71";
- ctx.beginPath();
- ctx.arc(x+16,y+14,10,0,Math.PI*2);
- ctx.fill();
-
- ctx.fillStyle="#27ae60";
- ctx.beginPath();
- ctx.arc(x+10,y+14,6,0,Math.PI*2);
- ctx.fill();
-
- ctx.beginPath();
- ctx.arc(x+22,y+14,6,0,Math.PI*2);
- ctx.fill();
-}
-
-// 🎨 TILE
 function drawTile(x,y,t){
+
  x=Math.round(x);
  y=Math.round(y);
 
@@ -206,10 +242,11 @@ function drawTile(x,y,t){
   ctx.stroke();
  }
 
- // puente PRO
+ // puente mejorado
  if(t===T.BRIDGE){
-  ctx.strokeStyle="#6e4f32";
 
+  // tablones
+  ctx.strokeStyle="#6e4f32";
   for(let i=0;i<32;i+=8){
     ctx.beginPath();
     ctx.moveTo(x+i,y);
@@ -217,6 +254,7 @@ function drawTile(x,y,t){
     ctx.stroke();
   }
 
+  // barandas
   ctx.strokeStyle="#3e2c1c";
   ctx.beginPath();
   ctx.moveTo(x,y+4);
@@ -227,8 +265,8 @@ function drawTile(x,y,t){
  }
 }
 
-// 🏢 EDIFICIO
 function drawBuilding(x,y){
+
  let d=getBuildingData(x,y);
  let h=d.height;
 
@@ -250,11 +288,39 @@ function drawBuilding(x,y){
  }
 }
 
-// 🌍 RENDER
+function drawTree(x,y){
+
+ x=Math.round(x);
+ y=Math.round(y);
+
+ // tronco
+ ctx.fillStyle="#5a3e1b";
+ ctx.fillRect(x+13,y+20,6,10);
+
+ // hojas
+ ctx.fillStyle="#2ecc71";
+ ctx.beginPath();
+ ctx.arc(x+16,y+14,10,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#27ae60";
+ ctx.beginPath();
+ ctx.arc(x+10,y+14,6,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.beginPath();
+ ctx.arc(x+22,y+14,6,0,Math.PI*2);
+ ctx.fill();
+}
+
+/* =========================
+   RENDER
+========================= */
 function drawWorld(){
 
  let startCol=Math.floor(camX/TILE);
  let startRow=Math.floor(camY/TILE);
+
  let endCol=startCol+Math.ceil(canvas.width/TILE)+2;
  let endRow=startRow+Math.ceil(canvas.height/TILE)+2;
 
@@ -279,15 +345,21 @@ function drawWorld(){
   }
  }
 
+ // texto zona
  let px=Math.floor((camX+canvas.width/2)/TILE);
  let py=Math.floor((camY+canvas.height/2)/TILE);
+
  zoneUI.innerText=getZone(px,py);
 }
 
-// 🔁 LOOP
+/* =========================
+   LOOP
+========================= */
 function loop(time){
+
  let delta=(time-lastTime)/16;
  lastTime=time;
+
  if(delta>2) delta=1;
 
  ctx.clearRect(0,0,canvas.width,canvas.height);
@@ -300,6 +372,9 @@ function loop(time){
 
 requestAnimationFrame(loop);
 
+/* =========================
+   RESIZE
+========================= */
 window.addEventListener("resize",()=>{
  canvas.width=window.innerWidth;
  canvas.height=window.innerHeight;
