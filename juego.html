@@ -43,7 +43,6 @@ const CONFIG = {
   LAKE_SIZE:200,
   TREE_DENSITY:0.85,
   BRIDGE_Y:250,
-
   TOWN_SIZE:15
 };
 
@@ -88,16 +87,19 @@ function defineZones(){
  ZONES.push(city2);
  ZONES.push(lake);
 
- /* 🔥 PUEBLOS ORDENADOS */
- let spacing = 25;
+ /* 🔥 CARRETERA CENTRAL */
+ let highwayY = CONFIG.BRIDGE_Y;
 
- for(let i=0;i<5;i++){
+ /* 🔥 PUEBLOS LEJANOS Y ALINEADOS */
+ let spacing = 60;
+
+ for(let i=1;i<=5;i++){
 
   // izquierda
   ZONES.push({
     name:"Pueblo",
-    x: lake.x - (i+2)*spacing,
-    y: CONFIG.BRIDGE_Y - 40,
+    x: lake.x - (i*spacing) - 80,
+    y: highwayY - CONFIG.TOWN_SIZE/2,
     w: CONFIG.TOWN_SIZE,
     h: CONFIG.TOWN_SIZE
   });
@@ -105,8 +107,8 @@ function defineZones(){
   // derecha
   ZONES.push({
     name:"Pueblo",
-    x: lake.x + lake.w + (i+1)*spacing,
-    y: CONFIG.BRIDGE_Y + 40,
+    x: lake.x + lake.w + (i*spacing) + 80,
+    y: highwayY - CONFIG.TOWN_SIZE/2,
     w: CONFIG.TOWN_SIZE,
     h: CONFIG.TOWN_SIZE
   });
@@ -156,19 +158,21 @@ function generateWorld(){
    map[CONFIG.BRIDGE_Y+1][x]=T.BRIDGE;
  }
 
- /* 🛣️ HIGHWAY GLOBAL */
+ /* 🔥 HIGHWAY PRINCIPAL (recta infinita) */
  for(let x=0;x<WORLD_COLS;x++){
    map[CONFIG.BRIDGE_Y][x]=T.ROAD;
    map[CONFIG.BRIDGE_Y+1][x]=T.ROAD;
  }
 
- /* 🔗 CONEXIÓN A PUEBLOS */
+ /* 🔥 CONEXIÓN PERFECTA A PUEBLOS */
  for(let z of ZONES){
   if(z.name==="Pueblo"){
-    let cx = Math.floor(z.x + z.w/2);
 
+    let centerX = Math.floor(z.x + z.w/2);
+
+    // conectar verticalmente con la ruta
     for(let y=z.y; y<=CONFIG.BRIDGE_Y; y++){
-      map[y][cx]=T.ROAD;
+      map[y][centerX]=T.ROAD;
     }
   }
  }
@@ -279,14 +283,17 @@ function drawTree(x,y){
  ctx.fill();
 }
 
-/* ========================= RENDER */
+/* ========================= RENDER (ARREGLADO) */
 function drawWorld(){
 
  let startCol=Math.floor(camX/TILE);
  let startRow=Math.floor(camY/TILE);
 
- for(let y=startRow;y<startRow+40;y++){
-  for(let x=startCol;x<startCol+40;x++){
+ let endCol=startCol+Math.ceil(canvas.width/TILE)+2;
+ let endRow=startRow+Math.ceil(canvas.height/TILE)+2;
+
+ for(let y=startRow;y<endRow;y++){
+  for(let x=startCol;x<endCol;x++){
 
    let t=city[y]?.[x];
    if(t===undefined) continue;
