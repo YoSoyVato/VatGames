@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (Mapa con Zonas)</title>
+<title>Detroit PRO 2D (Juego Base)</title>
 <style>
 body{margin:0;overflow:hidden;background:#0e1116}
 canvas{display:block}
@@ -37,7 +37,6 @@ const TILE=32;
 const WORLD_ROWS=500;
 const WORLD_COLS=500;
 
-// Tipos
 const T={
  ROAD:0,
  BUILDING:1,
@@ -45,10 +44,8 @@ const T={
  WATER:3
 };
 
-// ZONAS
 const ZONES=[];
 
-// Crear zonas manuales (DISEÑO PRO)
 function defineZones(){
  ZONES.push({name:"Ciudad", x:100,y:100,w:300,h:300});
  ZONES.push({name:"Parque", x:50,y:50,w:80,h:80});
@@ -56,7 +53,6 @@ function defineZones(){
  ZONES.push({name:"Suburbio", x:0,y:300,w:150,h:200});
 }
 
-// Saber zona actual
 function getZone(x,y){
  for(let z of ZONES){
   if(x>=z.x && x<z.x+z.w && y>=z.y && y<z.y+z.h){
@@ -66,7 +62,6 @@ function getZone(x,y){
  return "Exterior";
 }
 
-// GENERACIÓN GLOBAL
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
 
@@ -77,19 +72,12 @@ function generateWorld(){
 
    if(zone==="Ciudad"){
      map[y][x]=T.BUILDING;
-
-     // calles
-     if(x%8===0 || y%8===0){
-       map[y][x]=T.ROAD;
-     }
+     if(x%8===0 || y%8===0) map[y][x]=T.ROAD;
    }
 
    if(zone==="Suburbio"){
      map[y][x]=Math.random()>0.3 ? T.BUILDING : T.GRASS;
-
-     if(x%10===0 || y%10===0){
-       map[y][x]=T.ROAD;
-     }
+     if(x%10===0 || y%10===0) map[y][x]=T.ROAD;
    }
 
    if(zone==="Parque"){
@@ -99,39 +87,42 @@ function generateWorld(){
    if(zone==="Lago"){
      map[y][x]=T.WATER;
    }
-
   }
  }
-
  return map;
 }
 
 defineZones();
 let city=generateWorld();
 
-// CÁMARA
+// 🎮 INPUT PRO
+let keys={};
+document.addEventListener("keydown",e=>keys[e.code]=true);
+document.addEventListener("keyup",e=>keys[e.code]=false);
+
+// 🎥 CÁMARA
 let camX=0, camY=0;
 let speed=6;
-let keys={};
 
-document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
-document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+// ⏱️ tiempo
+let lastTime=0;
 
-function updateCamera(){
- if(keys["w"]) camY-=speed;
- if(keys["s"]) camY+=speed;
- if(keys["a"]) camX-=speed;
- if(keys["d"]) camX+=speed;
+function updateCamera(delta){
+ let move = speed * delta;
+
+ if(keys["KeyW"]||keys["ArrowUp"]) camY-=move;
+ if(keys["KeyS"]||keys["ArrowDown"]) camY+=move;
+ if(keys["KeyA"]||keys["ArrowLeft"]) camX-=move;
+ if(keys["KeyD"]||keys["ArrowRight"]) camX+=move;
 
  camX=Math.floor(camX);
  camY=Math.floor(camY);
 
- // límites del mapa
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-// EDIFICIOS
+// 🏢 edificios
 let buildingsData={};
 function getBuildingData(x,y){
  let key=x+","+y;
@@ -150,7 +141,7 @@ function getBuildingData(x,y){
  return buildingsData[key];
 }
 
-// DIBUJO
+// 🎨 tiles
 function drawTile(x,y,t,gx,gy){
 
  if(t===T.ROAD){
@@ -171,7 +162,6 @@ function drawTile(x,y,t,gx,gy){
 
  ctx.fillRect(x,y,TILE,TILE);
 
- // líneas de calle
  if(t===T.ROAD){
   ctx.strokeStyle="#aaa";
   ctx.beginPath();
@@ -183,6 +173,7 @@ function drawTile(x,y,t,gx,gy){
  }
 }
 
+// 🏢 dibujar edificio
 function drawBuilding(x,y){
  let d=getBuildingData(x,y);
  let h=d.height;
@@ -202,7 +193,7 @@ function drawBuilding(x,y){
  }
 }
 
-// RENDER
+// 🌍 render
 function drawWorld(){
 
  let startCol=Math.floor(camX/TILE);
@@ -227,21 +218,28 @@ function drawWorld(){
   }
  }
 
- // zona actual
- let playerTileX=Math.floor((camX+canvas.width/2)/TILE);
- let playerTileY=Math.floor((camY+canvas.height/2)/TILE);
- zoneUI.innerText=getZone(playerTileX,playerTileY);
+ // 📍 zona actual
+ let px=Math.floor((camX+canvas.width/2)/TILE);
+ let py=Math.floor((camY+canvas.height/2)/TILE);
+ zoneUI.innerText=getZone(px,py);
 }
 
-function loop(){
+// 🔁 loop
+function loop(time){
+ let delta=(time-lastTime)/16;
+ lastTime=time;
+
  ctx.clearRect(0,0,canvas.width,canvas.height);
- updateCamera();
+
+ updateCamera(delta);
  drawWorld();
+
  requestAnimationFrame(loop);
 }
 
-loop();
+requestAnimationFrame(loop);
 
+// resize
 window.addEventListener("resize",()=>{
  canvas.width=window.innerWidth;
  canvas.height=window.innerHeight;
