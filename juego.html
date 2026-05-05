@@ -1,23 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Detroit PRO 2D (FINAL PRO FIX)</title>
+<style>
+body{margin:0;overflow:hidden;background:#0e1116}
+canvas{display:block}
+#zoneName{
+ position:fixed;
+ top:10px;
+ left:50%;
+ transform:translateX(-50%);
+ color:white;
+ font-family:Arial;
+ font-size:20px;
+ background:rgba(0,0,0,0.5);
+ padding:5px 15px;
+ border-radius:10px;
+}
+</style>
+</head>
+<body>
+
+<div id="zoneName">Zona</div>
+<canvas id="game"></canvas>
+
 <script>
+const canvas=document.getElementById("game");
+const ctx=canvas.getContext("2d");
+const zoneUI=document.getElementById("zoneName");
 
-// 🧠 DATOS PERSISTENTES DE ÁRBOLES (FIX TEMBLOR)
-let treesData={};
+canvas.width=window.innerWidth;
+canvas.height=window.innerHeight;
 
-function hasTree(x,y){
- let key=x+","+y;
+const TILE=32;
+const WORLD_ROWS=500;
+const WORLD_COLS=500;
 
- if(!treesData[key]){
-  let zone=getZone(x,y);
+const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
-  treesData[key]={
-    exists:(zone==="Exterior"||zone==="Parque") && Math.random()>0.92
-  };
- }
+const ZONES=[];
 
- return treesData[key].exists;
+function defineZones(){
+ ZONES.push({name:"Ciudad", x:100,y:100,w:200,h:200});
+ ZONES.push({name:"Ciudad Norte", x:350,y:50,w:120,h:120});
+ ZONES.push({name:"Lago", x:280,y:80,w:120,h:120});
+ ZONES.push({name:"Parque", x:50,y:50,w:80,h:80});
 }
 
-// 🌍 GENERACIÓN FIX (NO CIUDAD SOBRE AGUA)
+function getZone(x,y){
+ for(let z of ZONES){
+  if(x>=z.x && x<z.x+z.w && y>=z.y && y<z.y+z.h){
+    return z.name;
+  }
+ }
+ return "Exterior";
+}
+
+// 🌍 GENERACIÓN
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
 
@@ -26,7 +66,7 @@ function generateWorld(){
 
    let zone=getZone(x,y);
 
-   // 🔥 LAGO PRIORIDAD (NUNCA se pisa)
+   // 🔥 LAGO PRIORIDAD
    if(zone==="Lago"){
      map[y][x]=T.WATER;
      continue;
@@ -56,14 +96,145 @@ function generateWorld(){
  return map;
 }
 
-// 🏢 EDIFICIOS (FIX TEMBLOR)
+defineZones();
+let city=generateWorld();
+
+// 🎮 INPUT
+let keys={};
+document.addEventListener("keydown",e=>keys[e.code]=true);
+document.addEventListener("keyup",e=>keys[e.code]=false);
+
+// 🎥 CÁMARA (empieza en ciudad)
+let camX=120*TILE;
+let camY=120*TILE;
+let speed=5;
+
+let lastTime=performance.now();
+
+function updateCamera(delta){
+ if(keys["KeyW"]||keys["ArrowUp"]) camY-=speed*delta;
+ if(keys["KeyS"]||keys["ArrowDown"]) camY+=speed*delta;
+ if(keys["KeyA"]||keys["ArrowLeft"]) camX-=speed*delta;
+ if(keys["KeyD"]||keys["ArrowRight"]) camX+=speed*delta;
+
+ // 🔥 SNAP PERFECTO (adiós temblores)
+ camX=Math.round(camX);
+ camY=Math.round(camY);
+
+ camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
+ camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
+}
+
+// 🏢 DATOS ESTABLES
+let buildingsData={};
+function getBuildingData(x,y){
+ let key=x+","+y;
+ if(!buildingsData[key]){
+  let windows=[];
+  let h=60+Math.random()*40;
+
+  for(let wy=10;wy<h-10;wy+=12){
+    for(let wx=6;wx<26;wx+=10){
+      windows.push({x:wx,y:wy,on:Math.random()>0.2});
+    }
+  }
+
+  buildingsData[key]={height:h,windows};
+ }
+ return buildingsData[key];
+}
+
+// 🌳 ÁRBOLES FIJOS
+let treesData={};
+function hasTree(x,y){
+ let key=x+","+y;
+
+ if(!treesData[key]){
+  let zone=getZone(x,y);
+
+  treesData[key]={
+    exists:(zone==="Exterior"||zone==="Parque") && Math.random()>0.92
+  };
+ }
+
+ return treesData[key].exists;
+}
+
+// 🌳 DIBUJO ÁRBOL
+function drawTree(x,y){
+ x=Math.round(x);
+ y=Math.round(y);
+
+ ctx.fillStyle="#5a3e1b";
+ ctx.fillRect(x+13,y+20,6,10);
+
+ ctx.fillStyle="#2ecc71";
+ ctx.beginPath();
+ ctx.arc(x+16,y+14,10,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.fillStyle="#27ae60";
+ ctx.beginPath();
+ ctx.arc(x+10,y+14,6,0,Math.PI*2);
+ ctx.fill();
+
+ ctx.beginPath();
+ ctx.arc(x+22,y+14,6,0,Math.PI*2);
+ ctx.fill();
+}
+
+// 🎨 TILE
+function drawTile(x,y,t){
+ x=Math.round(x);
+ y=Math.round(y);
+
+ if(t===T.ROAD) ctx.fillStyle="#2b2f36";
+ if(t===T.BUILDING) ctx.fillStyle="#1c222b";
+ if(t===T.GRASS) ctx.fillStyle="#1f5f3a";
+ if(t===T.WATER) ctx.fillStyle="#1e90ff";
+ if(t===T.BRIDGE) ctx.fillStyle="#a9825a";
+
+ ctx.fillRect(x,y,TILE,TILE);
+
+ // calles
+ if(t===T.ROAD){
+  ctx.strokeStyle="#ffffff55";
+  ctx.beginPath();
+  ctx.moveTo(x,y+16);
+  ctx.lineTo(x+32,y+16);
+  ctx.moveTo(x+16,y);
+  ctx.lineTo(x+16,y+32);
+  ctx.stroke();
+ }
+
+ // puente PRO
+ if(t===T.BRIDGE){
+  ctx.strokeStyle="#6e4f32";
+
+  for(let i=0;i<32;i+=8){
+    ctx.beginPath();
+    ctx.moveTo(x+i,y);
+    ctx.lineTo(x+i,y+32);
+    ctx.stroke();
+  }
+
+  ctx.strokeStyle="#3e2c1c";
+  ctx.beginPath();
+  ctx.moveTo(x,y+4);
+  ctx.lineTo(x+32,y+4);
+  ctx.moveTo(x,y+28);
+  ctx.lineTo(x+32,y+28);
+  ctx.stroke();
+ }
+}
+
+// 🏢 EDIFICIO
 function drawBuilding(x,y){
  let d=getBuildingData(x,y);
  let h=d.height;
 
- // 🔥 SNAP PIXEL PERFECT
- x=Math.floor(x);
- y=Math.floor(y);
+ x=Math.round(x);
+ y=Math.round(y);
 
  ctx.fillStyle="rgba(0,0,0,0.3)";
  ctx.fillRect(x+5,y-h+5,32,h);
@@ -80,82 +251,7 @@ function drawBuilding(x,y){
  }
 }
 
-// 🌳 ÁRBOLES PRO (ESTABLES)
-function drawTree(x,y){
-
- x=Math.floor(x);
- y=Math.floor(y);
-
- // tronco
- ctx.fillStyle="#5a3e1b";
- ctx.fillRect(x+13,y+20,6,10);
-
- // hojas base
- ctx.fillStyle="#2ecc71";
- ctx.beginPath();
- ctx.arc(x+16,y+14,10,0,Math.PI*2);
- ctx.fill();
-
- // volumen
- ctx.fillStyle="#27ae60";
- ctx.beginPath();
- ctx.arc(x+10,y+14,6,0,Math.PI*2);
- ctx.fill();
-
- ctx.beginPath();
- ctx.arc(x+22,y+14,6,0,Math.PI*2);
- ctx.fill();
-}
-
-// 🎨 TILES + PUENTE PRO
-function drawTile(x,y,t){
-
- x=Math.floor(x);
- y=Math.floor(y);
-
- if(t===T.ROAD) ctx.fillStyle="#2b2f36";
- if(t===T.BUILDING) ctx.fillStyle="#1c222b";
- if(t===T.GRASS) ctx.fillStyle="#1f5f3a";
- if(t===T.WATER) ctx.fillStyle="#1e90ff";
- if(t===T.BRIDGE) ctx.fillStyle="#a9825a";
-
- ctx.fillRect(x,y,TILE,TILE);
-
- // 🛣️ calles
- if(t===T.ROAD){
-  ctx.strokeStyle="#ffffff55";
-  ctx.beginPath();
-  ctx.moveTo(x,y+16);
-  ctx.lineTo(x+32,y+16);
-  ctx.moveTo(x+16,y);
-  ctx.lineTo(x+16,y+32);
-  ctx.stroke();
- }
-
- // 🌉 PUENTE PRO (barandas + madera)
- if(t===T.BRIDGE){
-
-  // tablones
-  ctx.strokeStyle="#6e4f32";
-  for(let i=0;i<32;i+=8){
-    ctx.beginPath();
-    ctx.moveTo(x+i,y);
-    ctx.lineTo(x+i,y+32);
-    ctx.stroke();
-  }
-
-  // barandas
-  ctx.strokeStyle="#3e2c1c";
-  ctx.beginPath();
-  ctx.moveTo(x,y+4);
-  ctx.lineTo(x+32,y+4);
-  ctx.moveTo(x,y+28);
-  ctx.lineTo(x+32,y+28);
-  ctx.stroke();
- }
-}
-
-// 🌍 RENDER (FIX ÁRBOLES)
+// 🌍 RENDER
 function drawWorld(){
 
  let startCol=Math.floor(camX/TILE);
@@ -178,7 +274,6 @@ function drawWorld(){
     drawBuilding(dx,dy);
    }
 
-   // 🌳 FIX → ya no usa random por frame
    if(hasTree(x,y)){
     drawTree(dx,dy);
    }
@@ -190,4 +285,26 @@ function drawWorld(){
  zoneUI.innerText=getZone(px,py);
 }
 
+// 🔁 LOOP
+function loop(time){
+ let delta=(time-lastTime)/16;
+ lastTime=time;
+ if(delta>2) delta=1;
+
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ updateCamera(delta);
+ drawWorld();
+
+ requestAnimationFrame(loop);
+}
+
+requestAnimationFrame(loop);
+
+window.addEventListener("resize",()=>{
+ canvas.width=window.innerWidth;
+ canvas.height=window.innerHeight;
+});
 </script>
+</body>
+</html>
