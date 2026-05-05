@@ -2,72 +2,114 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (Calles PRO + Sin temblores)</title>
+<title>Detroit PRO 2D (Mapa con Zonas)</title>
 <style>
 body{margin:0;overflow:hidden;background:#0e1116}
 canvas{display:block}
+#zoneName{
+ position:fixed;
+ top:10px;
+ left:50%;
+ transform:translateX(-50%);
+ color:white;
+ font-family:Arial;
+ font-size:20px;
+ background:rgba(0,0,0,0.5);
+ padding:5px 15px;
+ border-radius:10px;
+}
 </style>
 </head>
 <body>
+
+<div id="zoneName">Zona</div>
 <canvas id="game"></canvas>
+
 <script>
 const canvas=document.getElementById("game");
 const ctx=canvas.getContext("2d");
+const zoneUI=document.getElementById("zoneName");
 
 canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
 const TILE=32;
-const WORLD_ROWS=200;
-const WORLD_COLS=200;
+const WORLD_ROWS=500;
+const WORLD_COLS=500;
 
-const T={ROAD:0,BUILDING:1};
+// Tipos
+const T={
+ ROAD:0,
+ BUILDING:1,
+ GRASS:2,
+ WATER:3
+};
 
-// 🧠 GENERACIÓN LIMPIA: NUNCA EDIFICIOS EN CALLE
-function generateCity(){
- let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.BUILDING));
+// ZONAS
+const ZONES=[];
 
- // Avenidas principales
- const rows=[Math.floor(WORLD_ROWS*0.25),Math.floor(WORLD_ROWS*0.5),Math.floor(WORLD_ROWS*0.75)];
- rows.forEach(r=>{
-  for(let x=0;x<WORLD_COLS;x++){
-    map[r][x]=T.ROAD;
-    if(map[r+1]) map[r+1][x]=T.ROAD;
-  }
- });
-
- const center=Math.floor(WORLD_COLS/2);
- for(let y=0;y<WORLD_ROWS;y++){
-  map[y][center]=T.ROAD;
-  if(map[y][center+1]) map[y][center+1]=T.ROAD;
- }
-
- // Calles secundarias
- for(let y=0;y<WORLD_ROWS;y++){
-  for(let x=0;x<WORLD_COLS;x++){
-    if(map[y][x]===T.ROAD) continue;
-    if(x%10===0 || y%10===0) map[y][x]=T.ROAD;
-  }
- }
-
- // BUFFER SOLO PARA EDIFICIOS (no toca calles)
- let finalMap = map.map(r=>r.slice());
- for(let y=0;y<WORLD_ROWS;y++){
-  for(let x=0;x<WORLD_COLS;x++){
-    if(map[y][x]===T.BUILDING){
-      let nearRoad = map[y+1]?.[x]===T.ROAD || map[y-1]?.[x]===T.ROAD || map[y]?.[x+1]===T.ROAD || map[y]?.[x-1]===T.ROAD;
-      if(nearRoad && Math.random()>0.7){
-        finalMap[y][x]=T.ROAD; // vereda ligera
-      }
-    }
-  }
- }
- return finalMap;
+// Crear zonas manuales (DISEÑO PRO)
+function defineZones(){
+ ZONES.push({name:"Ciudad", x:100,y:100,w:300,h:300});
+ ZONES.push({name:"Parque", x:50,y:50,w:80,h:80});
+ ZONES.push({name:"Lago", x:350,y:50,w:100,h:100});
+ ZONES.push({name:"Suburbio", x:0,y:300,w:150,h:200});
 }
 
-let city=generateCity();
+// Saber zona actual
+function getZone(x,y){
+ for(let z of ZONES){
+  if(x>=z.x && x<z.x+z.w && y>=z.y && y<z.y+z.h){
+    return z.name;
+  }
+ }
+ return "Exterior";
+}
 
-// 🎮 CÁMARA (SIN TEMBLOR → valores enteros)
+// GENERACIÓN GLOBAL
+function generateWorld(){
+ let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
+
+ for(let y=0;y<WORLD_ROWS;y++){
+  for(let x=0;x<WORLD_COLS;x++){
+
+   let zone=getZone(x,y);
+
+   if(zone==="Ciudad"){
+     map[y][x]=T.BUILDING;
+
+     // calles
+     if(x%8===0 || y%8===0){
+       map[y][x]=T.ROAD;
+     }
+   }
+
+   if(zone==="Suburbio"){
+     map[y][x]=Math.random()>0.3 ? T.BUILDING : T.GRASS;
+
+     if(x%10===0 || y%10===0){
+       map[y][x]=T.ROAD;
+     }
+   }
+
+   if(zone==="Parque"){
+     map[y][x]=T.GRASS;
+   }
+
+   if(zone==="Lago"){
+     map[y][x]=T.WATER;
+   }
+
+  }
+ }
+
+ return map;
+}
+
+defineZones();
+let city=generateWorld();
+
+// CÁMARA
 let camX=0, camY=0;
 let speed=6;
 let keys={};
@@ -81,64 +123,71 @@ function updateCamera(){
  if(keys["a"]) camX-=speed;
  if(keys["d"]) camX+=speed;
 
- // 🔥 evitar subpixeles (causa del temblor)
- camX = Math.floor(camX);
- camY = Math.floor(camY);
+ camX=Math.floor(camX);
+ camY=Math.floor(camY);
+
+ // límites del mapa
+ camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
+ camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-// DATOS EDIFICIOS
+// EDIFICIOS
 let buildingsData={};
 function getBuildingData(x,y){
  let key=x+","+y;
  if(!buildingsData[key]){
   let windows=[];
   let h=70+Math.random()*40;
+
   for(let wy=10;wy<h-10;wy+=12){
     for(let wx=6;wx<26;wx+=10){
       windows.push({x:wx,y:wy,on:Math.random()>0.2});
     }
   }
-  buildingsData[key]={height:h,windows:windows};
+
+  buildingsData[key]={height:h,windows};
  }
  return buildingsData[key];
 }
 
-// 🛣️ CALLES PRO (intersecciones reales)
-function drawGround(x,y,t,gx,gy){
+// DIBUJO
+function drawTile(x,y,t,gx,gy){
+
  if(t===T.ROAD){
   ctx.fillStyle="#2b2f36";
-  ctx.fillRect(x,y,TILE,TILE);
-
-  ctx.strokeStyle="#aaa";
-  ctx.lineWidth=2;
-
-  let up = city[gy-1]?.[gx]===T.ROAD;
-  let down = city[gy+1]?.[gx]===T.ROAD;
-  let left = city[gy]?.[gx-1]===T.ROAD;
-  let right = city[gy]?.[gx+1]===T.ROAD;
-
-  ctx.beginPath();
-
-  if(left) { ctx.moveTo(x,y+16); ctx.lineTo(x+16,y+16); }
-  if(right){ ctx.moveTo(x+16,y+16); ctx.lineTo(x+32,y+16); }
-  if(up)   { ctx.moveTo(x+16,y); ctx.lineTo(x+16,y+16); }
-  if(down) { ctx.moveTo(x+16,y+16); ctx.lineTo(x+16,y+32); }
-
-  ctx.stroke();
  }
 
  if(t===T.BUILDING){
   ctx.fillStyle="#1c222b";
-  ctx.fillRect(x,y,TILE,TILE);
+ }
+
+ if(t===T.GRASS){
+  ctx.fillStyle="#1f5f3a";
+ }
+
+ if(t===T.WATER){
+  ctx.fillStyle="#1e90ff";
+ }
+
+ ctx.fillRect(x,y,TILE,TILE);
+
+ // líneas de calle
+ if(t===T.ROAD){
+  ctx.strokeStyle="#aaa";
+  ctx.beginPath();
+  ctx.moveTo(x,y+16);
+  ctx.lineTo(x+32,y+16);
+  ctx.moveTo(x+16,y);
+  ctx.lineTo(x+16,y+32);
+  ctx.stroke();
  }
 }
 
-// 🏢 EDIFICIOS
 function drawBuilding(x,y){
  let d=getBuildingData(x,y);
  let h=d.height;
 
- ctx.fillStyle="rgba(0,0,0,0.35)";
+ ctx.fillStyle="rgba(0,0,0,0.3)";
  ctx.fillRect(x+5,y-h+5,32,h);
 
  ctx.fillStyle="#c0392b";
@@ -147,16 +196,15 @@ function drawBuilding(x,y){
  ctx.fillStyle="#ecf0f1";
  ctx.fillRect(x,y-h,32,6);
 
- ctx.fillStyle="#962d22";
- ctx.fillRect(x+28,y-h,4,h);
-
  for(let w of d.windows){
   ctx.fillStyle = w.on ? "#f7dc6f" : "#2c3e50";
   ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
  }
 }
 
-function drawCity(){
+// RENDER
+function drawWorld(){
+
  let startCol=Math.floor(camX/TILE);
  let startRow=Math.floor(camY/TILE);
  let endCol=startCol+Math.ceil(canvas.width/TILE)+2;
@@ -164,22 +212,31 @@ function drawCity(){
 
  for(let y=startRow;y<endRow;y++){
   for(let x=startCol;x<endCol;x++){
+
    let t=city[y]?.[x];
    if(t===undefined) continue;
 
-   let dx=Math.floor((x*TILE)-camX);
-   let dy=Math.floor((y*TILE)-camY);
+   let dx=Math.floor(x*TILE-camX);
+   let dy=Math.floor(y*TILE-camY);
 
-   drawGround(dx,dy,t,x,y);
-   if(t===T.BUILDING) drawBuilding(dx,dy);
+   drawTile(dx,dy,t,x,y);
+
+   if(t===T.BUILDING){
+    drawBuilding(dx,dy);
+   }
   }
  }
+
+ // zona actual
+ let playerTileX=Math.floor((camX+canvas.width/2)/TILE);
+ let playerTileY=Math.floor((camY+canvas.height/2)/TILE);
+ zoneUI.innerText=getZone(playerTileX,playerTileY);
 }
 
 function loop(){
  ctx.clearRect(0,0,canvas.width,canvas.height);
  updateCamera();
- drawCity();
+ drawWorld();
  requestAnimationFrame(loop);
 }
 
