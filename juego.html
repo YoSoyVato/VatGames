@@ -106,13 +106,23 @@ function defineZones(){
  ZONES.push(city2);
  ZONES.push(lake);
 
- let roadX = Math.floor(city1.x + city1.w/2);
+ let roadX1 = Math.floor(city1.x + city1.w/2);
+ let roadX2 = Math.floor(city2.x + city2.w/2);
 
+ /* 🔥 PUEBLOS CIUDAD SUR */
  for(let i=1;i<=5;i++){
    let yPos = city1.y - i*60;
 
-   ZONES.push({ name:"Pueblo", x: roadX - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
-   ZONES.push({ name:"Pueblo", x: roadX + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX1 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+ }
+
+ /* 🔥 PUEBLOS CIUDAD NORTE */
+ for(let i=1;i<=5;i++){
+   let yPos = city2.y - i*60;
+
+   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 }
 
@@ -129,7 +139,8 @@ function getZone(x,y){
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
  let lake = ZONES.find(z=>z.name==="Lago");
- let city = ZONES.find(z=>z.name==="Ciudad");
+ let city1 = ZONES.find(z=>z.name==="Ciudad");
+ let city2 = ZONES.find(z=>z.name==="Ciudad Norte");
 
  for(let y=0;y<WORLD_ROWS;y++){
   for(let x=0;x<WORLD_COLS;x++){
@@ -141,7 +152,6 @@ function generateWorld(){
      continue;
    }
 
-   /* 🔥 CIUDAD SIN CALLES RANDOM */
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
      map[y][x]=T.BUILDING;
    }
@@ -154,44 +164,71 @@ function generateWorld(){
   }
  }
 
- /* 🔥 PUENTE PRO (MISMO ANCHO QUE RUTA) */
+ /* 🔥 PUENTE ANCHO CORRECTO */
  for(let x=lake.x; x<lake.x+lake.w; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.BRIDGE;
    }
  }
 
- let roadX = Math.floor(city.x + city.w/2);
+ let roadX1 = Math.floor(city1.x + city1.w/2);
+ let roadX2 = Math.floor(city2.x + city2.w/2);
 
- /* 🔥 RUTA VERTICAL */
- for(let y=0;y<city.y;y++){
+ /* ========================= */
+ /* 🔥 CIUDAD SUR */
+
+ for(let y=0;y<city1.y;y++){
    for(let i=-1;i<=1;i++){
-     map[y][roadX+i]=T.ROAD;
+     map[y][roadX1+i]=T.ROAD;
    }
  }
 
- /* 🔥 ATRAVESAR CIUDAD */
- for(let y=city.y; y<city.y+city.h; y++){
+ for(let y=city1.y; y<city1.y+city1.h; y++){
    for(let i=-1;i<=1;i++){
-     map[y][roadX+i]=T.ROAD;
+     map[y][roadX1+i]=T.ROAD;
    }
  }
 
- /* 🔥 AVENIDA HACIA PUENTE */
- for(let x=roadX; x<lake.x; x++){
+ for(let x=roadX1; x<lake.x; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
    }
  }
 
- /* 🔥 CONEXIONES LIMPIAS */
+ /* ========================= */
+ /* 🔥 CIUDAD NORTE (NUEVO) */
+
+ for(let y=0;y<city2.y;y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX2+i]=T.ROAD;
+   }
+ }
+
+ for(let y=city2.y; y<city2.y+city2.h; y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX2+i]=T.ROAD;
+   }
+ }
+
+ /* conexión al puente */
+ for(let x=lake.x+lake.w; x<=roadX2; x++){
+   for(let i=-1;i<=1;i++){
+     map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
+   }
+ }
+
+ /* ========================= */
+ /* 🔥 CONEXIONES PUEBLOS */
+
  for(let z of ZONES){
    if(z.name==="Pueblo"){
 
      let cy = Math.floor(z.y + z.h/2);
      let cx = Math.floor(z.x + z.w/2);
 
-     for(let x=Math.min(cx,roadX); x<=Math.max(cx,roadX); x++){
+     let targetX = (cx < WORLD_COLS/2) ? roadX1 : roadX2;
+
+     for(let x=Math.min(cx,targetX); x<=Math.max(cx,targetX); x++){
        for(let i=-1;i<=1;i++){
          map[cy+i][x]=T.ROAD;
        }
