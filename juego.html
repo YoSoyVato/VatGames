@@ -48,8 +48,10 @@ const CONFIG = {
 };
 
 const TILE=32;
-const WORLD_ROWS=500;
-const WORLD_COLS=500;
+
+/* 🔥 MAPA MÁS COMPACTO */
+const WORLD_ROWS=350;
+const WORLD_COLS=350;
 
 const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3,BRIDGE:4};
 
@@ -141,7 +143,6 @@ function generateWorld(){
      continue;
    }
 
-   /* 🔥 CIUDAD SIN CALLES RANDOM */
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
      map[y][x]=T.BUILDING;
    }
@@ -154,7 +155,6 @@ function generateWorld(){
   }
  }
 
- /* 🔥 PUENTE PRO (MISMO ANCHO QUE RUTA) */
  for(let x=lake.x; x<lake.x+lake.w; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.BRIDGE;
@@ -163,28 +163,24 @@ function generateWorld(){
 
  let roadX = Math.floor(city.x + city.w/2);
 
- /* 🔥 RUTA VERTICAL */
  for(let y=0;y<city.y;y++){
    for(let i=-1;i<=1;i++){
      map[y][roadX+i]=T.ROAD;
    }
  }
 
- /* 🔥 ATRAVESAR CIUDAD */
  for(let y=city.y; y<city.y+city.h; y++){
    for(let i=-1;i<=1;i++){
      map[y][roadX+i]=T.ROAD;
    }
  }
 
- /* 🔥 AVENIDA HACIA PUENTE */
  for(let x=roadX; x<lake.x; x++){
    for(let i=-1;i<=1;i++){
      map[CONFIG.BRIDGE_Y+i][x]=T.ROAD;
    }
  }
 
- /* 🔥 CONEXIONES LIMPIAS */
  for(let z of ZONES){
    if(z.name==="Pueblo"){
 
@@ -216,11 +212,15 @@ let camY=220*TILE;
 let speed=5;
 let lastTime=performance.now();
 
+/* 🔥 SHIFT BOOST */
 function updateCamera(delta){
- if(keys["KeyW"]) camY-=speed*delta;
- if(keys["KeyS"]) camY+=speed*delta;
- if(keys["KeyA"]) camX-=speed*delta;
- if(keys["KeyD"]) camX+=speed*delta;
+
+ let currentSpeed = (keys["ShiftLeft"] || keys["ShiftRight"]) ? speed*2.5 : speed;
+
+ if(keys["KeyW"]) camY-=currentSpeed*delta;
+ if(keys["KeyS"]) camY+=currentSpeed*delta;
+ if(keys["KeyA"]) camX-=currentSpeed*delta;
+ if(keys["KeyD"]) camX+=currentSpeed*delta;
 
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
