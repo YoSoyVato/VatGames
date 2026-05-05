@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (Juego Base)</title>
+<title>Detroit PRO 2D (FIXED)</title>
 <style>
 body{margin:0;overflow:hidden;background:#0e1116}
 canvas{display:block}
@@ -37,12 +37,7 @@ const TILE=32;
 const WORLD_ROWS=500;
 const WORLD_COLS=500;
 
-const T={
- ROAD:0,
- BUILDING:1,
- GRASS:2,
- WATER:3
-};
+const T={ROAD:0,BUILDING:1,GRASS:2,WATER:3};
 
 const ZONES=[];
 
@@ -80,40 +75,35 @@ function generateWorld(){
      if(x%10===0 || y%10===0) map[y][x]=T.ROAD;
    }
 
-   if(zone==="Parque"){
-     map[y][x]=T.GRASS;
-   }
-
-   if(zone==="Lago"){
-     map[y][x]=T.WATER;
-   }
+   if(zone==="Parque") map[y][x]=T.GRASS;
+   if(zone==="Lago") map[y][x]=T.WATER;
   }
  }
+
  return map;
 }
 
 defineZones();
 let city=generateWorld();
 
-// 🎮 INPUT PRO
+// INPUT
 let keys={};
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
-// 🎥 CÁMARA
+// CÁMARA
 let camX=0, camY=0;
-let speed=6;
+let speed=4;
 
-// ⏱️ tiempo
-let lastTime=0;
+// 🔥 TIEMPO ARREGLADO
+let lastTime=performance.now();
 
 function updateCamera(delta){
- let move = speed * delta;
 
- if(keys["KeyW"]||keys["ArrowUp"]) camY-=move;
- if(keys["KeyS"]||keys["ArrowDown"]) camY+=move;
- if(keys["KeyA"]||keys["ArrowLeft"]) camX-=move;
- if(keys["KeyD"]||keys["ArrowRight"]) camX+=move;
+ if(keys["KeyW"]||keys["ArrowUp"]) camY-=speed*delta;
+ if(keys["KeyS"]||keys["ArrowDown"]) camY+=speed*delta;
+ if(keys["KeyA"]||keys["ArrowLeft"]) camX-=speed*delta;
+ if(keys["KeyD"]||keys["ArrowRight"]) camX+=speed*delta;
 
  camX=Math.floor(camX);
  camY=Math.floor(camY);
@@ -122,13 +112,14 @@ function updateCamera(delta){
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-// 🏢 edificios
+// EDIFICIOS
 let buildingsData={};
+
 function getBuildingData(x,y){
  let key=x+","+y;
  if(!buildingsData[key]){
   let windows=[];
-  let h=70+Math.random()*40;
+  let h=60+Math.random()*40;
 
   for(let wy=10;wy<h-10;wy+=12){
     for(let wx=6;wx<26;wx+=10){
@@ -141,24 +132,13 @@ function getBuildingData(x,y){
  return buildingsData[key];
 }
 
-// 🎨 tiles
-function drawTile(x,y,t,gx,gy){
+// DIBUJO
+function drawTile(x,y,t){
 
- if(t===T.ROAD){
-  ctx.fillStyle="#2b2f36";
- }
-
- if(t===T.BUILDING){
-  ctx.fillStyle="#1c222b";
- }
-
- if(t===T.GRASS){
-  ctx.fillStyle="#1f5f3a";
- }
-
- if(t===T.WATER){
-  ctx.fillStyle="#1e90ff";
- }
+ if(t===T.ROAD) ctx.fillStyle="#2b2f36";
+ if(t===T.BUILDING) ctx.fillStyle="#1c222b";
+ if(t===T.GRASS) ctx.fillStyle="#1f5f3a";
+ if(t===T.WATER) ctx.fillStyle="#1e90ff";
 
  ctx.fillRect(x,y,TILE,TILE);
 
@@ -173,7 +153,6 @@ function drawTile(x,y,t,gx,gy){
  }
 }
 
-// 🏢 dibujar edificio
 function drawBuilding(x,y){
  let d=getBuildingData(x,y);
  let h=d.height;
@@ -193,7 +172,7 @@ function drawBuilding(x,y){
  }
 }
 
-// 🌍 render
+// RENDER
 function drawWorld(){
 
  let startCol=Math.floor(camX/TILE);
@@ -210,7 +189,7 @@ function drawWorld(){
    let dx=Math.floor(x*TILE-camX);
    let dy=Math.floor(y*TILE-camY);
 
-   drawTile(dx,dy,t,x,y);
+   drawTile(dx,dy,t);
 
    if(t===T.BUILDING){
     drawBuilding(dx,dy);
@@ -218,16 +197,19 @@ function drawWorld(){
   }
  }
 
- // 📍 zona actual
  let px=Math.floor((camX+canvas.width/2)/TILE);
  let py=Math.floor((camY+canvas.height/2)/TILE);
  zoneUI.innerText=getZone(px,py);
 }
 
-// 🔁 loop
+// LOOP
 function loop(time){
+
  let delta=(time-lastTime)/16;
  lastTime=time;
+
+ // 🔥 evitar saltos raros
+ if(delta>2) delta=1;
 
  ctx.clearRect(0,0,canvas.width,canvas.height);
 
@@ -239,7 +221,6 @@ function loop(time){
 
 requestAnimationFrame(loop);
 
-// resize
 window.addEventListener("resize",()=>{
  canvas.width=window.innerWidth;
  canvas.height=window.innerHeight;
