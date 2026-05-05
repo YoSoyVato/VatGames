@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Detroit PRO 2D (Ciudad Densa Mejorada)</title>
+<title>Detroit PRO 2D (Calles Centrales + WASD)</title>
 <style>
 body{margin:0;overflow:hidden;background:#0e1116}
 canvas{display:block}
@@ -18,26 +18,32 @@ canvas.width=window.innerWidth;
 canvas.height=window.innerHeight;
 
 const TILE=32;
-const rows=Math.floor(canvas.height/TILE);
-const cols=Math.floor(canvas.width/TILE);
+
+// MAPA MÁS GRANDE (para moverte)
+const WORLD_ROWS=200;
+const WORLD_COLS=200;
 
 const T={ROAD:0,BUILDING:1};
 
-// NUEVA GENERACIÓN (más calles + sin pasto)
+// 🔥 GENERACIÓN MEJORADA (calles centrales + separación)
 function generateCity(){
  let map=[];
 
- for(let y=0;y<rows;y++){
+ for(let y=0;y<WORLD_ROWS;y++){
   let row=[];
-  for(let x=0;x<cols;x++){
+  for(let x=0;x<WORLD_COLS;x++){
 
    // Calles principales
    if(x%8===0 || y%8===0){
      row.push(T.ROAD);
    }
-   // Calles secundarias (mitad de bloque)
+   // Calles secundarias
    else if(x%4===0 || y%4===0){
-     row.push(Math.random()>0.5 ? T.ROAD : T.BUILDING);
+     row.push(Math.random()>0.4 ? T.ROAD : T.BUILDING);
+   }
+   // 🔥 CALLES HORIZONTALES COMO LAS MARCADAS (centrales)
+   else if(y%16===0){
+     row.push(T.ROAD);
    }
    else{
      row.push(T.BUILDING);
@@ -47,10 +53,38 @@ function generateCity(){
   map.push(row);
  }
 
+ // 🧠 LIMPIEZA: evitar edificios pegados a calles (buffer)
+ for(let y=0;y<WORLD_ROWS;y++){
+  for(let x=0;x<WORLD_COLS;x++){
+    if(map[y][x]===T.ROAD){
+      if(map[y+1]?.[x]===T.BUILDING) map[y+1][x]=T.ROAD;
+      if(map[y-1]?.[x]===T.BUILDING) map[y-1][x]=T.ROAD;
+      if(map[y]?.[x+1]===T.BUILDING) map[y][x+1]=T.ROAD;
+      if(map[y]?.[x-1]===T.BUILDING) map[y][x-1]=T.ROAD;
+    }
+  }
+ }
+
  return map;
 }
 
 let city=generateCity();
+
+// 🎮 CÁMARA (WASD)
+let camX=0;
+let camY=0;
+let speed=6;
+let keys={};
+
+document.addEventListener("keydown",e=>keys[e.key.toLowerCase()]=true);
+document.addEventListener("keyup",e=>keys[e.key.toLowerCase()]=false);
+
+function updateCamera(){
+ if(keys["w"]) camY-=speed;
+ if(keys["s"]) camY+=speed;
+ if(keys["a"]) camX-=speed;
+ if(keys["d"]) camX+=speed;
+}
 
 // Datos persistentes
 let buildingsData = {};
@@ -76,7 +110,7 @@ function getBuildingData(x,y){
  return buildingsData[key];
 }
 
-// CALLES MEJORADAS
+// CALLES
 function drawGround(x,y,t,gridX,gridY){
  if(t===T.ROAD){
   ctx.fillStyle="#2b2f36";
@@ -134,20 +168,31 @@ function drawBuilding(x,y){
 }
 
 function drawCity(){
- for(let y=0;y<rows;y++){
-  for(let x=0;x<cols;x++){
-   let t=city[y][x];
-   let dx=x*TILE;
-   let dy=y*TILE;
+ let startCol=Math.floor(camX/TILE);
+ let startRow=Math.floor(camY/TILE);
+
+ let endCol=startCol+Math.ceil(canvas.width/TILE)+2;
+ let endRow=startRow+Math.ceil(canvas.height/TILE)+2;
+
+ for(let y=startRow;y<endRow;y++){
+  for(let x=startCol;x<endCol;x++){
+   let t=city[y]?.[x];
+   if(t===undefined) continue;
+
+   let dx=(x*TILE)-camX;
+   let dy=(y*TILE)-camY;
+
    drawGround(dx,dy,t,x,y);
   }
  }
 
- for(let y=0;y<rows;y++){
-  for(let x=0;x<cols;x++){
-   let t=city[y][x];
-   let dx=x*TILE;
-   let dy=y*TILE;
+ for(let y=startRow;y<endRow;y++){
+  for(let x=startCol;x<endCol;x++){
+   let t=city[y]?.[x];
+   if(t===undefined) continue;
+
+   let dx=(x*TILE)-camX;
+   let dy=(y*TILE)-camY;
 
    if(t===T.BUILDING){
     drawBuilding(dx,dy);
@@ -158,6 +203,7 @@ function drawCity(){
 
 function loop(){
  ctx.clearRect(0,0,canvas.width,canvas.height);
+ updateCamera();
  drawCity();
  requestAnimationFrame(loop);
 }
@@ -171,4 +217,3 @@ window.addEventListener("resize",()=>{
 </script>
 </body>
 </html>
-
