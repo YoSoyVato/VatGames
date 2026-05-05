@@ -40,12 +40,14 @@ canvas.height=window.innerHeight;
    ⚙️ CONFIG EDITABLE
 ========================= */
 const CONFIG = {
-  CITY_SIZE:100,
+  CITY_WIDTH:75,   // 🔥 ancho ciudad
+  CITY_HEIGHT:50,  // 🔥 alto ciudad
   LAKE_SIZE:200,
   ROAD_SPACING:6,
+  AVENUE_SPACING:12, // 🔥 avenidas grandes (nuevo)
   TREE_DENSITY:0.85,
   BRIDGE_Y:250,
-  SAFE_MARGIN:20 // 🔥 distancia mínima entre ciudad y lago
+  SAFE_MARGIN:20
 };
 
 const TILE=32;
@@ -72,7 +74,6 @@ function defineZones(){
 
  ZONES.length=0;
 
- // 🌊 LAGO (primero para usarlo como referencia)
  let lake = {
    name:"Lago",
    x:150,
@@ -81,14 +82,13 @@ function defineZones(){
    h:CONFIG.LAKE_SIZE
  };
 
- // 🏙️ ciudades (se ajustan solas si chocan)
- let city1 = {name:"Ciudad", x:80, y:200, w:CONFIG.CITY_SIZE, h:CONFIG.CITY_SIZE};
- let city2 = {name:"Ciudad Norte", x:320, y:200, w:CONFIG.CITY_SIZE, h:CONFIG.CITY_SIZE};
+ // 🔥 ciudades 75x50
+ let city1 = {name:"Ciudad", x:60, y:260, w:CONFIG.CITY_WIDTH, h:CONFIG.CITY_HEIGHT};
+ let city2 = {name:"Ciudad Norte", x:340, y:260, w:CONFIG.CITY_WIDTH, h:CONFIG.CITY_HEIGHT};
 
- // 🔥 evitar superposición con el lago
  function fixCity(city){
   while(rectsOverlap(city,lake)){
-    city.y += 10; // empuja hacia abajo
+    city.y += 10;
   }
  }
 
@@ -128,16 +128,32 @@ function generateWorld(){
    }
 
    if(zone==="Ciudad" || zone==="Ciudad Norte"){
-     if(x % CONFIG.ROAD_SPACING === 0 || y % CONFIG.ROAD_SPACING === 0){
-       map[y][x]=T.ROAD;
-     } else {
+
+     // 🔥 SISTEMA PRO DE CALLES
+     let isStreet = (
+       x % CONFIG.ROAD_SPACING === 0 ||
+       y % CONFIG.ROAD_SPACING === 0
+     );
+
+     let isAvenue = (
+       x % CONFIG.AVENUE_SPACING === 0 ||
+       y % CONFIG.AVENUE_SPACING === 0
+     );
+
+     if(isAvenue){
+       map[y][x]=T.ROAD; // avenidas principales
+     }
+     else if(isStreet){
+       map[y][x]=T.ROAD; // calles normales
+     }
+     else{
        map[y][x]=T.BUILDING;
      }
    }
   }
  }
 
- /* 🌉 PUENTE INTELIGENTE (TAMAÑO EXACTO DEL LAGO) */
+ /* 🌉 PUENTE EXACTO */
  let startX = lake.x;
  let endX = lake.x + lake.w;
 
@@ -153,14 +169,14 @@ defineZones();
 let city=generateWorld();
 
 /* =========================
-   🎮 INPUT
+   INPUT
 ========================= */
 let keys={};
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
 /* =========================
-   🎥 CÁMARA
+   CÁMARA
 ========================= */
 let camX=100*TILE;
 let camY=220*TILE;
@@ -182,7 +198,7 @@ function updateCamera(delta){
 }
 
 /* =========================
-   🧠 DATOS
+   DATOS
 ========================= */
 let buildingsData={};
 
@@ -219,7 +235,7 @@ function hasTree(x,y){
 }
 
 /* =========================
-   🎨 DIBUJO
+   DIBUJO
 ========================= */
 function drawTile(x,y,t){
  x=Math.round(x);
@@ -233,7 +249,10 @@ function drawTile(x,y,t){
 
  ctx.fillRect(x,y,TILE,TILE);
 
+ // 🔥 CALLES PRO 90s
  if(t===T.ROAD){
+
+  // línea central
   ctx.strokeStyle="#d4c76b";
   ctx.lineWidth=2;
 
@@ -246,6 +265,10 @@ function drawTile(x,y,t){
   ctx.moveTo(x+16,y);
   ctx.lineTo(x+16,y+32);
   ctx.stroke();
+
+  // desgaste visual
+  ctx.strokeStyle="#ffffff08";
+  ctx.strokeRect(x,y,32,32);
 
   ctx.lineWidth=1;
  }
@@ -314,7 +337,7 @@ function drawTree(x,y){
 }
 
 /* =========================
-   🌍 RENDER
+   RENDER
 ========================= */
 function drawWorld(){
 
