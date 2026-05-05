@@ -48,8 +48,6 @@ const CONFIG = {
 };
 
 const TILE=32;
-
-/* 🔥 MUNDO MÁS CHICO (ANTES 500) */
 const WORLD_ROWS=300;
 const WORLD_COLS=300;
 
@@ -73,7 +71,7 @@ function defineZones(){
 
  let lake = {
    name:"Lago",
-   x:120, /* 🔥 ajustado para mundo chico */
+   x:120,
    y:100,
    w:CONFIG.LAKE_SIZE,
    h:CONFIG.LAKE_SIZE
@@ -200,20 +198,22 @@ function generateWorld(){
 defineZones();
 let city=generateWorld();
 
+/* 🔥 FIX PANTALLA NEGRA */
+let camX, camY;
+let citySpawn = ZONES.find(z=>z.name==="Ciudad");
+camX = (citySpawn.x * TILE) - canvas.width/2;
+camY = (citySpawn.y * TILE) - canvas.height/2;
+
 /* ========================= INPUT */
 let keys={};
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
 /* ========================= CÁMARA */
-let camX=100*TILE;
-let camY=220*TILE;
 let speed=5;
 let lastTime=performance.now();
 
-/* 🔥 SHIFT SPEED */
 function updateCamera(delta){
-
  let currentSpeed = (keys["ShiftLeft"] || keys["ShiftRight"]) ? speed*2 : speed;
 
  if(keys["KeyW"]) camY-=currentSpeed*delta;
@@ -225,7 +225,7 @@ function updateCamera(delta){
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-/* ========================= RESTO IGUAL */
+/* resto igual */
 let buildingsData={};
 function getBuildingData(x,y){
  let key=x+","+y;
