@@ -116,12 +116,14 @@ function defineZones(){
 
  for(let i=1;i<=5;i++){
    let yPos = city1.y - i*60;
+
    ZONES.push({ name:"Pueblo", x: roadX - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
    ZONES.push({ name:"Pueblo", x: roadX + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 
  for(let i=1;i<=5;i++){
    let yPos = city2.y - i*60;
+
    ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
    ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
@@ -145,14 +147,21 @@ function generateWorld(){
 
  for(let y=0;y<WORLD_ROWS;y++){
   for(let x=0;x<WORLD_COLS;x++){
+
    let zone=getZone(x,y);
 
-   if(zone==="Lago"){ map[y][x]=T.WATER; continue; }
-   if(zone==="Ciudad" || zone==="Ciudad Norte"){ map[y][x]=T.BUILDING; }
+   if(zone==="Lago"){
+     map[y][x]=T.WATER;
+     continue;
+   }
+
+   if(zone==="Ciudad" || zone==="Ciudad Norte"){
+     map[y][x]=T.BUILDING;
+   }
 
    if(zone==="Pueblo"){
      let isRoad = (x % 5 === 0 || y % 5 === 0);
-     map[y][x]=isRoad ? T.ROAD : T.BUILDING;
+     map[y][x]= isRoad ? T.ROAD : T.BUILDING;
    }
   }
  }
@@ -167,11 +176,15 @@ function generateWorld(){
  let roadX2 = Math.floor(cityN.x + cityN.w/2);
 
  for(let y=0;y<city.y;y++){
-   for(let i=-1;i<=1;i++) map[y][clamp(roadX+i,0,WORLD_COLS-1)]=T.ROAD;
+   for(let i=-1;i<=1;i++){
+     map[y][clamp(roadX+i,0,WORLD_COLS-1)]=T.ROAD;
+   }
  }
 
  for(let y=0;y<cityN.y;y++){
-   for(let i=-1;i<=1;i++) map[y][clamp(roadX2+i,0,WORLD_COLS-1)]=T.ROAD;
+   for(let i=-1;i<=1;i++){
+     map[y][clamp(roadX2+i,0,WORLD_COLS-1)]=T.ROAD;
+   }
  }
 
  return map;
@@ -181,91 +194,41 @@ defineZones();
 let city=generateWorld();
 
 /* ========================= VEHÍCULOS */
-
 let vehicles=[];
 
-function spawnVehicle(type){
- let roadTiles=[];
+function spawnVehicle(){
+ let type = Math.floor(Math.random()*3);
 
- for(let y=0;y<WORLD_ROWS;y++){
-  for(let x=0;x<WORLD_COLS;x++){
-   if(city[y][x]===T.ROAD || city[y][x]===T.BRIDGE){
-     roadTiles.push({x,y});
-   }
-  }
+ let roadX = Math.floor(ZONES[0].x + ZONES[0].w/2);
+ let roadX2 = Math.floor(ZONES[1].x + ZONES[1].w/2);
+
+ if(type===0){
+   vehicles.push({x:roadX*TILE,y:0,dir:1,speed:2,type:"vertical"});
  }
 
- let start = roadTiles[Math.floor(Math.random()*roadTiles.length)];
+ if(type===1){
+   vehicles.push({x:roadX2*TILE,y:0,dir:1,speed:2,type:"vertical"});
+ }
 
- vehicles.push({
-   x:start.x+0.5,
-   y:start.y+0.5,
-   dirX:0,
-   dirY:0,
-   speed:0.05+Math.random()*0.05,
-   type:type,
-   life:0
- });
+ if(type===2){
+   vehicles.push({x:150*TILE,y:CONFIG.BRIDGE_Y*TILE,dir:1,speed:2,type:"bridge"});
+ }
 }
 
-for(let i=0;i<20;i++){
- spawnVehicle(Math.floor(Math.random()*3));
-}
+setInterval(spawnVehicle,1500);
 
 function updateVehicles(){
  for(let v of vehicles){
 
-   v.life++;
+  if(v.type==="vertical"){
+    v.y += v.speed * v.dir;
+    if(v.y > WORLD_ROWS*TILE) v.y = 0;
+  }
 
-   if(v.life % 20 === 0){
-     let dirs=[
-       {x:1,y:0},{x:-1,y:0},{x:0,y:1},{x:0,y:-1}
-     ];
-
-     let valid = dirs.filter(d=>{
-       let tx=Math.floor(v.x+d.x);
-       let ty=Math.floor(v.y+d.y);
-       let t=city[ty]?.[tx];
-       return t===T.ROAD || t===T.BRIDGE;
-     });
-
-     if(valid.length){
-       let d=valid[Math.floor(Math.random()*valid.length)];
-       v.dirX=d.x;
-       v.dirY=d.y;
-     }
-   }
-
-   v.x+=v.dirX*v.speed;
-   v.y+=v.dirY*v.speed;
-
-   // comportamiento
-   if(v.type===0){ // loop
-     if(v.life>2000) v.life=0;
-   }
-
-   if(v.type===1){ // pueblo -> respawn
-     if(getZone(Math.floor(v.x),Math.floor(v.y))==="Pueblo"){
-       v.x=Math.random()*WORLD_COLS;
-       v.y=Math.random()*WORLD_ROWS;
-     }
-   }
-
-   if(v.type===2){ // puente
-     if(city[Math.floor(v.y)]?.[Math.floor(v.x)]!==T.BRIDGE){
-       v.life=999;
-     }
-   }
- }
-}
-
-function drawVehicles(){
- for(let v of vehicles){
-   let dx=(v.x*TILE-camX);
-   let dy=(v.y*TILE-camY);
-
-   ctx.fillStyle="#ff4444";
-   ctx.fillRect(dx-4,dy-4,8,8);
+  if(v.type==="bridge"){
+    v.x += v.speed * v.dir;
+    if(v.x > WORLD_COLS*TILE) v.x = 0;
+  }
  }
 }
 
@@ -281,18 +244,18 @@ let speed=5;
 let lastTime=performance.now();
 
 function updateCamera(delta){
- let currentSpeed=(keys["ShiftLeft"]||keys["ShiftRight"])?speed*2:speed;
+ let s = (keys["ShiftLeft"]||keys["ShiftRight"]) ? speed*2 : speed;
 
- if(keys["KeyW"]) camY-=currentSpeed*delta;
- if(keys["KeyS"]) camY+=currentSpeed*delta;
- if(keys["KeyA"]) camX-=currentSpeed*delta;
- if(keys["KeyD"]) camX+=currentSpeed*delta;
+ if(keys["KeyW"]) camY-=s*delta;
+ if(keys["KeyS"]) camY+=s*delta;
+ if(keys["KeyA"]) camX-=s*delta;
+ if(keys["KeyD"]) camX+=s*delta;
 
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
-/* ========================= DRAW */
+/* ========================= RENDER */
 function drawTile(x,y,t){
  if(t===T.ROAD) ctx.fillStyle="#111";
  if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
@@ -300,6 +263,17 @@ function drawTile(x,y,t){
  if(t===T.WATER) ctx.fillStyle="#2c6fa3";
  if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
  ctx.fillRect(x,y,TILE,TILE);
+}
+
+function drawVehicle(v){
+ let dx=v.x-camX;
+ let dy=v.y-camY;
+
+ ctx.fillStyle="#ff4444";
+ ctx.fillRect(dx+6,dy+10,20,12);
+
+ ctx.fillStyle="#222";
+ ctx.fillRect(dx+10,dy+12,12,6);
 }
 
 function drawWorld(){
@@ -320,14 +294,13 @@ function drawWorld(){
   }
  }
 
- drawVehicles();
+ for(let v of vehicles) drawVehicle(v);
 
  let px=Math.floor((camX+canvas.width/2)/TILE);
  let py=Math.floor((camY+canvas.height/2)/TILE);
  zoneUI.innerText=getZone(px,py);
 }
 
-/* ========================= LOOP */
 function loop(time){
  let delta=(time-lastTime)/16;
  lastTime=time;
