@@ -1,43 +1,174 @@
 <!DOCTYPE html>
-<html>
+<html lang="es">
 <head>
-  <title>Launcher</title>
-  <style>
-    body {
-      margin: 0;
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      background: linear-gradient(135deg, #111, #333);
-      font-family: Arial;
-    }
+<meta charset="UTF-8">
+<title>Detroit 1990</title>
 
-    button {
-      padding: 20px 40px;
-      font-size: 24px;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      background: #00c3ff;
-      color: white;
-      transition: 0.3s;
-    }
+<style>
+body{
+ margin:0;
+ overflow:hidden;
+ background:#0b0d12;
+ font-family:monospace;
+ color:white;
+}
 
-    button:hover {
-      background: #0099cc;
-      transform: scale(1.1);
-    }
-  </style>
+/* ===== MENU ===== */
+#menu{
+ position:absolute;
+ width:100%;
+ height:100%;
+ display:flex;
+ flex-direction:column;
+ justify-content:center;
+ align-items:center;
+ background:linear-gradient(#0b0d12,#000);
+}
+
+#title{
+ font-size:48px;
+ letter-spacing:4px;
+ margin-bottom:20px;
+}
+
+#lore{
+ width:60%;
+ max-width:800px;
+ text-align:center;
+ font-size:16px;
+ line-height:1.6;
+ opacity:0.8;
+ margin-bottom:30px;
+}
+
+button{
+ padding:12px 30px;
+ font-size:18px;
+ background:#111;
+ color:white;
+ border:1px solid #444;
+ cursor:pointer;
+ transition:0.2s;
+}
+
+button:hover{
+ background:#222;
+}
+
+/* ===== GAME ===== */
+canvas{
+ display:none;
+ background:#0b0d12;
+}
+</style>
 </head>
+
 <body>
 
-<button onclick="jugar()">🎮 Jugar</button>
+<!-- ===== MENU ===== -->
+<div id="menu">
+ <div id="title">DETROIT 1990</div>
+
+ <div id="lore">
+  Año 1990.<br><br>
+
+  Eras un sargento más en la policía…  
+  a punto de retirarte, cansado de las calles, de la corrupción y de todo lo que viste.<br><br>
+
+  Pero una carta cambió todo.<br><br>
+
+  <b>"Has sido ascendido a Teniente de Policía en el Estado de Detroit."</b><br><br>
+
+  Un nuevo comienzo… o el principio del final.<br><br>
+
+  Te quedan <b>10 años</b> antes de tu jubilación.<br>
+  10 años para sobrevivir.<br>
+  10 años para dejar tu marca.<br><br>
+
+  <b>¿Llegarás al año 2000?</b>
+ </div>
+
+ <button onclick="startGame()">INICIAR</button>
+</div>
+
+<!-- ===== GAME ===== -->
+<canvas id="game"></canvas>
 
 <script>
-function jugar() {
-  window.location.href = "juego.html";
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+/* ========================= */
+/* VARIABLES DEL JUEGO */
+let started = false;
+let player = {x:200,y:200,speed:4};
+
+/* ========================= */
+/* START GAME */
+function startGame(){
+ document.getElementById("menu").style.display="none";
+ canvas.style.display="block";
+ started = true;
 }
+
+/* ========================= */
+/* INPUT */
+let keys={};
+document.addEventListener("keydown",e=>keys[e.code]=true);
+document.addEventListener("keyup",e=>keys[e.code]=false);
+
+/* ========================= */
+/* UPDATE */
+function update(){
+ if(!started) return;
+
+ let sp = (keys["ShiftLeft"]||keys["ShiftRight"]) ? player.speed*2 : player.speed;
+
+ if(keys["KeyW"]) player.y -= sp;
+ if(keys["KeyS"]) player.y += sp;
+ if(keys["KeyA"]) player.x -= sp;
+ if(keys["KeyD"]) player.x += sp;
+}
+
+/* ========================= */
+/* DRAW */
+function draw(){
+ if(!started) return;
+
+ ctx.clearRect(0,0,canvas.width,canvas.height);
+
+ /* suelo */
+ ctx.fillStyle="#1a1a1a";
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ /* jugador */
+ ctx.fillStyle="#4aa3ff";
+ ctx.fillRect(player.x,player.y,20,20);
+
+ /* HUD */
+ ctx.fillStyle="white";
+ ctx.font="14px monospace";
+ ctx.fillText("Año: 1990",20,20);
+ ctx.fillText("Objetivo: Sobrevivir hasta 2000",20,40);
+}
+
+/* ========================= */
+/* LOOP */
+function loop(){
+ update();
+ draw();
+ requestAnimationFrame(loop);
+}
+loop();
+
+/* ========================= */
+window.addEventListener("resize",()=>{
+ canvas.width=window.innerWidth;
+ canvas.height=window.innerHeight;
+});
 </script>
 
 </body>
