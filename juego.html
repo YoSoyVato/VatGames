@@ -232,25 +232,29 @@ function generateWorld(){
 defineZones();
 let city=generateWorld();
 
-/* ========================= EVENTOS ========================= */
-let time=0;
-let fires={};
+/* ========================= DIA / NOCHE ========================= */
+/*
+  🔥 CONFIGURACIÓN IMPORTANTE:
 
-function updateEvents(delta){
- time+=delta;
+  DAY_DURATION = duración del ciclo completo (día + noche) en segundos
 
- if(Math.random()<0.002){
-   let x=Math.floor(Math.random()*WORLD_COLS);
-   let y=Math.floor(Math.random()*WORLD_ROWS);
-   if(getZone(x,y)==="Bosque" && hasTree(x,y)){
-     fires[x+","+y]={life:200, spread:Math.random()*7};
-   }
- }
+  EJEMPLOS:
+  - 60  = ciclo rápido (1 minuto)
+  - 300 = ciclo medio (5 minutos)
+  - 900 = ciclo realista (15 minutos)
+*/
 
- for(let k in fires){
-   fires[k].life-=1;
-   if(fires[k].life<=0) delete fires[k];
- }
+let dayTime = 0;
+const DAY_DURATION = 300; // 👈 CAMBIÁ ESTO
+
+function updateDayNight(delta){
+  dayTime += delta / 60;
+  if(dayTime > DAY_DURATION) dayTime = 0;
+}
+
+function getLightLevel(){
+  let t = dayTime / DAY_DURATION;
+  return Math.sin(t * Math.PI * 2) * 0.5 + 0.5; // 0 noche / 1 día
 }
 
 /* ========================= INPUT */
@@ -300,11 +304,13 @@ function getBuildingData(x,y){
 }
 
 function updateWindows(){
+ let nightFactor = 1 - getLightLevel();
+
  for(let k in buildingsData){
    let b=buildingsData[k];
    for(let w of b.windows){
-     if(Math.random()<0.01){
-       w.on=!w.on;
+     if(Math.random()<0.01 + nightFactor*0.05){
+       w.on = Math.random() < nightFactor;
      }
    }
  }
@@ -326,30 +332,37 @@ function hasTree(x,y){
  return treesData[key];
 }
 
-/* 🌊 AGUA PRO */
 function drawTile(x,y,t){
-
- if(t===T.WATER){
-   let wx=(x+camX)/TILE;
-   let wy=(y+camY)/TILE;
-
-   let wave1=Math.sin(wx*0.4+time*1.5)*3;
-   let wave2=Math.cos(wy*0.4+time*1.2)*3;
-   let wave=wave1+wave2;
-
-   let base=150+wave;
-   ctx.fillStyle=`rgb(44,111,${base})`;
- }else{
-   if(t===T.ROAD) ctx.fillStyle="#111";
-   if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
-   if(t===T.GRASS) ctx.fillStyle="#355c3a";
-   if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
- }
+ if(t===T.ROAD) ctx.fillStyle="#111";
+ if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
+ if(t===T.GRASS) ctx.fillStyle="#355c3a";
+ if(t===T.WATER) ctx.fillStyle="#2c6fa3"; // ← agua normal
+ if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
 
  ctx.fillRect(x,y,TILE,TILE);
 }
 
-/* 🔥 ARBOLES PRO */
+function drawBuilding(x,y,wx,wy){
+ let d=getBuildingData(wx,wy);
+ let h=d.height;
+ let zone=getZone(wx,wy);
+
+ let colors = zone==="Pueblo"
+   ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
+   : ["#5a4a3f","#4b5a3f","#3f4a5a"];
+
+ ctx.fillStyle=colors[d.style];
+ ctx.fillRect(x,y-h,32,h);
+
+ ctx.fillStyle="#222";
+ ctx.fillRect(x,y-h,32,4);
+
+ for(let w of d.windows){
+  ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
+  ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
+ }
+}
+
 function drawTree(x,y,wx,wy){
  ctx.fillStyle="#4a2f1b";
  ctx.fillRect(x+14,y+20,4,10);
@@ -358,24 +371,6 @@ function drawTree(x,y,wx,wy){
  ctx.beginPath();
  ctx.arc(x+16,y+14,9,0,Math.PI*2);
  ctx.fill();
-
- let key=wx+","+wy;
- if(fires[key]){
-   let f=fires[key];
-
-   for(let i=0;i<5;i++){
-     ctx.fillStyle=`rgba(255,${100+Math.random()*100},0,0.8)`;
-     ctx.beginPath();
-     ctx.arc(x+16+(Math.random()-0.5)*f.spread,y+10+(Math.random()-0.5)*f.spread,3,0,Math.PI*2);
-     ctx.fill();
-   }
-
-   // humo
-   ctx.fillStyle="rgba(50,50,50,0.3)";
-   ctx.beginPath();
-   ctx.arc(x+16,y+2-f.life*0.05,6,0,Math.PI*2);
-   ctx.fill();
- }
 }
 
 function drawWorld(){
@@ -399,6 +394,11 @@ function drawWorld(){
   }
  }
 
+ // 🌙 overlay noche
+ let darkness = 1 - getLightLevel();
+ ctx.fillStyle = `rgba(0,0,0,${darkness * 0.6})`;
+ ctx.fillRect(0,0,canvas.width,canvas.height);
+
  let px=Math.floor((camX+canvas.width/2)/TILE);
  let py=Math.floor((camY+canvas.height/2)/TILE);
  zoneUI.innerText=getZone(px,py);
@@ -411,7 +411,7 @@ function loop(timeNow){
  ctx.clearRect(0,0,canvas.width,canvas.height);
 
  updateCamera(delta);
- updateEvents(delta);
+ updateDayNight(delta);
  updateWindows();
  drawWorld();
 
