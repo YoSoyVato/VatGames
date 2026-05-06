@@ -40,7 +40,7 @@ canvas.height=window.innerHeight;
 /* ========================= */
 const CONFIG = {
   CITY_WIDTH:90,
-  CITY_HEIGHT:120, /* 🔥 MÁS LARGA HACIA ABAJO */
+  CITY_HEIGHT:120,
   LAKE_SIZE:200,
   TREE_DENSITY:0.85,
   BRIDGE_Y:250,
@@ -112,12 +112,22 @@ function defineZones(){
  ZONES.push(lake);
 
  let roadX = Math.floor(city1.x + city1.w/2);
+ let roadX2 = Math.floor(city2.x + city2.w/2); // 🔥 NUEVA RUTA NORTE
 
+ /* PUEBLOS CIUDAD SUR */
  for(let i=1;i<=5;i++){
    let yPos = city1.y - i*60;
 
    ZONES.push({ name:"Pueblo", x: roadX - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
    ZONES.push({ name:"Pueblo", x: roadX + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+ }
+
+ /* 🔥 PUEBLOS CIUDAD NORTE */
+ for(let i=1;i<=5;i++){
+   let yPos = city2.y - i*60;
+
+   ZONES.push({ name:"Pueblo", x: roadX2 - 40, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
+   ZONES.push({ name:"Pueblo", x: roadX2 + 25, y: yPos, w: CONFIG.TOWN_SIZE, h: CONFIG.TOWN_SIZE });
  }
 }
 
@@ -135,6 +145,7 @@ function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
  let lake = ZONES.find(z=>z.name==="Lago");
  let city = ZONES.find(z=>z.name==="Ciudad");
+ let cityN = ZONES.find(z=>z.name==="Ciudad Norte");
 
  for(let y=0;y<WORLD_ROWS;y++){
   for(let x=0;x<WORLD_COLS;x++){
@@ -158,7 +169,6 @@ function generateWorld(){
   }
  }
 
- /* 🔥 PUENTE SEGURO */
  for(let x=lake.x; x<lake.x+lake.w; x++){
    for(let i=-1;i<=1;i++){
      let yy = clamp(CONFIG.BRIDGE_Y+i,0,WORLD_ROWS-1);
@@ -167,7 +177,9 @@ function generateWorld(){
  }
 
  let roadX = Math.floor(city.x + city.w/2);
+ let roadX2 = Math.floor(cityN.x + cityN.w/2); // 🔥 RUTA NORTE
 
+ /* RUTA SUR */
  for(let y=0;y<city.y;y++){
    for(let i=-1;i<=1;i++){
      let xx = clamp(roadX+i,0,WORLD_COLS-1);
@@ -175,10 +187,23 @@ function generateWorld(){
    }
  }
 
+ /* 🔥 RUTA NORTE */
+ for(let y=0;y<cityN.y;y++){
+   for(let i=-1;i<=1;i++){
+     let xx = clamp(roadX2+i,0,WORLD_COLS-1);
+     map[y][xx]=T.ROAD;
+   }
+ }
+
  for(let y=city.y; y<city.y+city.h; y++){
    for(let i=-1;i<=1;i++){
-     let xx = clamp(roadX+i,0,WORLD_COLS-1);
-     map[y][xx]=T.ROAD;
+     map[y][roadX+i]=T.ROAD;
+   }
+ }
+
+ for(let y=cityN.y; y<cityN.y+cityN.h; y++){
+   for(let i=-1;i<=1;i++){
+     map[y][roadX2+i]=T.ROAD;
    }
  }
 
@@ -189,12 +214,15 @@ function generateWorld(){
    }
  }
 
+ /* 🔥 CONEXIONES PUEBLOS */
  for(let z of ZONES){
    if(z.name==="Pueblo"){
      let cy = Math.floor(z.y + z.h/2);
      let cx = Math.floor(z.x + z.w/2);
 
-     for(let x=Math.min(cx,roadX); x<=Math.max(cx,roadX); x++){
+     let nearestRoad = (cx < WORLD_COLS/2) ? roadX : roadX2;
+
+     for(let x=Math.min(cx,nearestRoad); x<=Math.max(cx,nearestRoad); x++){
        for(let i=-1;i<=1;i++){
          let yy = clamp(cy+i,0,WORLD_ROWS-1);
          map[yy][x]=T.ROAD;
@@ -214,18 +242,21 @@ let keys={};
 document.addEventListener("keydown",e=>keys[e.code]=true);
 document.addEventListener("keyup",e=>keys[e.code]=false);
 
-/* ========================= CÁMARA (FIJA BUG) */
+/* ========================= CÁMARA */
 let camX=150*TILE;
 let camY=200*TILE;
 let speed=5;
 let lastTime=performance.now();
 
+/* 🔥 SHIFT SPEED */
 function updateCamera(delta){
 
- if(keys["KeyW"]) camY-=speed*delta;
- if(keys["KeyS"]) camY+=speed*delta;
- if(keys["KeyA"]) camX-=speed*delta;
- if(keys["KeyD"]) camX+=speed*delta;
+ let currentSpeed = (keys["ShiftLeft"] || keys["ShiftRight"]) ? speed*2 : speed;
+
+ if(keys["KeyW"]) camY-=currentSpeed*delta;
+ if(keys["KeyS"]) camY+=currentSpeed*delta;
+ if(keys["KeyA"]) camX-=currentSpeed*delta;
+ if(keys["KeyD"]) camX+=currentSpeed*delta;
 
  camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
