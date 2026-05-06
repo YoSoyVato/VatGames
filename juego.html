@@ -239,12 +239,11 @@ let fires={};
 function updateEvents(delta){
  time+=delta;
 
- // 🔥 incendios SOLO en bosque (árboles)
  if(Math.random()<0.002){
    let x=Math.floor(Math.random()*WORLD_COLS);
    let y=Math.floor(Math.random()*WORLD_ROWS);
    if(getZone(x,y)==="Bosque" && hasTree(x,y)){
-     fires[x+","+y]={life:200};
+     fires[x+","+y]={life:200, spread:Math.random()*7};
    }
  }
 
@@ -327,20 +326,19 @@ function hasTree(x,y){
  return treesData[key];
 }
 
+/* 🌊 AGUA PRO */
 function drawTile(x,y,t){
 
  if(t===T.WATER){
-   // 🌊 AGUA MEJORADA Y SUAVE (sin afectar puente)
-   let worldX = Math.floor((x+camX)/TILE);
-   let worldY = Math.floor((y+camY)/TILE);
+   let wx=(x+camX)/TILE;
+   let wy=(y+camY)/TILE;
 
-   if(city[worldY][worldX]!==T.BRIDGE){
-     let wave = Math.sin((worldX*0.3 + time*2)) * 5 + Math.cos((worldY*0.3 + time*2))*5;
-     ctx.fillStyle=`rgb(44,111,${160+wave})`;
-   } else {
-     ctx.fillStyle="#2c6fa3";
-   }
+   let wave1=Math.sin(wx*0.4+time*1.5)*3;
+   let wave2=Math.cos(wy*0.4+time*1.2)*3;
+   let wave=wave1+wave2;
 
+   let base=150+wave;
+   ctx.fillStyle=`rgb(44,111,${base})`;
  }else{
    if(t===T.ROAD) ctx.fillStyle="#111";
    if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
@@ -351,27 +349,7 @@ function drawTile(x,y,t){
  ctx.fillRect(x,y,TILE,TILE);
 }
 
-function drawBuilding(x,y,wx,wy){
- let d=getBuildingData(wx,wy);
- let h=d.height;
- let zone=getZone(wx,wy);
-
- let colors = zone==="Pueblo"
-   ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
-   : ["#5a4a3f","#4b5a3f","#3f4a5a"];
-
- ctx.fillStyle=colors[d.style];
- ctx.fillRect(x,y-h,32,h);
-
- ctx.fillStyle="#222";
- ctx.fillRect(x,y-h,32,4);
-
- for(let w of d.windows){
-  ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
-  ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
- }
-}
-
+/* 🔥 ARBOLES PRO */
 function drawTree(x,y,wx,wy){
  ctx.fillStyle="#4a2f1b";
  ctx.fillRect(x+14,y+20,4,10);
@@ -381,11 +359,22 @@ function drawTree(x,y,wx,wy){
  ctx.arc(x+16,y+14,9,0,Math.PI*2);
  ctx.fill();
 
- // 🔥 fuego en árbol
  let key=wx+","+wy;
  if(fires[key]){
-   ctx.fillStyle="orange";
-   ctx.fillRect(x+12,y+5,8,8);
+   let f=fires[key];
+
+   for(let i=0;i<5;i++){
+     ctx.fillStyle=`rgba(255,${100+Math.random()*100},0,0.8)`;
+     ctx.beginPath();
+     ctx.arc(x+16+(Math.random()-0.5)*f.spread,y+10+(Math.random()-0.5)*f.spread,3,0,Math.PI*2);
+     ctx.fill();
+   }
+
+   // humo
+   ctx.fillStyle="rgba(50,50,50,0.3)";
+   ctx.beginPath();
+   ctx.arc(x+16,y+2-f.life*0.05,6,0,Math.PI*2);
+   ctx.fill();
  }
 }
 
