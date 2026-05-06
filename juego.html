@@ -232,23 +232,22 @@ function generateWorld(){
 defineZones();
 let city=generateWorld();
 
-/* ========================= NUEVO: EVENTOS ========================= */
+/* ========================= EVENTOS ========================= */
 let time=0;
 let fires={};
 
 function updateEvents(delta){
  time+=delta;
 
- // 🔥 incendios random
+ // 🔥 incendios SOLO en bosque (árboles)
  if(Math.random()<0.002){
    let x=Math.floor(Math.random()*WORLD_COLS);
    let y=Math.floor(Math.random()*WORLD_ROWS);
-   if(city[y][x]===T.BUILDING){
+   if(getZone(x,y)==="Bosque" && hasTree(x,y)){
      fires[x+","+y]={life:200};
    }
  }
 
- // actualizar fuego
  for(let k in fires){
    fires[k].life-=1;
    if(fires[k].life<=0) delete fires[k];
@@ -331,8 +330,17 @@ function hasTree(x,y){
 function drawTile(x,y,t){
 
  if(t===T.WATER){
-   let wave=Math.sin((x+y+time*5)*0.05)*10;
-   ctx.fillStyle=`rgb(44,111,${160+wave})`;
+   // 🌊 AGUA MEJORADA Y SUAVE (sin afectar puente)
+   let worldX = Math.floor((x+camX)/TILE);
+   let worldY = Math.floor((y+camY)/TILE);
+
+   if(city[worldY][worldX]!==T.BRIDGE){
+     let wave = Math.sin((worldX*0.3 + time*2)) * 5 + Math.cos((worldY*0.3 + time*2))*5;
+     ctx.fillStyle=`rgb(44,111,${160+wave})`;
+   } else {
+     ctx.fillStyle="#2c6fa3";
+   }
+
  }else{
    if(t===T.ROAD) ctx.fillStyle="#111";
    if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
@@ -362,18 +370,9 @@ function drawBuilding(x,y,wx,wy){
   ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
   ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
  }
-
- // 🔥 fuego
- let key=wx+","+wy;
- if(fires[key]){
-   ctx.fillStyle="orange";
-   ctx.fillRect(x+10,y-h-10,10,10);
-   ctx.fillStyle="rgba(0,0,0,0.3)";
-   ctx.fillRect(x+12,y-h-20,6,10);
- }
 }
 
-function drawTree(x,y){
+function drawTree(x,y,wx,wy){
  ctx.fillStyle="#4a2f1b";
  ctx.fillRect(x+14,y+20,4,10);
 
@@ -381,6 +380,13 @@ function drawTree(x,y){
  ctx.beginPath();
  ctx.arc(x+16,y+14,9,0,Math.PI*2);
  ctx.fill();
+
+ // 🔥 fuego en árbol
+ let key=wx+","+wy;
+ if(fires[key]){
+   ctx.fillStyle="orange";
+   ctx.fillRect(x+12,y+5,8,8);
+ }
 }
 
 function drawWorld(){
@@ -400,7 +406,7 @@ function drawWorld(){
    drawTile(dx,dy,t);
 
    if(t===T.BUILDING) drawBuilding(dx,dy,x,y);
-   if(hasTree(x,y)) drawTree(dx,dy);
+   if(hasTree(x,y)) drawTree(dx,dy,x,y);
   }
  }
 
