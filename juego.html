@@ -233,19 +233,8 @@ defineZones();
 let city=generateWorld();
 
 /* ========================= DIA / NOCHE ========================= */
-/*
-  🔥 CONFIGURACIÓN IMPORTANTE:
-
-  DAY_DURATION = duración del ciclo completo (día + noche) en segundos
-
-  EJEMPLOS:
-  - 60  = ciclo rápido (1 minuto)
-  - 300 = ciclo medio (5 minutos)
-  - 900 = ciclo realista (15 minutos)
-*/
-
 let dayTime = 0;
-const DAY_DURATION = 60; // 👈 CAMBIÁ ESTO
+const DAY_DURATION = 300;
 
 function updateDayNight(delta){
   dayTime += delta / 60;
@@ -254,8 +243,17 @@ function updateDayNight(delta){
 
 function getLightLevel(){
   let t = dayTime / DAY_DURATION;
-  return Math.sin(t * Math.PI * 2) * 0.5 + 0.5; // 0 noche / 1 día
+  return Math.sin(t * Math.PI * 2) * 0.5 + 0.5;
 }
+
+/* 🔦 NUEVO: MOUSE (linterna) */
+let mouseX = canvas.width/2;
+let mouseY = canvas.height/2;
+
+canvas.addEventListener("mousemove",e=>{
+  mouseX = e.clientX;
+  mouseY = e.clientY;
+});
 
 /* ========================= INPUT */
 let keys={};
@@ -303,14 +301,19 @@ function getBuildingData(x,y){
  return buildingsData[key];
 }
 
+/* 🔥 MEJORA: ventanas se apagan en la noche */
 function updateWindows(){
- let nightFactor = 1 - getLightLevel();
+ let light = getLightLevel();
 
  for(let k in buildingsData){
    let b=buildingsData[k];
    for(let w of b.windows){
-     if(Math.random()<0.01 + nightFactor*0.05){
-       w.on = Math.random() < nightFactor;
+     if(light < 0.3){
+       w.on = false; // 🔴 noche = todo apagado
+     } else {
+       if(Math.random()<0.01){
+         w.on=!w.on;
+       }
      }
    }
  }
@@ -336,7 +339,7 @@ function drawTile(x,y,t){
  if(t===T.ROAD) ctx.fillStyle="#111";
  if(t===T.BUILDING) ctx.fillStyle="#2a2a2a";
  if(t===T.GRASS) ctx.fillStyle="#355c3a";
- if(t===T.WATER) ctx.fillStyle="#2c6fa3"; // ← agua normal
+ if(t===T.WATER) ctx.fillStyle="#2c6fa3";
  if(t===T.BRIDGE) ctx.fillStyle="#8b6b4a";
 
  ctx.fillRect(x,y,TILE,TILE);
@@ -363,7 +366,7 @@ function drawBuilding(x,y,wx,wy){
  }
 }
 
-function drawTree(x,y,wx,wy){
+function drawTree(x,y){
  ctx.fillStyle="#4a2f1b";
  ctx.fillRect(x+14,y+20,4,10);
 
@@ -390,14 +393,30 @@ function drawWorld(){
    drawTile(dx,dy,t);
 
    if(t===T.BUILDING) drawBuilding(dx,dy,x,y);
-   if(hasTree(x,y)) drawTree(dx,dy,x,y);
+   if(hasTree(x,y)) drawTree(dx,dy);
   }
  }
 
- // 🌙 overlay noche
+ // 🌙 oscuridad
  let darkness = 1 - getLightLevel();
- ctx.fillStyle = `rgba(0,0,0,${darkness * 0.6})`;
+ ctx.fillStyle = `rgba(0,0,0,${darkness * 0.7})`;
  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+ // 🔦 linterna (recorta oscuridad)
+ if(darkness > 0.2){
+   ctx.globalCompositeOperation = "destination-out";
+
+   let gradient = ctx.createRadialGradient(mouseX,mouseY,20,mouseX,mouseY,120);
+   gradient.addColorStop(0,"rgba(0,0,0,1)");
+   gradient.addColorStop(1,"rgba(0,0,0,0)");
+
+   ctx.fillStyle = gradient;
+   ctx.beginPath();
+   ctx.arc(mouseX,mouseY,120,0,Math.PI*2);
+   ctx.fill();
+
+   ctx.globalCompositeOperation = "source-over";
+ }
 
  let px=Math.floor((camX+canvas.width/2)/TILE);
  let py=Math.floor((camY+canvas.height/2)/TILE);
