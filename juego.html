@@ -138,7 +138,7 @@ function getZone(x,y){
  return "Bosque";
 }
 
-/* ========================= WORLD */
+/* ========================= */
 function generateWorld(){
  let map = Array.from({length:WORLD_ROWS},()=>Array(WORLD_COLS).fill(T.GRASS));
  let lake = ZONES.find(z=>z.name==="Lago");
@@ -161,14 +161,16 @@ function generateWorld(){
 
    if(zone==="Pueblo"){
      let isRoad = (x % 5 === 0 || y % 5 === 0);
-     map[y][x]= isRoad ? T.ROAD : T.BUILDING;
+     if(isRoad) map[y][x]=T.ROAD;
+     else map[y][x]=T.BUILDING;
    }
   }
  }
 
  for(let x=lake.x; x<lake.x+lake.w; x++){
    for(let i=-1;i<=1;i++){
-     map[clamp(CONFIG.BRIDGE_Y+i,0,WORLD_ROWS-1)][x]=T.BRIDGE;
+     let yy = clamp(CONFIG.BRIDGE_Y+i,0,WORLD_ROWS-1);
+     map[yy][x]=T.BRIDGE;
    }
  }
 
@@ -177,13 +179,15 @@ function generateWorld(){
 
  for(let y=0;y<city.y;y++){
    for(let i=-1;i<=1;i++){
-     map[y][clamp(roadX+i,0,WORLD_COLS-1)]=T.ROAD;
+     let xx = clamp(roadX+i,0,WORLD_COLS-1);
+     map[y][xx]=T.ROAD;
    }
  }
 
  for(let y=0;y<cityN.y;y++){
    for(let i=-1;i<=1;i++){
-     map[y][clamp(roadX2+i,0,WORLD_COLS-1)]=T.ROAD;
+     let xx = clamp(roadX2+i,0,WORLD_COLS-1);
+     map[y][xx]=T.ROAD;
    }
  }
 
@@ -197,38 +201,33 @@ let city=generateWorld();
 let vehicles=[];
 
 function spawnVehicle(){
- let type = Math.floor(Math.random()*3);
+ let roadTiles=[];
 
- let roadX = Math.floor(ZONES[0].x + ZONES[0].w/2);
- let roadX2 = Math.floor(ZONES[1].x + ZONES[1].w/2);
-
- if(type===0){
-   vehicles.push({x:roadX*TILE,y:0,dir:1,speed:2,type:"vertical"});
+ for(let y=0;y<WORLD_ROWS;y++){
+  for(let x=0;x<WORLD_COLS;x++){
+    if(city[y][x]===T.ROAD || city[y][x]===T.BRIDGE){
+      roadTiles.push({x,y});
+    }
+  }
  }
 
- if(type===1){
-   vehicles.push({x:roadX2*TILE,y:0,dir:1,speed:2,type:"vertical"});
- }
+ let spawn = roadTiles[Math.floor(Math.random()*roadTiles.length)];
 
- if(type===2){
-   vehicles.push({x:150*TILE,y:CONFIG.BRIDGE_Y*TILE,dir:1,speed:2,type:"bridge"});
- }
+ vehicles.push({
+   x:spawn.x*TILE,
+   y:spawn.y*TILE,
+   dir:Math.random()<0.5?1:-1,
+   speed:1.5+Math.random()*1.5,
+   axis:Math.random()<0.5?"x":"y"
+ });
 }
 
-setInterval(spawnVehicle,1500);
+setInterval(spawnVehicle,1200);
 
 function updateVehicles(){
  for(let v of vehicles){
-
-  if(v.type==="vertical"){
-    v.y += v.speed * v.dir;
-    if(v.y > WORLD_ROWS*TILE) v.y = 0;
-  }
-
-  if(v.type==="bridge"){
-    v.x += v.speed * v.dir;
-    if(v.x > WORLD_COLS*TILE) v.x = 0;
-  }
+   if(v.axis==="x") v.x += v.speed * v.dir;
+   else v.y += v.speed * v.dir;
  }
 }
 
@@ -255,6 +254,44 @@ function updateCamera(delta){
  camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
+/* ========================= BUILDINGS + TREES (INTACTO) */
+let buildingsData={};
+
+function getBuildingData(x,y){
+ let key=x+","+y;
+ if(!buildingsData[key]){
+  let zone=getZone(x,y);
+  let h = zone==="Pueblo" ? 20+Math.random()*10 : 60+Math.random()*50;
+  let windows=[];
+  let style=Math.floor(Math.random()*3);
+
+  for(let wy=10;wy<h-10;wy+=12){
+    for(let wx=6;wx<26;wx+=10){
+      windows.push({x:wx,y:wy,on:Math.random()>0.5});
+    }
+  }
+
+  buildingsData[key]={height:h,windows,style};
+ }
+ return buildingsData[key];
+}
+
+let treesData={};
+
+function hasTree(x,y){
+ let key=x+","+y;
+ if(!treesData[key]){
+   let tile = city[y]?.[x];
+   treesData[key]=(
+     getZone(x,y)==="Bosque" &&
+     tile!==T.ROAD &&
+     tile!==T.BRIDGE &&
+     Math.random()>CONFIG.TREE_DENSITY
+   );
+ }
+ return treesData[key];
+}
+
 /* ========================= RENDER */
 function drawTile(x,y,t){
  if(t===T.ROAD) ctx.fillStyle="#111";
@@ -265,15 +302,46 @@ function drawTile(x,y,t){
  ctx.fillRect(x,y,TILE,TILE);
 }
 
+function drawBuilding(x,y,wx,wy){
+ let d=getBuildingData(wx,wy);
+ let h=d.height;
+ let zone=getZone(wx,wy);
+
+ let colors = zone==="Pueblo"
+   ? ["#7a5a3f","#8b6b4a","#6b4f3a"]
+   : ["#5a4a3f","#4b5a3f","#3f4a5a"];
+
+ ctx.fillStyle=colors[d.style];
+ ctx.fillRect(x,y-h,32,h);
+
+ ctx.fillStyle="#222";
+ ctx.fillRect(x,y-h,32,4);
+
+ for(let w of d.windows){
+  ctx.fillStyle = w.on ? "#ffd966" : "#1a1a1a";
+  ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
+ }
+}
+
+function drawTree(x,y){
+ ctx.fillStyle="#4a2f1b";
+ ctx.fillRect(x+14,y+20,4,10);
+
+ ctx.fillStyle="#2f7a3f";
+ ctx.beginPath();
+ ctx.arc(x+16,y+14,9,0,Math.PI*2);
+ ctx.fill();
+}
+
 function drawVehicle(v){
  let dx=v.x-camX;
  let dy=v.y-camY;
 
- ctx.fillStyle="#ff4444";
+ ctx.fillStyle="#ff3b3b";
  ctx.fillRect(dx+6,dy+10,20,12);
 
- ctx.fillStyle="#222";
- ctx.fillRect(dx+10,dy+12,12,6);
+ ctx.fillStyle="#ffffff";
+ ctx.fillRect(dx+10,dy+12,10,6);
 }
 
 function drawWorld(){
@@ -291,6 +359,9 @@ function drawWorld(){
    let dy=(y*TILE-camY);
 
    drawTile(dx,dy,t);
+
+   if(t===T.BUILDING) drawBuilding(dx,dy,x,y);
+   if(hasTree(x,y)) drawTree(dx,dy);
   }
  }
 
