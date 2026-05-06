@@ -289,7 +289,12 @@ function getBuildingData(x,y){
 
   for(let wy=10;wy<h-10;wy+=12){
     for(let wx=6;wx<26;wx+=10){
-      windows.push({x:wx,y:wy,on:true});
+      windows.push({
+        x:wx,
+        y:wy,
+        on:true,
+        sleepTimer:Math.random()*200 // 🔥 cada ventana se apaga en distinto tiempo
+      });
     }
   }
 
@@ -298,20 +303,31 @@ function getBuildingData(x,y){
  return buildingsData[key];
 }
 
-/* 🔥 ventanas apagadas de noche */
+/* 🔥 SISTEMA REALISTA DE SUEÑO */
 function updateWindows(){
  let light = getLightLevel();
 
  for(let k in buildingsData){
    let b=buildingsData[k];
    for(let w of b.windows){
+
      if(light < 0.35){
-       w.on = false;
-     } else {
-       if(Math.random()<0.01){
-         w.on=true;
+       w.sleepTimer -= 0.3; // 🔴 se van apagando lento
+
+       if(w.sleepTimer <= 0){
+         w.on = false;
        }
+
+     } else {
+       // 🌞 día: comportamiento normal
+       if(Math.random()<0.01){
+         w.on = !w.on;
+       }
+
+       // recargar timer para la próxima noche
+       w.sleepTimer = 100 + Math.random()*200;
      }
+
    }
  }
 }
@@ -358,7 +374,7 @@ function drawBuilding(x,y,wx,wy){
  ctx.fillRect(x,y-h,32,4);
 
  for(let w of d.windows){
-  ctx.fillStyle = w.on ? "#ffd966" : "#000000"; // 🔴 negro real
+  ctx.fillStyle = w.on ? "#ffd966" : "#000000";
   ctx.fillRect(x+w.x, y-h+w.y, 5, 6);
  }
 }
@@ -394,12 +410,10 @@ function drawWorld(){
   }
  }
 
- // 🌙 oscuridad FIX
  let darkness = 1 - getLightLevel();
  ctx.fillStyle = `rgba(0,0,0,${darkness * 0.7})`;
  ctx.fillRect(0,0,canvas.width,canvas.height);
 
- // 🔦 linterna blanca suave
  if(darkness > 0.2){
    ctx.globalCompositeOperation = "lighter";
 
