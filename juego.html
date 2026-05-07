@@ -589,96 +589,6 @@ function generateWorld(){
   }
  }
 
- for(let x=lake.x; x<lake.x+lake.w; x++){
-   for(let i=-1;i<=1;i++){
-     let yy = clamp(CONFIG.BRIDGE_Y+i,0,WORLD_ROWS-1);
-     map[yy][x]=T.BRIDGE;
-   }
- }
-
- let roadX = Math.floor(city.x + city.w/2);
- let roadX2 = Math.floor(cityN.x + cityN.w/2);
-
- for(let y=0;y<city.y;y++){
-   for(let i=-1;i<=1;i++){
-     let xx = clamp(roadX+i,0,WORLD_COLS-1);
-     map[y][xx]=T.ROAD;
-   }
- }
-
- for(let y=0;y<cityN.y;y++){
-   for(let i=-1;i<=1;i++){
-     let xx = clamp(roadX2+i,0,WORLD_COLS-1);
-     map[y][xx]=T.ROAD;
-   }
- }
-
- for(let y=city.y; y<city.y+city.h; y++){
-   for(let i=-1;i<=1;i++){
-     map[y][roadX+i]=T.ROAD;
-   }
- }
-
- for(let y=cityN.y; y<cityN.y+cityN.h; y++){
-   for(let i=-1;i<=1;i++){
-     map[y][roadX2+i]=T.ROAD;
-   }
- }
-
- for(let x=roadX; x<lake.x; x++){
-   for(let i=-1;i<=1;i++){
-     let yy = clamp(CONFIG.BRIDGE_Y+i,0,WORLD_ROWS-1);
-     map[yy][x]=T.ROAD;
-   }
- }
-
- /* ========================= */
- /* 🛣️ NUEVA RUTA LADO NORTE */
-
- for(let x=lake.x + lake.w; x<roadX2; x++){
-   for(let i=-1;i<=1;i++){
-
-     let yy = clamp(
-       CONFIG.BRIDGE_Y+i,
-       0,
-       WORLD_ROWS-1
-     );
-
-     map[yy][x]=T.ROAD;
-   }
- }
-
- /* salida larga hacia bosque */
-
- for(let x=roadX2; x<roadX2+120; x++){
-   for(let i=-1;i<=1;i++){
-
-     let yy = clamp(
-       CONFIG.BRIDGE_Y+i,
-       0,
-       WORLD_ROWS-1
-     );
-
-     map[yy][x]=T.ROAD;
-   }
- }
-
- for(let z of ZONES){
-   if(z.name==="Pueblo"){
-     let cy = Math.floor(z.y + z.h/2);
-     let cx = Math.floor(z.x + z.w/2);
-
-     let nearestRoad = (cx < WORLD_COLS/2) ? roadX : roadX2;
-
-     for(let x=Math.min(cx,nearestRoad); x<=Math.max(cx,nearestRoad); x++){
-       for(let i=-1;i<=1;i++){
-         let yy = clamp(cy+i,0,WORLD_ROWS-1);
-         map[yy][x]=T.ROAD;
-       }
-     }
-   }
- }
-
  return map;
 }
 
@@ -728,8 +638,6 @@ function updateCamera(delta){
  if(keys["KeyS"]) camY+=currentSpeed*delta;
  if(keys["KeyA"]) camX-=currentSpeed*delta;
  if(keys["KeyD"]) camX+=currentSpeed*delta;
- camX=Math.max(0,Math.min(camX,(WORLD_COLS*TILE)-canvas.width));
- camY=Math.max(0,Math.min(camY,(WORLD_ROWS*TILE)-canvas.height));
 }
 
 /* ========================= RESTO IGUAL */
@@ -759,7 +667,6 @@ function getBuildingData(x,y){
  return buildingsData[key];
 }
 
-/* 🔥 SISTEMA REALISTA DE SUEÑO */
 function updateWindows(){
  let light = getLightLevel();
 
@@ -869,25 +776,31 @@ function drawWorld(){
  ctx.fillStyle = `rgba(0,0,0,${darkness * 0.7})`;
  ctx.fillRect(0,0,canvas.width,canvas.height);
 
- if(darkness > 0.2){
-   ctx.globalCompositeOperation = "lighter";
-
-   let gradient = ctx.createRadialGradient(mouseX,mouseY,10,mouseX,mouseY,140);
-   gradient.addColorStop(0,"rgba(255,255,255,0.25)");
-   gradient.addColorStop(1,"rgba(255,255,255,0)");
-
-   ctx.fillStyle = gradient;
-   ctx.beginPath();
-   ctx.arc(mouseX,mouseY,140,0,Math.PI*2);
-   ctx.fill();
-
-   ctx.globalCompositeOperation = "source-over";
- }
-
  let px=Math.floor((camX+canvas.width/2)/TILE);
  let py=Math.floor((camY+canvas.height/2)/TILE);
  zoneUI.innerText=getZone(px,py);
 }
+
+/* ========================= */
+/* 🔪 CONEXIÓN CON killers.js */
+
+function updateKillersWrapper(delta){
+
+ if(typeof updateKillers === "function"){
+   updateKillers(delta);
+ }
+
+}
+
+function drawKillersWrapper(){
+
+ if(typeof drawKillers === "function"){
+   drawKillers();
+ }
+
+}
+
+/* ========================= */
 
 function loop(timeNow){
  let delta=(timeNow-lastTime)/16;
@@ -904,6 +817,10 @@ function loop(timeNow){
  updateWindows();
  drawWorld();
 
+ /* 🔪 IA killers.js */
+ updateKillersWrapper(delta);
+ drawKillersWrapper();
+
  requestAnimationFrame(loop);
 }
 
@@ -914,8 +831,8 @@ window.addEventListener("resize",()=>{
  canvas.height=window.innerHeight;
 });
 </script>
- 
+
 <script src="killers.js"></script>
- 
+
 </body>
 </html>
