@@ -2,21 +2,27 @@
    ⏳ TIME SYSTEM - DETROIT 1990
    =========================
 
-   ✔ Maneja:
-   - Hora
-   - Día/Noche
+   ✔ Sistema completo:
+   - Día / Noche REAL
+   - Meses dinámicos
    - Años
-   - Calendario UI
-   - Meses
-   - Integración automática con juego.html
+   - Calendario bonito
+   - Ciclo automático
+   - Compatible con juego.html
 
-   ✔ NO necesitas tocar juego.html
-   ✔ Solo cargar este archivo
+   ✔ 1 año = 25 minutos reales
+   ✔ Día = 5 minutos
+   ✔ Noche = 3 minutos
+
+   🔥 IMPORTANTE:
+   1 ciclo completo = 8 minutos
+   3 ciclos = 24 minutos
+   El minuto restante se usa como:
+   - transición
+   - cambio de mes
+   - amanecer
+
 */
-
-/* =========================
-   ⚙️ CONFIG
-   ========================= */
 
 const TimeSystem = (function(){
 
@@ -25,23 +31,57 @@ const TimeSystem = (function(){
      ========================= */
 
   let year = 1990;
-  let day = 1;
+  let month = 0;
+
+  /*
+    Cada 3 ciclos:
+    cambia el mes
+  */
+
+  let completedCycles = 0;
+
+  /*
+    Hora simulada
+  */
+
   let hour = 8;
 
   /* =========================
-     ⏱️ TIEMPO
+     ⏱️ CONFIG
      ========================= */
 
   /*
-    1 año = 25 minutos reales
+    TIEMPOS REALES
   */
 
-  const YEAR_DURATION_REAL = 1500;
+  const DAY_DURATION = 300; // 5 min
+  const NIGHT_DURATION = 180; // 3 min
 
-  const DAYS_PER_YEAR = 365;
+  /*
+    1 ciclo completo:
+    8 min
+  */
 
-  const DAY_DURATION_REAL =
-    YEAR_DURATION_REAL / DAYS_PER_YEAR;
+  const FULL_CYCLE =
+    DAY_DURATION +
+    NIGHT_DURATION;
+
+  /*
+    3 ciclos = 24 minutos
+    +1 minuto transición
+    = 25 min año
+  */
+
+  const YEAR_TRANSITION = 60;
+
+  /*
+    Estados:
+    day
+    night
+    transition
+  */
+
+  let state = "day";
 
   let timer = 0;
 
@@ -78,6 +118,8 @@ const TimeSystem = (function(){
   let monthUI;
   let timeUI;
   let headerUI;
+  let infoUI;
+  let stateUI;
 
   /* =========================
      🚀 INIT
@@ -87,19 +129,10 @@ const TimeSystem = (function(){
 
     createCalendarUI();
 
-    year = 1990;
-    day = 1;
-    hour = 8;
+    console.log(
+      "🕒 TimeSystem iniciado"
+    );
 
-    timer = 0;
-
-    updateLight();
-
-    console.log("🕒 TimeSystem iniciado");
-
-    /*
-      🔪 Activa asesinos iniciales
-    */
     if(typeof KillersSystem !== "undefined"){
       KillersSystem.activateKillers(year);
     }
@@ -115,192 +148,297 @@ const TimeSystem = (function(){
     timer += delta / 60;
 
     /*
-      Avanza el día
+      ☀️ DÍA
     */
 
-    if(timer >= DAY_DURATION_REAL){
+    if(state === "day"){
 
-      timer = 0;
+      let progress =
+        timer / DAY_DURATION;
 
-      nextDay();
+      hour =
+        6 + (progress * 12);
+
+      lightLevel =
+        0.4 + (progress * 0.6);
+
+      if(timer >= DAY_DURATION){
+
+        timer = 0;
+        state = "night";
+
+      }
+
     }
 
     /*
-      Hora simulada
+      🌙 NOCHE
     */
 
-    let progress = timer / DAY_DURATION_REAL;
+    else if(state === "night"){
 
-    hour = progress * 24;
+      let progress =
+        timer / NIGHT_DURATION;
 
-    updateLight();
+      hour =
+        18 + (progress * 12);
 
-    updateCalendarUI();
-  }
+      if(hour >= 24){
+        hour -= 24;
+      }
 
-  /* =========================
-     ☀️ LUZ
-     ========================= */
+      lightLevel =
+        1 - progress;
 
-  function updateLight(){
+      if(timer >= NIGHT_DURATION){
 
-    let normalized = hour / 24;
+        timer = 0;
 
-    lightLevel =
-      Math.sin(normalized * Math.PI * 2 - Math.PI/2)
-      * 0.5 + 0.5;
+        completedCycles++;
+
+        /*
+          3 ciclos = nuevo mes
+        */
+
+        if(completedCycles >= 3){
+
+          completedCycles = 0;
+
+          month++;
+
+          /*
+            Nuevo año
+          */
+
+          if(month >= 12){
+
+            month = 0;
+            year++;
+
+            console.log(
+              "📅 NUEVO AÑO:",
+              year
+            );
+
+            if(typeof KillersSystem !== "undefined"){
+              KillersSystem.activateKillers(year);
+            }
+
+          }
+
+          state = "transition";
+
+        } else {
+
+          state = "day";
+
+        }
+
+      }
+
+    }
+
+    /*
+      🌅 TRANSICIÓN
+    */
+
+    else if(state === "transition"){
+
+      hour = 5;
+
+      lightLevel = 0.25;
+
+      if(timer >= YEAR_TRANSITION){
+
+        timer = 0;
+
+        state = "day";
+
+      }
+
+    }
+
+    /*
+      clamp
+    */
 
     lightLevel = Math.max(
       0,
       Math.min(1,lightLevel)
     );
-  }
 
-  /* =========================
-     📆 NUEVO DÍA
-     ========================= */
-
-  function nextDay(){
-
-    day++;
-
-    /*
-      Nuevo año
-    */
-
-    if(day > DAYS_PER_YEAR){
-
-      day = 1;
-      year++;
-
-      console.log(
-        "📅 NUEVO AÑO:",
-        year
-      );
-
-      /*
-        🔪 Activar asesinos
-      */
-
-      if(typeof KillersSystem !== "undefined"){
-        KillersSystem.activateKillers(year);
-      }
-
-    }
+    updateCalendarUI();
 
   }
 
   /* =========================
-     📅 MES
+     📆 MES
      ========================= */
 
   function getMonthName(){
 
-    let monthIndex =
-      Math.floor((day / DAYS_PER_YEAR) * 12);
+    return MONTHS[month];
 
-    monthIndex = Math.max(
-      0,
-      Math.min(11,monthIndex)
-    );
-
-    return MONTHS[monthIndex];
   }
 
   /* =========================
-     🕒 HORA FORMATEADA
+     🕒 FORMATO HORA
      ========================= */
 
   function getFormattedTime(){
 
     let h = Math.floor(hour);
-    let m = Math.floor((hour - h) * 60);
+
+    let m =
+      Math.floor(
+        (hour - h) * 60
+      );
 
     if(h < 10) h = "0" + h;
     if(m < 10) m = "0" + m;
 
     return h + ":" + m;
+
   }
 
   /* =========================
-     📅 FECHA TEXTO
+     🌙 GET LIGHT
      ========================= */
 
-  function getFormattedDate(){
+  function getLightLevel(){
 
-    return (
-      getMonthName() +
-      " | Año " +
-      year
-    );
+    return lightLevel;
+
   }
 
   /* =========================
-     🖥️ CREAR UI
+     🖥️ UI
      ========================= */
 
   function createCalendarUI(){
-
-    /*
-      CSS automático
-    */
 
     const style =
     document.createElement("style");
 
     style.innerHTML = `
-    
+
     #calendarUI{
       position:fixed;
-      right:15px;
-      top:15px;
-      width:190px;
-      background:rgba(0,0,0,0.78);
-      border:2px solid #444;
-      border-radius:10px;
+      right:20px;
+      top:20px;
+      width:240px;
+      background:
+      linear-gradient(
+      180deg,
+      rgba(25,25,30,0.96),
+      rgba(10,10,14,0.96)
+      );
+
+      border:
+      2px solid rgba(255,255,255,0.08);
+
+      border-radius:18px;
+
       overflow:hidden;
-      z-index:9999;
+
+      z-index:99999;
+
       color:white;
+
       font-family:monospace;
+
       user-select:none;
-      box-shadow:0 0 20px rgba(0,0,0,0.5);
+
+      box-shadow:
+      0 0 25px rgba(0,0,0,0.6),
+      inset 0 0 15px rgba(255,255,255,0.03);
+
+      backdrop-filter:blur(4px);
     }
 
     #calendarHeader{
-      background:#8b0000;
-      padding:8px;
+      background:
+      linear-gradient(
+      90deg,
+      #6d1010,
+      #aa1b1b
+      );
+
+      padding:12px;
+
       text-align:center;
-      font-size:15px;
-      letter-spacing:1px;
+
+      font-size:16px;
+
+      letter-spacing:2px;
+
+      border-bottom:
+      1px solid rgba(255,255,255,0.08);
     }
 
     #calendarMonth{
-      padding:18px;
+      padding-top:24px;
+
       text-align:center;
-      font-size:28px;
+
+      font-size:34px;
+
+      font-weight:bold;
+
+      color:#ffd966;
+
+      text-shadow:
+      0 0 12px rgba(255,217,102,0.4);
+
       cursor:pointer;
+
       transition:0.2s;
     }
 
     #calendarMonth:hover{
-      background:rgba(255,255,255,0.08);
+      transform:scale(1.03);
+    }
+
+    #calendarInfo{
+      text-align:center;
+      padding-top:8px;
+      font-size:13px;
+      color:#aaa;
+      letter-spacing:1px;
     }
 
     #calendarTime{
-      border-top:1px solid #444;
-      padding:12px;
+      padding:20px;
+
       text-align:center;
-      font-size:24px;
-      color:#ffd966;
+
+      font-size:42px;
+
+      color:white;
+
+      text-shadow:
+      0 0 20px rgba(255,255,255,0.2);
+    }
+
+    #calendarState{
+      border-top:
+      1px solid rgba(255,255,255,0.06);
+
+      padding:12px;
+
+      text-align:center;
+
+      font-size:14px;
+
+      background:
+      rgba(255,255,255,0.03);
+
+      letter-spacing:1px;
     }
 
     `;
 
     document.head.appendChild(style);
-
-    /*
-      HTML automático
-    */
 
     calendarUI =
     document.createElement("div");
@@ -308,49 +446,77 @@ const TimeSystem = (function(){
     calendarUI.id = "calendarUI";
 
     calendarUI.innerHTML = `
-    
+
       <div id="calendarHeader">
-        📅 Detroit - 1990
+        DETROIT POLICE
       </div>
 
       <div id="calendarMonth">
         Enero
       </div>
 
+      <div id="calendarInfo">
+        Año 1990
+      </div>
+
       <div id="calendarTime">
         08:00
+      </div>
+
+      <div id="calendarState">
+        ☀️ Día
       </div>
 
     `;
 
     document.body.appendChild(calendarUI);
 
-    /*
-      Referencias
-    */
-
     headerUI =
-      document.getElementById("calendarHeader");
+    document.getElementById(
+      "calendarHeader"
+    );
 
     monthUI =
-      document.getElementById("calendarMonth");
+    document.getElementById(
+      "calendarMonth"
+    );
+
+    infoUI =
+    document.getElementById(
+      "calendarInfo"
+    );
 
     timeUI =
-      document.getElementById("calendarTime");
+    document.getElementById(
+      "calendarTime"
+    );
+
+    stateUI =
+    document.getElementById(
+      "calendarState"
+    );
 
     /*
-      Click del calendario
+      CLICK
     */
 
-    monthUI.addEventListener("click",()=>{
+    monthUI.addEventListener(
+      "click",
+      ()=>{
 
       alert(
-        "📅 " +
-        getMonthName() +
-        "\n🕒 Hora: " +
-        getFormattedTime() +
-        "\n📆 Año: " +
-        year
+
+`📅 ${getMonthName()}
+
+🕒 Hora:
+${getFormattedTime()}
+
+📆 Año:
+${year}
+
+🔄 Ciclos:
+${completedCycles}/3`
+
       );
 
     });
@@ -358,42 +524,47 @@ const TimeSystem = (function(){
   }
 
   /* =========================
-     🔄 ACTUALIZAR UI
+     🔄 UPDATE UI
      ========================= */
 
   function updateCalendarUI(){
 
-    if(!monthUI) return;
+    if(!calendarUI) return;
 
     monthUI.innerText =
       getMonthName();
 
+    infoUI.innerText =
+      "Año " + year;
+
     timeUI.innerText =
       getFormattedTime();
 
-    headerUI.innerText =
-      "📅 Detroit - " + year;
+    /*
+      Estado
+    */
 
-  }
+    if(state === "day"){
 
-  /* =========================
-     🌙 GETTERS
-     ========================= */
+      stateUI.innerText =
+        "☀️ Día";
 
-  function getYear(){
-    return year;
-  }
+    }
 
-  function getDay(){
-    return day;
-  }
+    else if(state === "night"){
 
-  function getHour(){
-    return hour;
-  }
+      stateUI.innerText =
+        "🌙 Noche";
 
-  function getLightLevel(){
-    return lightLevel;
+    }
+
+    else {
+
+      stateUI.innerText =
+        "🌅 Amanecer";
+
+    }
+
   }
 
   /* =========================
@@ -405,15 +576,8 @@ const TimeSystem = (function(){
     init,
     update,
 
-    getYear,
-    getDay,
-    getHour,
-
     getLightLevel,
-
     getFormattedTime,
-    getFormattedDate,
-
     getMonthName
 
   };
@@ -424,64 +588,39 @@ const TimeSystem = (function(){
    🚀 AUTO INIT
    ========================= */
 
-/*
-  Espera a que cargue el juego
-*/
-
-window.addEventListener("load",()=>{
+window.addEventListener(
+"load",
+()=>{
 
   TimeSystem.init();
 
   /*
     🔥 AUTO HOOK
-
-    Intenta conectarse automáticamente
-    al loop del juego
   */
 
-  const originalLoop = window.loop;
+  const oldRAF =
+  window.requestAnimationFrame;
 
-  if(typeof originalLoop === "function"){
+  let last =
+  performance.now();
 
-    window.loop = function(timeNow){
+  function timeLoop(now){
 
-      /*
-        Delta automático
-      */
+    let delta =
+      (now - last) / 16;
 
-      if(!window.__timeSystemLast){
-        window.__timeSystemLast = timeNow;
-      }
+    last = now;
 
-      let delta =
-        (timeNow - window.__timeSystemLast) / 16;
+    TimeSystem.update(delta);
 
-      window.__timeSystemLast = timeNow;
-
-      /*
-        Update tiempo
-      */
-
-      TimeSystem.update(delta);
-
-      /*
-        Loop original
-      */
-
-      originalLoop(timeNow);
-
-    };
-
-    console.log(
-      "✅ TimeSystem conectado automáticamente"
-    );
-
-  } else {
-
-    console.warn(
-      "⚠ No se encontró loop() en juego.html"
-    );
+    oldRAF(timeLoop);
 
   }
+
+  oldRAF(timeLoop);
+
+  console.log(
+    "✅ TimeSystem conectado"
+  );
 
 });
