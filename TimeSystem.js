@@ -2,28 +2,21 @@
    ⏳ TIME SYSTEM - DETROIT 1990
    =========================
 
-   ESTE SISTEMA CONTROLA:
+   ✔ Maneja:
    - Hora
    - Día/Noche
    - Años
-   - Conexión con juego.html
-   - Eventos anuales
+   - Calendario UI
+   - Meses
+   - Integración automática con juego.html
 
-   1 año = 25 minutos reales
+   ✔ NO necesitas tocar juego.html
+   ✔ Solo cargar este archivo
 */
 
 /* =========================
    ⚙️ CONFIG
    ========================= */
-
-/*
-  25 minutos reales = 1500 segundos
-
-  El juego tendrá:
-  - 365 días simulados
-  - Cada día dura:
-      1500 / 365 = 4.10 segundos aprox
-*/
 
 const TimeSystem = (function(){
 
@@ -33,28 +26,22 @@ const TimeSystem = (function(){
 
   let year = 1990;
   let day = 1;
-
-  /*
-    Hora del día:
-    0 → medianoche
-    12 → mediodía
-    24 → reinicia
-  */
   let hour = 8;
 
   /* =========================
-     ⏱️ TIEMPOS
+     ⏱️ TIEMPO
      ========================= */
 
-  const YEAR_DURATION_REAL = 1500; // 25 min reales
+  /*
+    1 año = 25 minutos reales
+  */
+
+  const YEAR_DURATION_REAL = 1500;
+
   const DAYS_PER_YEAR = 365;
 
   const DAY_DURATION_REAL =
     YEAR_DURATION_REAL / DAYS_PER_YEAR;
-
-  /*
-    Cada día completo dura ~4 segundos reales
-  */
 
   let timer = 0;
 
@@ -62,19 +49,43 @@ const TimeSystem = (function(){
      🌙 LUZ
      ========================= */
 
-  /*
-    lightLevel:
-    0 = noche
-    1 = día
-  */
-
   let lightLevel = 1;
+
+  /* =========================
+     📆 MESES
+     ========================= */
+
+  const MONTHS = [
+    "Enero",
+    "Febrero",
+    "Marzo",
+    "Abril",
+    "Mayo",
+    "Junio",
+    "Julio",
+    "Agosto",
+    "Septiembre",
+    "Octubre",
+    "Noviembre",
+    "Diciembre"
+  ];
+
+  /* =========================
+     🖥️ UI
+     ========================= */
+
+  let calendarUI;
+  let monthUI;
+  let timeUI;
+  let headerUI;
 
   /* =========================
      🚀 INIT
      ========================= */
 
   function init(){
+
+    createCalendarUI();
 
     year = 1990;
     day = 1;
@@ -101,15 +112,12 @@ const TimeSystem = (function(){
 
   function update(delta){
 
-    /*
-      delta viene del juego principal
-    */
-
     timer += delta / 60;
 
     /*
       Avanza el día
     */
+
     if(timer >= DAY_DURATION_REAL){
 
       timer = 0;
@@ -118,18 +126,16 @@ const TimeSystem = (function(){
     }
 
     /*
-      Hora interpolada
+      Hora simulada
     */
 
     let progress = timer / DAY_DURATION_REAL;
 
-    /*
-      24 horas simuladas
-    */
-
     hour = progress * 24;
 
     updateLight();
+
+    updateCalendarUI();
   }
 
   /* =========================
@@ -138,29 +144,20 @@ const TimeSystem = (function(){
 
   function updateLight(){
 
-    /*
-      Convierte la hora en luz
-
-      madrugada = oscuro
-      mañana = claridad
-      tarde = luz
-      noche = oscuro
-    */
-
     let normalized = hour / 24;
 
     lightLevel =
       Math.sin(normalized * Math.PI * 2 - Math.PI/2)
       * 0.5 + 0.5;
 
-    /*
-      clamp
-    */
-    lightLevel = Math.max(0,Math.min(1,lightLevel));
+    lightLevel = Math.max(
+      0,
+      Math.min(1,lightLevel)
+    );
   }
 
   /* =========================
-     📆 SIGUIENTE DÍA
+     📆 NUEVO DÍA
      ========================= */
 
   function nextDay(){
@@ -170,21 +167,212 @@ const TimeSystem = (function(){
     /*
       Nuevo año
     */
+
     if(day > DAYS_PER_YEAR){
 
       day = 1;
       year++;
 
-      console.log("📅 NUEVO AÑO:", year);
+      console.log(
+        "📅 NUEVO AÑO:",
+        year
+      );
 
       /*
         🔪 Activar asesinos
       */
+
       if(typeof KillersSystem !== "undefined"){
         KillersSystem.activateKillers(year);
       }
 
     }
+
+  }
+
+  /* =========================
+     📅 MES
+     ========================= */
+
+  function getMonthName(){
+
+    let monthIndex =
+      Math.floor((day / DAYS_PER_YEAR) * 12);
+
+    monthIndex = Math.max(
+      0,
+      Math.min(11,monthIndex)
+    );
+
+    return MONTHS[monthIndex];
+  }
+
+  /* =========================
+     🕒 HORA FORMATEADA
+     ========================= */
+
+  function getFormattedTime(){
+
+    let h = Math.floor(hour);
+    let m = Math.floor((hour - h) * 60);
+
+    if(h < 10) h = "0" + h;
+    if(m < 10) m = "0" + m;
+
+    return h + ":" + m;
+  }
+
+  /* =========================
+     📅 FECHA TEXTO
+     ========================= */
+
+  function getFormattedDate(){
+
+    return (
+      getMonthName() +
+      " | Año " +
+      year
+    );
+  }
+
+  /* =========================
+     🖥️ CREAR UI
+     ========================= */
+
+  function createCalendarUI(){
+
+    /*
+      CSS automático
+    */
+
+    const style =
+    document.createElement("style");
+
+    style.innerHTML = `
+    
+    #calendarUI{
+      position:fixed;
+      right:15px;
+      top:15px;
+      width:190px;
+      background:rgba(0,0,0,0.78);
+      border:2px solid #444;
+      border-radius:10px;
+      overflow:hidden;
+      z-index:9999;
+      color:white;
+      font-family:monospace;
+      user-select:none;
+      box-shadow:0 0 20px rgba(0,0,0,0.5);
+    }
+
+    #calendarHeader{
+      background:#8b0000;
+      padding:8px;
+      text-align:center;
+      font-size:15px;
+      letter-spacing:1px;
+    }
+
+    #calendarMonth{
+      padding:18px;
+      text-align:center;
+      font-size:28px;
+      cursor:pointer;
+      transition:0.2s;
+    }
+
+    #calendarMonth:hover{
+      background:rgba(255,255,255,0.08);
+    }
+
+    #calendarTime{
+      border-top:1px solid #444;
+      padding:12px;
+      text-align:center;
+      font-size:24px;
+      color:#ffd966;
+    }
+
+    `;
+
+    document.head.appendChild(style);
+
+    /*
+      HTML automático
+    */
+
+    calendarUI =
+    document.createElement("div");
+
+    calendarUI.id = "calendarUI";
+
+    calendarUI.innerHTML = `
+    
+      <div id="calendarHeader">
+        📅 Detroit - 1990
+      </div>
+
+      <div id="calendarMonth">
+        Enero
+      </div>
+
+      <div id="calendarTime">
+        08:00
+      </div>
+
+    `;
+
+    document.body.appendChild(calendarUI);
+
+    /*
+      Referencias
+    */
+
+    headerUI =
+      document.getElementById("calendarHeader");
+
+    monthUI =
+      document.getElementById("calendarMonth");
+
+    timeUI =
+      document.getElementById("calendarTime");
+
+    /*
+      Click del calendario
+    */
+
+    monthUI.addEventListener("click",()=>{
+
+      alert(
+        "📅 " +
+        getMonthName() +
+        "\n🕒 Hora: " +
+        getFormattedTime() +
+        "\n📆 Año: " +
+        year
+      );
+
+    });
+
+  }
+
+  /* =========================
+     🔄 ACTUALIZAR UI
+     ========================= */
+
+  function updateCalendarUI(){
+
+    if(!monthUI) return;
+
+    monthUI.innerText =
+      getMonthName();
+
+    timeUI.innerText =
+      getFormattedTime();
+
+    headerUI.innerText =
+      "📅 Detroit - " + year;
 
   }
 
@@ -209,36 +397,7 @@ const TimeSystem = (function(){
   }
 
   /* =========================
-     🕒 TEXTO BONITO
-     ========================= */
-
-  function getFormattedTime(){
-
-    let h = Math.floor(hour);
-    let m = Math.floor((hour - h) * 60);
-
-    if(h < 10) h = "0" + h;
-    if(m < 10) m = "0" + m;
-
-    return h + ":" + m;
-  }
-
-  /* =========================
-     📅 TEXTO FECHA
-     ========================= */
-
-  function getFormattedDate(){
-
-    return (
-      "Año " + year +
-      " | Día " + day +
-      " | " + getFormattedTime()
-    );
-
-  }
-
-  /* =========================
-     🔌 API PÚBLICA
+     🔌 API
      ========================= */
 
   return {
@@ -253,8 +412,76 @@ const TimeSystem = (function(){
     getLightLevel,
 
     getFormattedTime,
-    getFormattedDate
+    getFormattedDate,
+
+    getMonthName
 
   };
 
 })();
+
+/* =========================
+   🚀 AUTO INIT
+   ========================= */
+
+/*
+  Espera a que cargue el juego
+*/
+
+window.addEventListener("load",()=>{
+
+  TimeSystem.init();
+
+  /*
+    🔥 AUTO HOOK
+
+    Intenta conectarse automáticamente
+    al loop del juego
+  */
+
+  const originalLoop = window.loop;
+
+  if(typeof originalLoop === "function"){
+
+    window.loop = function(timeNow){
+
+      /*
+        Delta automático
+      */
+
+      if(!window.__timeSystemLast){
+        window.__timeSystemLast = timeNow;
+      }
+
+      let delta =
+        (timeNow - window.__timeSystemLast) / 16;
+
+      window.__timeSystemLast = timeNow;
+
+      /*
+        Update tiempo
+      */
+
+      TimeSystem.update(delta);
+
+      /*
+        Loop original
+      */
+
+      originalLoop(timeNow);
+
+    };
+
+    console.log(
+      "✅ TimeSystem conectado automáticamente"
+    );
+
+  } else {
+
+    console.warn(
+      "⚠ No se encontró loop() en juego.html"
+    );
+
+  }
+
+});
