@@ -632,6 +632,37 @@ function generateWorld(){
    }
  }
 
+ /* ========================= */
+ /* 🛣️ NUEVA RUTA LADO NORTE */
+
+ for(let x=lake.x + lake.w; x<roadX2; x++){
+   for(let i=-1;i<=1;i++){
+
+     let yy = clamp(
+       CONFIG.BRIDGE_Y+i,
+       0,
+       WORLD_ROWS-1
+     );
+
+     map[yy][x]=T.ROAD;
+   }
+ }
+
+ /* salida larga hacia bosque */
+
+ for(let x=roadX2; x<roadX2+120; x++){
+   for(let i=-1;i<=1;i++){
+
+     let yy = clamp(
+       CONFIG.BRIDGE_Y+i,
+       0,
+       WORLD_ROWS-1
+     );
+
+     map[yy][x]=T.ROAD;
+   }
+ }
+
  for(let z of ZONES){
    if(z.name==="Pueblo"){
      let cy = Math.floor(z.y + z.h/2);
