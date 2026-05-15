@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AGENCIA DE SEGURIDAD NACIONAL - S.O. OPERADOR v5.1</title>
+    <title>SISTEMA DE DESPACHO POLICIAL - POLICÍA DE DISTRITO 9</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -16,10 +16,9 @@
         }
 
         body {
-            background-color: #030712;
-            /* Fondo simulando un monitor CRT o interfaz táctica de operaciones */
-            background-image: radial-gradient(#111827 20%, #030712 80%);
-            color: #d1d5db;
+            background-color: #020617;
+            background-image: radial-gradient(#0f172a 20%, #020617 80%);
+            color: #e2e8f0;
             font-family: 'Courier New', Courier, monospace;
             height: 100vh;
             display: flex;
@@ -27,7 +26,7 @@
             overflow: hidden;
         }
 
-        /* --- ESCRITORIO DE LA PC --- */
+        /* --- ESCRITORIO --- */
         #desktop {
             flex: 1;
             position: relative;
@@ -38,9 +37,8 @@
             align-items: flex-start;
         }
 
-        /* Iconos del Escritorio */
         .desktop-icon {
-            width: 90px;
+            width: 100px;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -52,50 +50,48 @@
         }
 
         .desktop-icon:hover {
-            background-color: rgba(16, 185, 129, 0.15);
-            outline: 1px dashed #10b981;
+            background-color: rgba(239, 68, 68, 0.1);
+            outline: 1px dashed #ef4444;
         }
 
         .icon-symbol {
-            font-size: 36px;
+            font-size: 34px;
             margin-bottom: 5px;
-            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+            filter: drop-shadow(0 0 8px rgba(239,68,68,0.3));
         }
 
         .icon-label {
             font-size: 11px;
             font-weight: bold;
-            color: #10b981;
+            color: #94a3b8;
             letter-spacing: 0.5px;
         }
 
-        /* --- VENTANAS DE APLICACIONES --- */
+        /* --- VENTANAS --- */
         .window {
             position: absolute;
-            background-color: #090b0e;
-            border: 2px solid #1f2937;
+            background-color: #0b0f19;
+            border: 2px solid #334155;
             border-radius: 6px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
-            display: none; /* Ocultas por defecto */
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            display: none;
             flex-direction: column;
             z-index: 100;
         }
 
-        /* Barra de título de la ventana */
         .window-header {
-            background-color: #111827;
-            border-bottom: 2px solid #1f2937;
+            background-color: #1e293b;
+            border-bottom: 1px solid #334155;
             padding: 6px 12px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            cursor: move;
         }
 
         .window-title {
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
-            color: #9ca3af;
+            color: #cbd5e1;
             letter-spacing: 1px;
         }
 
@@ -107,104 +103,85 @@
             font-size: 14px;
             cursor: pointer;
             padding: 2px 6px;
-            border-radius: 3px;
-        }
-
-        .window-controls button:hover {
-            background-color: #ef4444;
-            color: #000;
         }
 
         .window-content {
             flex: 1;
             position: relative;
             overflow: hidden;
-            background-color: #020406;
+            background-color: #030712;
         }
 
-        /* Dimensiones específicas de las ventanas */
-        #window-map {
-            width: 650px;
-            height: 450px;
-            top: 50px;
-            left: 200px;
-        }
+        /* Tamaños de Apps */
+        #window-map { width: 600px; height: 400px; top: 40px; left: 240px; }
+        #window-calls { width: 480px; height: 520px; top: 60px; left: 860px; }
+        #window-news { width: 500px; height: 450px; top: 120px; left: 300px; }
+        #window-live { width: 450px; height: 320px; top: 200px; left: 400px; border: 2px solid #ef4444; }
 
-        #window-calls {
-            width: 450px;
-            height: 500px;
-            top: 80px;
-            left: 700px;
-        }
+        /* --- APP: MAPA --- */
+        #map { width: 100%; height: 100%; background-color: #020617; }
+        .leaflet-container { filter: invert(100%) hue-rotate(180deg) brightness(30%) contrast(140%); }
 
-        /* --- CONTENIDO APP: MAPA --- */
-        #map {
-            width: 100%;
-            height: 100%;
-            background-color: #0d0d0d;
-        }
-
-        /* Filtro de la PC militarizada sobre el mapa satelital */
-        .leaflet-container {
-            filter: invert(100%) hue-rotate(180deg) brightness(35%) contrast(130%);
-        }
-
-        /* --- CONTENIDO APP: LLAMADAS --- */
-        .calls-container {
-            display: flex;
-            flex-direction: column;
-            height: 100%;
-            padding: 15px;
-        }
-
+        /* --- APP: LLAMADAS --- */
+        .calls-container { display: flex; flex-direction: column; height: 100%; padding: 15px; }
         #terminal {
             flex: 1;
-            border: 1px solid #1f2937;
+            border: 1px solid #334155;
             padding: 12px;
             overflow-y: auto;
             font-size: 13px;
-            line-height: 1.5;
+            line-height: 1.6;
             margin-bottom: 15px;
-            background-color: #010204;
+            background-color: #010409;
         }
-
-        .log-entry {
-            margin-bottom: 10px;
-            border-bottom: 1px dashed #111827;
-            padding-bottom: 5px;
-        }
-
-        .opciones-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
+        .log-entry { margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px dashed #1e293b; }
+        .opciones-container { display: flex; flex-direction: column; gap: 8px; }
+        
         .action-btn {
-            background-color: #111827;
-            color: #10b981;
-            border: 1px solid #10b981;
+            background-color: #1e293b;
+            color: #f1f5f9;
+            border: 1px solid #475569;
             padding: 10px;
             cursor: pointer;
             font-family: inherit;
-            font-weight: bold;
             text-align: left;
             transition: all 0.2s;
             border-radius: 4px;
             font-size: 11px;
         }
+        .action-btn:hover { background-color: #ef4444; color: #fff; border-color: #ef4444; }
 
-        .action-btn:hover {
-            background-color: #10b981;
-            color: #000;
-            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        /* --- APP: NOTICIAS --- */
+        .news-container { padding: 20px; overflow-y: auto; height: 100%; }
+        .news-article { border-left: 3px solid #ef4444; padding-left: 15px; margin-bottom: 25px; }
+        .news-title { font-size: 15px; font-weight: bold; color: #ef4444; margin-bottom: 5px; }
+        .news-date { font-size: 11px; color: #64748b; margin-bottom: 8px; }
+        .news-body { font-size: 12px; line-height: 1.5; color: #cbd5e1; }
+
+        /* --- APP: LIVE FEED --- */
+        .live-video {
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background-color: #000;
+            color: #ef4444;
+            padding: 15px;
+            font-size: 12px;
+        }
+        .live-screen {
+            flex: 1;
+            border: 1px solid #ef4444;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+            padding: 10px;
+            overflow-y: auto;
         }
 
-        /* --- BARRA DE TAREAS INFERIOR --- */
+        /* --- BARRA DE TAREAS --- */
         #taskbar {
             height: 40px;
-            background-color: #0c0f12;
-            border-top: 2px solid #1f2937;
+            background-color: #0f172a;
+            border-top: 1px solid #334155;
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -212,33 +189,20 @@
             font-size: 12px;
             z-index: 1000;
         }
+        .taskbar-section { display: flex; align-items: center; gap: 15px; }
+        .system-alert { color: #ef4444; font-weight: bold; animation: parpadeo 1.5s infinite; }
 
-        .taskbar-section {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .system-alert {
-            color: #ef4444;
-            font-weight: bold;
-            animation: parpadeo 1.5s infinite;
-        }
-
-        @keyframes parpadeo {
-            0% { opacity: 0.3; }
-            50% { opacity: 1; }
-            100% { opacity: 0.3; }
-        }
+        @keyframes parpadeo { 0%, 100% { opacity: 0.3; } 50% { opacity: 1; } }
     </style>
 </head>
 <body>
 
     <div id="desktop">
         
+        <!-- Iconos de la PC -->
         <div class="desktop-icon" onclick="openWindow('window-map')">
             <div class="icon-symbol">🗺️</div>
-            <div class="icon-label">GEO-MAPA V4</div>
+            <div class="icon-label">GEO-MAPA D9</div>
         </div>
 
         <div class="desktop-icon" onclick="openWindow('window-calls')">
@@ -246,44 +210,63 @@
             <div class="icon-label">RECEPTOR 911</div>
         </div>
 
-        <div class="desktop-icon" onclick="alert('[ERROR]: Acceso denegado. Nivel de seguridad INSURGENTE requerido.')">
-            <div class="icon-symbol" style="opacity: 0.5;">📁</div>
-            <div class="icon-label" style="color: #6b7280;">REGLAS_OMITIDAS.log</div>
+        <div class="desktop-icon" onclick="openWindow('window-news')">
+            <div class="icon-symbol">📰</div>
+            <div class="icon-label">NOTICIAS D9</div>
         </div>
 
+        <!-- --- VENTANA: MAPA --- -->
         <div id="window-map" class="window">
             <div class="window-header">
-                <span class="window-title">📡 RASTREADOR SATELITAL - CUADRANTE URBANO</span>
-                <div class="window-controls">
-                    <button onclick="closeWindow('window-map')">X</button>
-                </div>
+                <span class="window-title">MAPA DE DESPACHO URBANO</span>
+                <div class="window-controls"><button onclick="closeWindow('window-map')">X</button></div>
             </div>
-            <div class="window-content">
-                <div id="map"></div>
-            </div>
+            <div class="window-content"><div id="map"></div></div>
         </div>
 
+        <!-- --- VENTANA: RECEPTOR 911 --- -->
         <div id="window-calls" class="window">
             <div class="window-header">
-                <span class="window-title">📟 ENTRADA DE AUDIO EN VIVO</span>
-                <div class="window-controls">
-                    <button onclick="closeWindow('window-calls')">X</button>
-                </div>
+                <span class="window-title">TERMINAL DE ENTRADA DE AUDIO</span>
+                <div class="window-controls"><button onclick="closeWindow('window-calls')">X</button></div>
             </div>
             <div class="window-content">
                 <div class="calls-container">
-                    <div id="terminal">
-                        <div class="log-entry" style="color: #6b7280;">[SISTEMA]: Enlace de radio listo. Esperando triggers de proximidad...</div>
-                        <div class="log-entry" style="color: #ef4444;">[ALERTA]: Línea de emergencia comprometida. Origen desconocido.</div>
-                        <div class="log-entry" id="dialogo-actual">
-                            <b>[DESCONOCIDO]:</b> ...¿Hola? ¿Operador? Algo está golpeando las tuberías del sótano. Suena como... como si algo estuviera deletreando mi nombre desde adentro de las paredes...
-                        </div>
-                    </div>
+                    <div id="terminal"></div>
+                    <div class="opciones-container" id="opciones"></div>
+                </div>
+            </div>
+        </div>
 
-                    <div class="opciones-container" id="opciones">
-                        <button class="action-btn" onclick="elegirOpcion(1)">"Por favor, resguárdese e indíqueme su dirección exacta."</button>
-                        <button class="action-btn" onclick="elegirOpcion(2)">"Ignore el ruido. Proceda a tomar la píldora de asignación obligatoria."</button>
-                        <button class="action-btn" onclick="elegirOpcion(3)">[Directiva 0]: Activar incineración remota del sótano del ciudadano.</button>
+        <!-- --- VENTANA: NOTICIAS --- -->
+        <div id="window-news" class="window">
+            <div class="window-header">
+                <span class="window-title">PORTAL DIGITAL: EL INFORMANTE DE DISTRITO 9</span>
+                <div class="window-controls"><button onclick="closeWindow('window-news')">X</button></div>
+            </div>
+            <div class="window-content">
+                <div class="news-container" id="news-feed">
+                    <div class="news-article">
+                        <div class="news-title">CIUDAD SUMIDA EN EL MIEDO: CRECE LA PARANOIA POR UN ASESINO SUELTO</div>
+                        <div class="news-date">HACE 1 DÍA</div>
+                        <div class="news-body">Las autoridades locales insisten en mantener la calma tras los rumores de un asesino metódico en el Distrito 9. Se pide a la población atrancar puertas y reportar cualquier actividad sospechosa al 911.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- --- VENTANA SECRETA: TRANSMISIÓN EN DIRECTO --- -->
+        <div id="window-live" class="window">
+            <div class="window-header" style="background-color: #7f1d1d;">
+                <span class="window-title" style="color: #fca5a5;">⚠️ ALERTA: HACKEO EN DIRECTO - FEED CABINA RADIO</span>
+                <div class="window-controls"><button onclick="closeWindow('window-live')">X</button></div>
+            </div>
+            <div class="window-content">
+                <div class="live-video">
+                    <div style="font-weight: bold; margin-bottom: 5px;">🔴 TRANSMISIÓN EN VIVO DESDE LA ANTENA:</div>
+                    <div class="live-screen" id="live-text">
+                        [SEÑAL ESTABLE]<br>
+                        Esperando actividad...
                     </div>
                 </div>
             </div>
@@ -291,34 +274,53 @@
 
     </div>
 
+    <!-- BARRA DE TAREAS -->
     <div id="taskbar">
         <div class="taskbar-section">
-            <span>⚡ <b>ASN_OS v5.1</b></span>
+            <span>💻 <b>S.O. TERMINAL-911</b></span>
             <span>|</span>
-            <span>OPERADOR: <b>#421</b></span>
+            <span>TURNO: <b id="current-day-label">DÍA 1</b></span>
         </div>
         <div class="taskbar-section">
-            <span class="system-alert">🚨 ENLACE ANÓMALO DETECTADO</span>
+            <span class="system-alert" id="system-status">🚨 CENTRAL EN ALERTA MAXIMA</span>
             <span>|</span>
-            <span>🕒 <b id="clock">02:14:05</b></span>
+            <span>🕒 <b id="clock">00:00:00</b></span>
         </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        // --- CONTROL DE VENTANAS (ABRIR / CERRAR) ---
+        // --- VARIABLES DEL SISTEMA ---
+        let currentDay = 1;
         let mapInitialized = false;
         let mapInstance = null;
+        let activeMarker = null;
 
+        // Base de datos de noticias desbloqueables al pasar el día
+        const noticiasPorDia = {
+            2: `<div class="news-article">
+                    <div class="news-title">🔴 TRAGEDIA EN EL DISTRITO 9: ENCUENTRAN MUERTA A NIÑA DE 9 AÑOS</div>
+                    <div class="news-date">HOY</div>
+                    <div class="news-body">Clara Vance, la menor que desapareció de su casa hace unos días tras reportar un supuesto robo al 911, fue hallada sin vida en un descampado. La policía confirma que el homicida no robó nada de la casa. El asesino sigue libre. El pánico se apodera de los vecindarios.</div>
+                </div>`,
+            3: `<div class="news-article">
+                    <div class="news-title">🚨 HORROR EN DIRECTO: ASESINAN A LOCUTOR NOCTURNO HÉCTOR LUGO</div>
+                    <div class="news-date">HOY</div>
+                    <div class="news-body">El Distrito 9 presenció el crimen más retorcido del año. Héctor Lugo fue atacado mientras transmitía en vivo. Los oyentes escucharon horrorizados sus súplicas y la voz del asesino confirmando el acto antes de cortar la señal. Las estaciones de radio están militarizadas.</div>
+                </div>`,
+            4: `<div class="news-article">
+                    <div class="news-title">❌ MASACRE EN EL SUBTERRÁNEO: VALERIA ROSTOVA ES LA TERCERA VÍCTIMA</div>
+                    <div class="news-date">HOY</div>
+                    <div class="news-body">La joven Valeria Rostova fue emboscada en el estacionamiento del centro comercial. Fuentes policiales confirman que llamó al 911 mientras el atacante destrozaba su vehículo. La histeria colectiva paraliza la economía de la ciudad; nadie sale de noche.</div>
+                </div>`
+        };
+
+        // --- CONTROL DE VENTANAS ---
         function openWindow(id) {
             const win = document.getElementById(id);
             win.style.display = 'flex';
-            
-            // Si abren el mapa, lo inicializamos solo la primera vez que se renderiza el div visible
             if (id === 'window-map' && !mapInitialized) {
-                setTimeout(() => {
-                    initMap();
-                }, 100); // Pequeño delay para que Leaflet calcule bien las dimensiones del contenedor
+                setTimeout(() => initMap(), 100);
             }
         }
 
@@ -326,61 +328,155 @@
             document.getElementById(id).style.display = 'none';
         }
 
-        // --- INICIALIZACIÓN DEL MAPA ---
         function initMap() {
-            mapInstance = L.map('map', {
-                zoomControl: false,
-                attributionControl: false
-            }).setView([40.7128, -74.0060], 16); 
-
-            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-                maxZoom: 19
-            }).addTo(mapInstance);
-
-            // Marcador del incidente en el mapa
-            const incidenteMarker = L.circleMarker([40.7145, -74.0080], {
-                color: '#ef4444',
-                fillColor: '#ef4444',
-                fillOpacity: 0.5,
-                radius: 12
-            }).addTo(mapInstance);
-
-            // Animación de pulso táctico del marcador
-            let alternar = true;
-            setInterval(() => {
-                if(mapInstance) {
-                    incidenteMarker.setStyle({ radius: alternar ? 18 : 12, fillOpacity: alternar ? 0.7 : 0.3 });
-                    alternar = !alternar;
-                }
-            }, 800);
-
+            mapInstance = L.map('map', { zoomControl: false, attributionControl: false }).setView([40.7128, -74.0060], 15); 
+            L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { maxZoom: 19 }).addTo(mapInstance);
             mapInitialized = true;
         }
 
-        // --- LÓGICA DE DECISIONES DE LA APP DE LLAMADAS ---
-        function elegirOpcion(num) {
-            const terminal = document.getElementById('dialogo-actual');
-            const opcionesDiv = document.getElementById('opciones');
+        function moverMarcador(lat, lng) {
+            if (!mapInstance) return;
+            if (activeMarker) mapInstance.removeLayer(activeMarker);
+            activeMarker = L.circleMarker([lat, lng], { color: '#ef4444', fillColor: '#ef4444', fillOpacity: 0.6, radius: 14 }).addTo(mapInstance);
+            mapInstance.setView([lat, lng], 16);
+        }
+
+        // --- SISTEMA NARRATIVO: LAS LLAMADAS ---
+        const terminal = document.getElementById('terminal');
+        const opcionesDiv = document.getElementById('opciones');
+
+        function cargarCaso() {
+            document.getElementById('current-day-label').innerText = `DÍA ${currentDay}`;
             
-            if (num === 1) {
-                terminal.innerHTML = `<b>[DESCONOCIDO]:</b> Mi dirección es Calle Elm 405... Espera... El ruido se detuvo. Ahora suena detrás de mí. Oh... no tiene rostro, operador. TIENE MI PROPIA CARA.`;
+            if (currentDay === 1) {
+                // CASO 1: Clara Vance (Real)
+                openWindow('window-calls');
+                moverMarcador(40.7145, -74.0080);
+                terminal.innerHTML = `<div class="log-entry"><b style="color: #ef4444;">📢 LLAMADA ENTRANTE - RESIDENCIAL [02:14 AM]</b></div>
+                                      <div class="log-entry"><b>[CLARA VANCE]:</b> ...¿Hola? ¿Hay alguien ahí? Tengo 9 años, estoy sola... y un hombre rompió el vidrio de abajo. Está caminando muy lento por la casa...</div>`;
                 opcionesDiv.innerHTML = `
-                    <button class="action-btn" onclick="elegirOpcion(4)">Enviar Escuadrón de Amnésicos</button>
-                    <button class="action-btn" onclick="elegirOpcion(5)">Cerrar canal de audio y clasificar como "Asimilado"</button>
+                    <button class="action-btn" onclick="dialogoClara(1)">"Clara, escúchame. Escóndete en el armario y no hagas ningún ruido."</button>
+                    <button class="action-btn" onclick="dialogoClara(2)">"¿Dónde están tus padres? Sal corriendo de la casa de inmediato."</button>
                 `;
-            } else if (num === 2) {
-                terminal.innerHTML = `<b>[DESCONOCIDO]:</b> El manual... ustedes nos mintieron... la píldora no es para los nervios... (Sonido de asfixia y estática de radio severa).`;
-                opcionesDiv.innerHTML = `<button class="action-btn" onclick="location.reload()">Siguiente Caso (Reiniciar)</button>`;
-            } else if (num === 3) {
-                terminal.innerHTML = `<b>[SISTEMA]:</b> Protocolo Termobarico ejecutado en sector residencial. Fuego purificador activo. Registro eliminado de la base de datos pública. Buen trabajo, Operador.`;
-                opcionesDiv.innerHTML = `<button class="action-btn" onclick="location.reload()">Esperar nueva transmisión...</button>`;
+            } else if (currentDay === 2) {
+                // CASO FALSO 1: Paranoia Ciudadana
+                openWindow('window-calls');
+                moverMarcador(40.7190, -74.0020);
+                terminal.innerHTML = `<div class="log-entry"><b style="color: #38bdf8;">📢 LLAMADA ENTRANTE - VECINO ASUSTADO [21:05 PM]</b></div>
+                                      <div class="log-entry"><b>[CIUDADANO]:</b> ¡OPERADOR! ¡Él está en mi patio! El Asesino del Teléfono, vi una sombra detrás de los arbustos... ¡va a matarme! ¡Envíe a todo el ejército!</div>`;
+                opcionesDiv.innerHTML = `
+                    <button class="action-btn" onclick="casoFalso(1)">"Señor, mantenga la calma. Despacharé una patrulla de rutina para verificar."</button>
+                    <button class="action-btn" onclick="casoFalso(2)">"Señor, ¿está seguro? Toda la ciudad está llamando por lo mismo. Mire bien."</button>
+                `;
+            } else if (currentDay === 3) {
+                // CASO 2: Héctor Lugo (Real + Ventana Live en directo)
+                openWindow('window-calls');
+                moverMarcador(40.7090, -74.0120);
+                terminal.innerHTML = `<div class="log-entry"><b style="color: #ef4444;">📢 LLAMADA ENTRANTE - ANTENA DE RADIO [03:40 AM]</b></div>
+                                      <div class="log-entry"><b>[HÉCTOR LUGO]:</b> ¡911! ¡Soy Héctor, de la radio! Alguien cortó la luz general de la estación. ¡Están rompiendo la puerta de mi cabina con un hacha! ¡Me abrió el canal de la radio, toda la ciudad me está escuchando!</div>`;
+                opcionesDiv.innerHTML = `
+                    <button class="action-btn" onclick="dialogoHector(1)">"¡Héctor, transmite tu ubicación exacta al aire para que las patrullas te oigan!"</button>
+                    <button class="action-btn" onclick="dialogoHector(2)">"Trabe la puerta con las mesas de mezclas, la policía va en camino."</button>
+                `;
+            } else if (currentDay === 4) {
+                // CASO FALSO 2: Paranoia en Línea
+                openWindow('window-calls');
+                moverMarcador(40.7110, -73.9980);
+                terminal.innerHTML = `<div class="log-entry"><b style="color: #38bdf8;">📢 LLAMADA ENTRANTE - CENTRO [23:12 PM]</b></div>
+                                      <div class="log-entry"><b>[MUJER]:</b> ¿Hola? Escuché un teléfono sonar en el callejón de mi casa... Dicen que él hace eso antes de atacar. ¡Tengo pánico de mirar por la ventana! ¡Por favor ayuda!</div>`;
+                opcionesDiv.innerHTML = `
+                    <button class="action-btn" onclick="casoFalso(3)">"Señora, quédese adentro de su cuarto. Enviamos una unidad."</button>
+                `;
+            } else if (currentDay === 5) {
+                // CASO 3: Valeria Rostova (Real)
+                openWindow('window-calls');
+                moverMarcador(40.7050, -74.0090);
+                terminal.innerHTML = `<div class="log-entry"><b style="color: #ef4444;">📢 LLAMADA ENTRANTE - SUBTERRÁNEO -3 [01:15 AM]</b></div>
+                                      <div class="log-entry"><b>[VALERIA]:</b> ¡Por favor contesten! Estoy encerrada en mi auto en el estacionamiento del shopping. Un hombre me siguió... se paró frente a mi capó. ¡Está sacando una barra de metal!</div>`;
+                opcionesDiv.innerHTML = `
+                    <button class="action-btn" onclick="dialogoValeria(1)">"¡Arranque el auto y acelere directamente hacia él!"</button>
+                    <button class="action-btn" onclick="dialogoValeria(2)">"Agáchese debajo del tablero y resista, las patrullas entraron al estacionamiento."</button>
+                `;
             } else {
-                terminal.innerHTML = `<b>[SISTEMA]:</b> Transmisión cortada. Archivo encriptado automáticamente bajo el código de amenaza: INFESTACIÓN COGNITIVA.`;
-                opcionesDiv.innerHTML = `<button class="action-btn" onclick="location.reload()">Reiniciar Terminal</button>`;
+                // CLÍMAX: El Asesino llama al Operador
+                openWindow('window-calls');
+                moverMarcador(40.7128, -74.0060); // Tus propias coordenadas
+                document.getElementById('system-status').innerText = `🚨 LÍNEA RESTRINGIDA DIRECTA`;
+                terminal.innerHTML = `<div class="log-entry"><b style="color: #7f1d1d;">⚠️ ADVERTENCIA: CANAL INTERNO HACKEADO</b></div>
+                                      <div class="log-entry"><b>[ASESINO]:</b> Hola, Operador 421. He estado viendo tu pantalla. Disfruté mucho cómo intentaste salvarlos. Pero mira tu mapa... el punto parpadea en tu edificio. Estoy en tu callejón... y mi noche... *ya está hecho*.</div>`;
+                opcionesDiv.innerHTML = `<button class="action-btn" onclick="alert('FIN DEL TURNO... ÉL ESTÁ ADENTRO.')">CORTAR TRANSMISIÓN...</button>`;
             }
         }
 
-        // Actualizar reloj de la barra de tareas en tiempo real
+        // --- ÁRBOLES DE DIÁLOGOS ---
+        function dialogoClara(opc) {
+            terminal.innerHTML += `<div class="log-entry" style="color: #94a3b8;">[SISTEMA]: Despachando patrullas a Calle Gray #104 (Distancia: 4 minutos)</div>`;
+            setTimeout(() => {
+                terminal.innerHTML += `<div class="log-entry"><b>[CLARA VANCE]:</b> Ya entró a mi cuarto... está golpeando el armario... ¡Mami! ¡Papi! *(Sonido violento de madera rota y gritos desgarradores que se cortan de golpe. Silencio de 5 segundos)*</div>`;
+                setTimeout(() => {
+                    terminal.innerHTML += `<div class="log-entry" style="color: #ef4444;"><b>[ASESINO]:</b> ...Ya está hecho.</div>`;
+                    opcionesDiv.innerHTML = `<button class="action-btn" onclick="terminarTurno()">Terminar Turno Nocturno</button>`;
+                }, 3000);
+            }, 2000);
+        }
+
+        function casoFalso(opc) {
+            if (opc === 1 || opc === 2) {
+                terminal.innerHTML += `<div class="log-entry"><b>[CIUDADANO]:</b> Espera... oh... Dios mío, lo siento mucho operador. Era el gato del vecino tirando un bote de basura. Estoy tan alterado con las noticias... Gracias de todos modos.</div>`;
+            } else {
+                terminal.innerHTML += `<div class="log-entry"><b>[SISTEMA]:</b> Patrulla revisó la zona. El sonido provenía de un transformador eléctrico fallando. Falsa alarma por psicosis generalizada.</div>`;
+            }
+            opcionesDiv.innerHTML = `<button class="action-btn" onclick="terminarTurno()">Pasar a la siguiente llamada</button>`;
+        }
+
+        function dialogoHector(opc) {
+            // Activar automáticamente la ventana en directo del asesinato
+            openWindow('window-live');
+            const liveText = document.getElementById('live-text');
+            
+            liveText.innerHTML = `<b style="color: #ef4444;">[CONEXIÓN DETECTADA]</b><br>Se observa a un hombre de espaldas destrozando un panel con un hacha... Héctor está arrinconado contra el micrófono...`;
+            
+            setTimeout(() => {
+                terminal.innerHTML += `<div class="log-entry"><b>[HÉCTOR]:</b> ¡No, por favor! ¡Tengo familia! ¡Ahg! *(Sonidos brutales de impactos captados por el micrófono ambiental)*</div>`;
+                liveText.innerHTML += `<br><b style="color: #7f1d1d;">[ALERTA VÍDEO]</b> El atacante asesta un golpe definitivo. Héctor cae sobre la consola.`;
+                
+                setTimeout(() => {
+                    terminal.innerHTML += `<div class="log-entry" style="color: #ef4444;"><b>[ASESINO]:</b> ...Ya está hecho.</div>`;
+                    liveText.innerHTML += `<br><b style="color: #ef4444;">[SISTEMA]</b> El asesino mira fijo a la cámara, saluda con la mano y corta el cable de red. SEÑAL CAÍDA.`;
+                    opcionesDiv.innerHTML = `<button class="action-btn" onclick="terminarTurno()">Cerrar caso del Día</button>`;
+                }, 3000);
+            }, 2500);
+        }
+
+        function dialogoValeria(opc) {
+            terminal.innerHTML += `<div class="log-entry"><b>[VALERIA]:</b> ¡No arranca! ¡El auto no arranca! *(Sonido ensordecedor de un caño de hierro impactando el parabrisas)* ¡Está rompiendo el vidrio! ¡Me está agarrando de las piernas! ¡OPERADO-! *(Grito sofocado y sonido del celular rebotando en el pavimento)*</div>`;
+            setTimeout(() => {
+                terminal.innerHTML += `<div class="log-entry" style="color: #ef4444;"><b>[ASESINO]:</b> ...Ya está hecho.</div>`;
+                opcionesDiv.innerHTML = `<button class="action-btn" onclick="terminarTurno()">Archivar y salir</button>`;
+            }, 3000);
+        }
+
+        // --- SISTEMA DEL FIN DEL TURNO (ACTUALIZAR NOTICIAS) ---
+        function terminarTurno() {
+            closeWindow('window-live');
+            currentDay++;
+            
+            // Añadir noticias nuevas al portal digital según el día superado
+            if (noticiasPorDia[currentDay]) {
+                const feed = document.getElementById('news-feed');
+                feed.innerHTML = noticiasPorDia[currentDay] + feed.innerHTML;
+                alert(`[SISTEMA]: Turno finalizado. El portal de 'NOTICIAS D9' se ha actualizado con los eventos de la noche.`);
+            }
+            
+            cargarCaso();
+        }
+
+        // Arrancar juego automáticamente
+        window.onload = () => {
+            cargarCaso();
+        };
+
+        // Reloj del OS
         setInterval(() => {
             const ahora = new Date();
             document.getElementById('clock').innerText = ahora.toTimeString().split(' ')[0];
