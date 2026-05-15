@@ -2,62 +2,222 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>SISTEMA OPERATIVO 911 - v4.0.1</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SISTEMA DE DESPACHO INTERACTIVO - DISTRITO 9</title>
+    
+    <!-- Hojas de estilo de Leaflet para el mapa -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
     <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
-            background-color: #0a0a0a;
-            color: #00ff66;
+            background-color: #050505;
+            color: #d1d5db;
             font-family: 'Courier New', Courier, monospace;
-            padding: 20px;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
         }
-        #terminal {
-            border: 2px solid #00ff66;
-            padding: 20px;
-            height: 400px;
-            overflow-y: auto;
-            background-color: #020f05;
-            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
-        }
-        .opciones {
-            margin-top: 20px;
-        }
-        button {
-            background-color: #00ff66;
-            color: #000;
-            border: none;
+
+        /* Barra de estado superior estilo juego */
+        header {
+            background-color: #0c0f12;
+            border-bottom: 2px solid #1f2937;
             padding: 10px 20px;
-            margin-right: 10px;
-            cursor: pointer;
-            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 14px;
+            letter-spacing: 1px;
         }
+
+        .status-item {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        .alert-text {
+            color: #ef4444;
+            font-weight: bold;
+            animation: parpadeo 1.5s infinite;
+        }
+
+        /* Contenedor principal: Mapa + Consola */
+        #game-container {
+            display: flex;
+            flex: 1;
+            position: relative;
+        }
+
+        /* EL MAPA (Ocupa toda la pantalla de fondo) */
+        #map {
+            width: 70%;
+            height: 100%;
+            background-color: #0d0d0d;
+        }
+
+        /* Filtro CSS para darle al mapa satelital el look oscuro, frío y militarizado */
+        .leaflet-container {
+            filter: invert(100%) hue-rotate(180deg) brightness(40%) contrast(120%);
+        }
+
+        /* Panel lateral de llamadas e información */
+        #side-panel {
+            width: 30%;
+            background-color: #090b0e;
+            border-left: 2px solid #1f2937;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            z-index: 10;
+            box-shadow: -5px 0 15px rgba(0,0,0,0.5);
+        }
+
+        #terminal {
+            flex: 1;
+            background-color: #020406;
+            border: 1px solid #1f2937;
+            padding: 15px;
+            overflow-y: auto;
+            font-size: 13px;
+            line-height: 1.5;
+            margin-bottom: 15px;
+            border-radius: 4px;
+        }
+
+        .log-entry {
+            margin-bottom: 10px;
+            border-bottom: 1px dashed #111827;
+            padding-bottom: 5px;
+        }
+
+        .opciones-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        button {
+            background-color: #111827;
+            color: #10b981;
+            border: 1px solid #10b981;
+            padding: 12px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+            text-align: left;
+            transition: all 0.2s;
+            border-radius: 4px;
+        }
+
         button:hover {
-            background-color: #fff;
+            background-color: #10b981;
+            color: #000;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
+        }
+
+        /* Animaciones */
+        @keyframes parpadeo {
+            0% { opacity: 0.3; }
+            50% { opacity: 1; }
+            100% { opacity: 0.3; }
         }
     </style>
 </head>
 <body>
 
-    <h2>SISTEMA DE DESPACHO DE EMERGENCIAS (DISTRITO 9)</h2>
-    <hr>
-    
-    <div id="terminal">
-        <p>[SISTEMA]: Turno de noche iniciado. Bienvenido, Operador 421.</p>
-        <p>[SISTEMA]: Recordatorio: No haga preguntas fuera del manual.</p>
-        <p style="color: #ff3333;">📢 LLAMADA ENTRANTE DE: ANONIMO (02:14 AM)...</p>
+    <header>
+        <div>
+            <span class="status-item">📡 RECEPTOR: <b>OPERADOR 421</b></span>
+            <span class="status-item">🕒 HORA: <b id="clock">02:14:05</b></span>
+        </div>
+        <div>
+            <span class="status-item">UNIDADES DISPONIBLES: <b style="color: #10b981;">4</b></span>
+            <span class="status-item alert-text">🚨 CASOS ACTIVOS: 1</span>
+        </div>
+    </header>
+
+    <div id="game-container">
+        <!-- Contenedor del Mapa Satelital -->
+        <div id="map"></div>
+
+        <!-- Panel de Control Lateral -->
+        <div id="side-panel">
+            <h3 style="margin-bottom: 10px; color: #10b981; font-size: 14px;">📟 CENTRAL DE COMUNICACIONES</h3>
+            
+            <div id="terminal">
+                <div class="log-entry" style="color: #6b7280;">[SISTEMA]: Enlace satelital establecido con el cuadrante urbano.</div>
+                <div class="log-entry" style="color: #ef4444;">[ALERTA]: Llamada entrante redirigida desde sector residencial periférico.</div>
+                <div class="log-entry" id="dialogo-actual">
+                    <b>[DESCONOCIDO]:</b> ...¿Hola? ¿Hay alguien ahí? Creo que... creo que hay algo en mi techo. No se mueve como un animal. Hace un ruido como... como un módem viejo...
+                </div>
+            </div>
+
+            <div class="opciones-container" id="opciones">
+                <button onclick="elegirOpcion(1)">"Señor, mantenga la calma. ¿Puede describir el tamaño de lo que ve?"</button>
+                <button onclick="elegirOpcion(2)">"Enviaré una patrulla de inmediato. No salga de su casa bajo ninguna circunstancia."</button>
+                <button onclick="elegirOpcion(3)">[Manual Interno - Regla 9]: Colgar inmediatamente si reportan ruidos electrónicos sintéticos.</button>
+            </div>
+        </div>
     </div>
 
-    <div class="opciones">
-        <button onclick="responderLlamada()">Contestar Llamada</button>
-    </div>
-
+    <!-- Scripts de Leaflet para manejo del mapa -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script>
-        function responderLlamada() {
-            const term = document.getElementById('terminal');
-            term.innerHTML += "<p><b>Operador:</b> 911, ¿cuál es su emergencia?</p>";
-            setTimeout(() => {
-                term.innerHTML += "<p><b>Voz anónima:</b> ...Hola? Por favor, no cuelguen. Hay un hombre parado en mi patio... pero es demasiado alto. Sus rodillas se doblan hacia atrás...</p>";
-                // Aquí añadirías más opciones de diálogo
-            }, 1500);
+        // 1. Inicializar el mapa cenital centrado en coordenadas específicas (Ej: Nueva York)
+        // El zoom 16 nos da una vista de calles y techos perfectamente vertical
+        const map = L.map('map', {
+            zoomControl: false, // Ocultamos los botones de zoom estándar para un look más limpio
+            attributionControl: false
+        }).setView([40.7128, -74.0060], 16); 
+
+        // 2. Cargar la capa de satélite real (Usamos Esri World Imagery)
+        L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            maxZoom: 19
+        }).addTo(map);
+
+        // 3. Añadir un marcador parpadeante de emergencia (el reporte del ciudadano)
+        const incidenteMarker = L.circleMarker([40.7145, -74.0080], {
+            color: '#ef4444',
+            fillColor: '#ef4444',
+            fillOpacity: 0.4,
+            radius: 12
+        }).addTo(map);
+
+        // Hacer que el marcador del mapa pulse visualmente
+        let alternar = true;
+        setInterval(() => {
+            incidenteMarker.setStyle({ radius: alternar ? 18 : 12, fillOpacity: alternar ? 0.6 : 0.3 });
+            alternar = !alternar;
+        }, 800);
+
+        // 4. Lógica de decisiones sencilla para probar la atmósfera del lore turbio
+        function elegirOpcion(num) {
+            const terminal = document.getElementById('dialogo-actual');
+            const opcionesDiv = document.getElementById('opciones');
+            
+            if (num === 1) {
+                terminal.innerHTML = `<b>[DESCONOCIDO]:</b> No es grande... es largo. Tiene demasiadas articulaciones. Oh Dios, se dio cuenta de que lo estoy mirando... ¡Está cambiando de forma!`;
+                opcionesDiv.innerHTML = `
+                    <button onclick="elegirOpcion(4)">Enviar Unidad de Contención de la Agencia</button>
+                    <button onclick="elegirOpcion(5)">Cortar transmisión y marcar como falso reporte</button>
+                `;
+            } else if (num === 2) {
+                terminal.innerHTML = `<b>[SISTEMA]:</b> Error. La Unidad 04 asignada a ese cuadrante dejó de emitir señal de GPS. Despacho cancelado por el protocolo de cuarentena automatizado.`;
+                opcionesDiv.innerHTML = `<button onclick="location.reload()">Reiniciar Turno</button>`;
+            } else if (num === 3) {
+                terminal.innerHTML = `<b>[SISTEMA]:</b> Llamada finalizada. Registro borrado con éxito. Tu nivel de obediencia ha subido. No pienses en lo que escuchaste.`;
+                opcionesDiv.innerHTML = `<button onclick="location.reload()">Esperar siguiente llamada...</button>`;
+            } else {
+                terminal.innerHTML = `<b>[SISTEMA]:</b> Procesando directiva... Transmisión interrumpida por interferencia estática extrema.`;
+                opcionesDiv.innerHTML = `<button onclick="location.reload()">Reiniciar Turno</button>`;
+            }
         }
     </script>
 </body>
