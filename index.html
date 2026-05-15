@@ -1,92 +1,64 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Detroit 1990</title>
-
-<style>
-body{
- margin:0;
- overflow:hidden;
- background:#0b0d12;
- font-family:monospace;
- color:white;
-}
-
-/* MENU */
-#menu{
- position:absolute;
- width:100%;
- height:100%;
- display:flex;
- flex-direction:column;
- justify-content:center;
- align-items:center;
- background:linear-gradient(#0b0d12,#000);
-}
-
-#title{
- font-size:48px;
- letter-spacing:4px;
- margin-bottom:20px;
-}
-
-#lore{
- width:60%;
- max-width:800px;
- text-align:center;
- font-size:16px;
- line-height:1.6;
- opacity:0.85;
- margin-bottom:30px;
-}
-
-button{
- padding:12px 30px;
- font-size:18px;
- background:#111;
- color:white;
- border:1px solid #444;
- cursor:pointer;
- transition:0.2s;
-}
-
-button:hover{
- background:#222;
-}
-</style>
+    <meta charset="UTF-8">
+    <title>SISTEMA OPERATIVO 911 - v4.0.1</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #00ff66;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 20px;
+        }
+        #terminal {
+            border: 2px solid #00ff66;
+            padding: 20px;
+            height: 400px;
+            overflow-y: auto;
+            background-color: #020f05;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+        }
+        .opciones {
+            margin-top: 20px;
+        }
+        button {
+            background-color: #00ff66;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        button:hover {
+            background-color: #fff;
+        }
+    </style>
 </head>
-
 <body>
 
-<div id="menu">
- <div id="title">DETROIT 1990</div>
+    <h2>SISTEMA DE DESPACHO DE EMERGENCIAS (DISTRITO 9)</h2>
+    <hr>
+    
+    <div id="terminal">
+        <p>[SISTEMA]: Turno de noche iniciado. Bienvenido, Operador 421.</p>
+        <p>[SISTEMA]: Recordatorio: No haga preguntas fuera del manual.</p>
+        <p style="color: #ff3333;">📢 LLAMADA ENTRANTE DE: ANONIMO (02:14 AM)...</p>
+    </div>
 
- <div id="lore">
-  Año 1990.<br><br>
+    <div class="opciones">
+        <button onclick="responderLlamada()">Contestar Llamada</button>
+    </div>
 
-  Eras un sargento… a punto de retirarte.<br>
-  Pero una carta cambió todo.<br><br>
-
-  <b>"Has sido ascendido a Teniente de Policía en el Estado de Detroit."</b><br><br>
-
-  Te quedan <b>10 años</b> antes de tu jubilación.<br>
-  10 años para sobrevivir.<br>
-  10 años para dejar tu marca.<br><br>
-
-  <b>¿Llegarás al año 2000?</b>
- </div>
-
- <!-- 🔥 ESTO ES LO IMPORTANTE -->
- <button onclick="startGame()">INICIAR</button>
-</div>
-
-<script>
-function startGame(){
- // 🔥 REDIRECCIÓN AL JUEGO
- window.location.href = "juego.html";
-}
-</script>
-
+    <script>
+        function responderLlamada() {
+            const term = document.getElementById('terminal');
+            term.innerHTML += "<p><b>Operador:</b> 911, ¿cuál es su emergencia?</p>";
+            setTimeout(() => {
+                term.innerHTML += "<p><b>Voz anónima:</b> ...Hola? Por favor, no cuelguen. Hay un hombre parado en mi patio... pero es demasiado alto. Sus rodillas se doblan hacia atrás...</p>";
+                // Aquí añadirías más opciones de diálogo
+            }, 1500);
+        }
+    </script>
 </body>
 </html>
