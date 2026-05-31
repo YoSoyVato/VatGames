@@ -10,6 +10,7 @@
             --card-bg: #161925;
             --accent-color: #7928ca;
             --text-color: #f5f5f7;
+            --success-color: #00ffa3;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -19,6 +20,28 @@
             padding: 0;
             text-align: center;
         }
+        
+        /* Barra de Usuario */
+        .user-bar {
+            background-color: #06070a;
+            padding: 10px 20px;
+            display: flex;
+            justify-content:间;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            border-bottom: 1px solid #1f1135;
+        }
+        .logout-btn {
+            background: none;
+            border: 1px solid #ff4a4a;
+            color: #ff4a4a;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .logout-btn:hover { background-color: #ff4a4a; color: white; }
+
         header {
             background: linear-gradient(180deg, #1f1135 0%, var(--bg-color) 100%);
             padding: 50px 20px;
@@ -29,8 +52,10 @@
             color: #b388ff;
             text-shadow: 0 0 10px rgba(179, 136, 255, 0.5);
         }
+
+        /* Contenedores y Tablas */
         .container {
-            max-width: 1000px;
+            max-width: 1100px;
             margin: 40px auto;
             display: flex;
             justify-content: center;
@@ -51,13 +76,10 @@
             transform: translateY(-5px);
             border-color: var(--accent-color);
         }
-        .card h2 {
-            color: #fff;
-            margin-top: 0;
-        }
+        .card h2 { color: #fff; margin-top: 0; }
         .price {
             font-size: 1.8rem;
-            color: #00ffa3;
+            color: var(--success-color);
             margin: 15px 0;
             font-weight: bold;
         }
@@ -69,13 +91,9 @@
             font-size: 0.95rem;
             color: #a0aec0;
         }
-        .features li {
-            margin-bottom: 8px;
-        }
-        .features li::before {
-            content: "✔ ";
-            color: #00ffa3;
-        }
+        .features li { margin-bottom: 8px; }
+        .features li::before { content: "✔ "; color: var(--success-color); }
+        
         .btn-buy {
             display: block;
             background-color: var(--accent-color);
@@ -86,19 +104,159 @@
             font-weight: bold;
             transition: background 0.2s;
         }
-        .btn-buy:hover {
-            background-color: #621b9e;
+        .btn-buy:hover { background-color: #621b9e; }
+
+        /* Nuevas Secciones: Compras y Tops */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            max-width: 1100px;
+            margin: 50px auto;
+            padding: 0 20px;
+        }
+        .stats-box {
+            background-color: var(--card-bg);
+            border: 1px solid #23283d;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: left;
+        }
+        .stats-box h3 {
+            margin-top: 0;
+            color: #b388ff;
+            border-bottom: 1px solid #23283d;
+            padding-bottom: 10px;
+        }
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #1a1d29;
+            font-size: 0.95rem;
+        }
+        .stat-item:last-child { border: none; }
+        .buyer-name { color: #fff; font-weight: bold; }
+        .buyer-product { color: var(--success-color); }
+        .buyer-amount { color: #ffd700; font-weight: bold; }
+
+        /* Sistema Anti-Intrusos del Modal Auth */
+        .auth-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(5, 6, 10, 0.95);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .auth-box {
+            background-color: var(--card-bg);
+            border: 2px solid var(--accent-color);
+            padding: 40px;
+            border-radius: 16px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 0 30px rgba(121, 40, 202, 0.3);
+        }
+        .auth-box h2 { margin-top: 0; color: #b388ff; }
+        .auth-tabs {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 25px;
+            border-bottom: 1px solid #23283d;
+        }
+        .tab-btn {
+            background: none;
+            border: none;
+            color: #a0aec0;
+            padding: 10px;
+            font-size: 1.1rem;
+            cursor: pointer;
+        }
+        .tab-btn.active {
+            color: white;
+            border-bottom: 2px solid var(--accent-color);
+            font-weight: bold;
+        }
+        .auth-form {
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .auth-form.active { display: flex; }
+        .auth-form input {
+            background-color: #0d0e15;
+            border: 1px solid #23283d;
+            padding: 12px;
+            border-radius: 6px;
+            color: white;
+            font-size: 1rem;
+        }
+        .auth-form input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+        .auth-box button[type="submit"] {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .auth-box button[type="submit"]:hover { background-color: #621b9e; }
+        .security-note {
+            font-size: 0.75rem;
+            color: #ffb74d;
+            margin-top: 10px;
         }
     </style>
 </head>
 <body>
+
+    <!-- Ventana de Login / Registro Obligatoria -->
+    <div id="authOverlay" class="auth-overlay">
+        <div class="auth-box">
+            <h2>🌙 EclipseMC</h2>
+            <div class="auth-tabs">
+                <button class="tab-btn active" onclick="switchTab('login')">/login</button>
+                <button class="tab-btn" onclick="switchTab('register')">/register</button>
+            </div>
+
+            <!-- Formulario Login -->
+            <form id="loginForm" class="auth-form active" onsubmit="handleAuth(event, 'login')">
+                <input type="text" id="loginUser" placeholder="Usuario de Minecraft" required>
+                <input type="password" id="loginPass" placeholder="Contraseña" required>
+                <button type="submit">Ingresar a la Tienda</button>
+            </form>
+
+            <!-- Formulario Registro -->
+            <form id="registerForm" class="auth-form" onsubmit="handleAuth(event, 'register')">
+                <input type="text" id="registerUser" placeholder="Usuario de Minecraft" required>
+                <input type="password" id="registerPass" placeholder="Contraseña del Servidor o nueva" required>
+                <p class="security-note">⚠️ Por seguridad, si usas una contraseña nueva, no la olvides. La necesitarás para futuras compras.</p>
+                <button type="submit">Registrarse e Ingresar</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Barra Superior de Usuario (Aparece tras loguearse) -->
+    <div class="user-bar">
+        <span>Conectado como: <strong id="userDisplay" style="color: #00ffa3;">Jugador</strong></span>
+        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+    </div>
 
     <header>
         <h1>🌙 EclipseMC Store</h1>
         <p>Apoya al servidor y consigue ventajas exclusivas</p>
     </header>
 
+    <!-- Sección de Productos -->
     <div class="container">
+        <!-- RANGO VIP -->
         <div class="card">
             <h2>Rango VIP</h2>
             <div class="price">$500 / mes</div>
@@ -111,6 +269,7 @@
             <a href="TU_LINK_DE_PAGO_AQUÍ" target="_blank" class="btn-buy">Comprar Rango</a>
         </div>
 
+        <!-- RANGO ECLIPSE -->
         <div class="card" style="border-color: #b388ff;">
             <h2>Rango ECLIPSE</h2>
             <div class="price">$1200 / mes</div>
@@ -124,5 +283,125 @@
         </div>
     </div>
 
+    <!-- SECCIONES NUEVAS: COMPRAS Y TOPS -->
+    <div class="stats-section">
+        
+        <!-- Historial de compras recientes (Edítalo manualmente aquí cuando vendas) -->
+        <div class="stats-box">
+            <h3>🛒 Compras Recientes</h3>
+            <div class="stat-item">
+                <span class="buyer-name">xX_Juan_Xx</span>
+                <span class="buyer-product">Rango ECLIPSE</span>
+                <span style="color: #a0aec0; font-size: 0.85rem;">Hace 10 min</span>
+            </div>
+            <div class="stat-item">
+                <span class="buyer-name">MineCraftero99</span>
+                <span class="buyer-product">Rango VIP</span>
+                <span style="color: #a0aec0; font-size: 0.85rem;">Hace 2 horas</span>
+            </div>
+            <div class="stat-item">
+                <span class="buyer-name">GamerGirl_206</span>
+                <span class="buyer-product">Kit Mythic x5</span>
+                <span style="color: #a0aec0; font-size: 0.85rem;">Ayer</span>
+            </div>
+        </div>
+
+        <!-- Tabla de Mayores Compradores (Edítalo manualmente) -->
+        <div class="stats-box">
+            <h3>🏆 Mayores Compradores</h3>
+            <div class="stat-item">
+                <div><span>1. </span><span class="buyer-name">ElProInmortal</span></div>
+                <span class="buyer-amount">$3400</span>
+            </div>
+            <div class="stat-item">
+                <div><span>2. </span><span class="buyer-name">xX_Juan_Xx</span></div>
+                <span class="buyer-amount">$1200</span>
+            </div>
+            <div class="stat-item">
+                <div><span>3. </span><span class="buyer-name">Steve_Donador</span></div>
+                <span class="buyer-amount">$1000</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Lógica de control en JavaScript -->
+    <script>
+        // Pestañas del Modal (Login / Register)
+        function switchTab(tab) {
+            const tabs = document.querySelectorAll('.tab-btn');
+            const forms = document.querySelectorAll('.auth-form');
+            
+            tabs.forEach(t => t.classList.remove('active'));
+            forms.forEach(f => f.classList.remove('active'));
+
+            if(tab === 'login') {
+                tabs[0].classList.add('active');
+                document.getElementById('loginForm').classList.add('active');
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('registerForm').classList.add('active');
+            }
+        }
+
+        // Manejo del registro y login local
+        function handleAuth(event, type) {
+            event.preventDefault();
+            
+            if (type === 'register') {
+                const user = document.getElementById('registerUser').value.trim();
+                const pass = document.getElementById('registerPass').value;
+                
+                if(user && pass) {
+                    localStorage.setItem('mc_user', user);
+                    localStorage.setItem('mc_pass', pass); // Se guarda localmente
+                    alert('¡Registro exitoso para ' + user + '!');
+                    loadStore(user);
+                }
+            } else if (type === 'login') {
+                const user = document.getElementById('loginUser').value.trim();
+                const pass = document.getElementById('loginPass').value;
+                
+                const savedUser = localStorage.getItem('mc_user');
+                const savedPass = localStorage.getItem('mc_pass');
+
+                // Si no hay usuarios registrados, creamos uno de prueba por defecto
+                if(!savedUser) {
+                    localStorage.setItem('mc_user', user);
+                    localStorage.setItem('mc_pass', pass);
+                    loadStore(user);
+                    return;
+                }
+
+                if(user.toLowerCase() === savedUser.toLowerCase() && pass === savedPass) {
+                    loadStore(user);
+                } else {
+                    alert('Usuario o contraseña incorrectos. Si no te has registrado ve a /register.');
+                }
+            }
+        }
+
+        function loadStore(username) {
+            localStorage.setItem('isLoggedIn', 'true');
+            localStorage.setItem('currentUser', username);
+            document.getElementById('authOverlay').style.display = 'none';
+            document.getElementById('userDisplay').innerText = username;
+        }
+
+        function logout() {
+            localStorage.removeItem('isLoggedIn');
+            localStorage.removeItem('currentUser');
+            location.reload();
+        }
+
+        // Al cargar la página comprueba si ya inició sesión antes
+        window.onload = function() {
+            if(localStorage.getItem('isLoggedIn') === 'true') {
+                const user = localStorage.getItem('currentUser');
+                document.getElementById('authOverlay').style.display = 'none';
+                document.getElementById('userDisplay').innerText = user;
+            }
+        }
+    </script>
 </body>
 </html>
