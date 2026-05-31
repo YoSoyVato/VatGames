@@ -6,254 +6,374 @@
     <title>Tienda Oficial | EclipseMC</title>
     <style>
         :root {
-            --bg-color: #0d0e15;
-            --card-bg: #161925;
-            --accent-color: #7928ca;
-            --text-color: #f5f5f7;
-            --success-color: #00ffa3;
+            --bg-color: #06070d;
+            --card-bg: #111322;
+            --accent-color: #8b5cf6;
+            --accent-glow: rgba(139, 92, 246, 0.4);
+            --text-color: #f3f4f6;
+            --success-color: #10b981;
             --steam-color: #1b2838;
             --discord-color: #5865F2;
+            --danger-color: #ef4444;
         }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Plus Jakarta Sans', 'Segoe UI', Roboto, sans-serif;
             background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(31, 17, 53, 0.3) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(121, 40, 202, 0.15) 0px, transparent 50%);
             color: var(--text-color);
             margin: 0;
             padding: 0;
             text-align: center;
+            min-height: 100vh;
         }
         
-        /* Barra de Usuario */
+        /* Barra de Usuario Mejorada */
         .user-bar {
-            background-color: #06070a;
-            padding: 10px 20px;
+            background-color: rgba(6, 7, 13, 0.8);
+            backdrop-filter: blur(10px);
+            padding: 12px 24px;
             display: flex;
             justify-content: space-between;
             align-items: center;
             font-size: 0.9rem;
-            border-bottom: 1px solid #1f1135;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-badge {
+            background: rgba(0, 255, 163, 0.1);
+            color: var(--success-color);
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 0.75rem;
+        }
+        .btn-group {
+            display: flex;
+            gap: 10px;
+        }
+        .staff-btn {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            padding: 6px 14px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .staff-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            box-shadow: 0 0 10px var(--accent-glow);
         }
         .logout-btn {
             background: none;
-            border: 1px solid #ff4a4a;
-            color: #ff4a4a;
-            padding: 5px 10px;
-            border-radius: 4px;
+            border: 1px solid rgba(239, 68, 68, 0.5);
+            color: var(--danger-color);
+            padding: 6px 14px;
+            border-radius: 6px;
             cursor: pointer;
+            transition: all 0.2s;
         }
-        .logout-btn:hover { background-color: #ff4a4a; color: white; }
+        .logout-btn:hover { background-color: var(--danger-color); color: white; }
 
         header {
-            background: linear-gradient(180deg, #1f1135 0%, var(--bg-color) 100%);
-            padding: 50px 20px;
+            padding: 60px 20px 30px;
         }
         header h1 {
             margin: 0;
-            font-size: 3rem;
-            color: #b388ff;
-            text-shadow: 0 0 10px rgba(179, 136, 255, 0.5);
+            font-size: 3.5rem;
+            font-weight: 800;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #c084fc 0%, #a78bfa 50%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            filter: drop-shadow(0 0 15px rgba(167, 139, 250, 0.3));
+        }
+        header p {
+            color: #9ca3af;
+            font-size: 1.1rem;
+            margin-top: 10px;
         }
 
-        /* Contenedores y Tablas */
+        /* Contenedores y Tarjetas de Rangos */
         .container {
             max-width: 1100px;
-            margin: 40px auto;
+            margin: 20px auto 40px;
             display: flex;
             justify-content: center;
-            gap: 20px;
+            gap: 30px;
             flex-wrap: wrap;
             padding: 0 20px;
         }
         .card {
             background-color: var(--card-bg);
-            border: 1px solid #23283d;
-            border-radius: 12px;
-            width: 280px;
-            padding: 25px;
-            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
-            transition: transform 0.3s, border-color 0.3s;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 16px;
+            width: 300px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 4px;
+            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+            transition: opacity 0.3s;
+            opacity: 0;
         }
         .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--accent-color);
+            transform: translateY(-8px);
+            border-color: rgba(139, 92, 246, 0.4);
+            box-shadow: 0 15px 30px rgba(139, 92, 246, 0.1);
         }
-        .card h2 { color: #fff; margin-top: 0; }
+        .card:hover::before { opacity: 1; }
+        .card h2 { color: #fff; margin-top: 0; font-size: 1.6rem; font-weight: 700; }
         .price {
-            font-size: 1.8rem;
+            font-size: 2.2rem;
             color: var(--success-color);
-            margin: 15px 0;
-            font-weight: bold;
+            margin: 20px 0;
+            font-weight: 800;
+            letter-spacing: -1px;
         }
         .features {
             list-style: none;
             padding: 0;
             text-align: left;
-            margin: 20px 0;
+            margin: 25px 0;
             font-size: 0.95rem;
-            color: #a0aec0;
+            color: #9ca3af;
         }
-        .features li { margin-bottom: 8px; }
-        .features li::before { content: "✔ "; color: var(--success-color); }
+        .features li {
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .features li::before {
+            content: "✦";
+            color: var(--success-color);
+            font-weight: bold;
+        }
         
         .btn-buy {
             display: block;
-            background-color: var(--accent-color);
+            width: 100%;
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
             color: white;
-            text-decoration: none;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: bold;
+            padding: 14px;
+            border-radius: 8px;
+            font-weight: 700;
             cursor: pointer;
             border: none;
             font-size: 1rem;
-            transition: background 0.2s;
+            letter-spacing: 0.5px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
         }
-        .btn-buy:hover { background-color: #621b9e; }
+        .btn-buy:hover {
+            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+            box-shadow: 0 6px 18px rgba(139, 92, 246, 0.5);
+            transform: scale(1.02);
+        }
 
         /* Secciones: Compras y Tops */
         .stats-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 20px;
+            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+            gap: 30px;
             max-width: 1100px;
-            margin: 50px auto;
+            margin: 40px auto 60px;
             padding: 0 20px;
         }
         .stats-box {
             background-color: var(--card-bg);
-            border: 1px solid #23283d;
-            border-radius: 12px;
-            padding: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            border-radius: 16px;
+            padding: 24px;
             text-align: left;
-            min-height: 150px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
         }
         .stats-box h3 {
             margin-top: 0;
-            color: #b388ff;
-            border-bottom: 1px solid #23283d;
-            padding-bottom: 10px;
+            color: #c084fc;
+            font-weight: 700;
+            font-size: 1.2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
         .stat-item {
             display: flex;
             justify-content: space-between;
-            padding: 10px 0;
-            border-bottom: 1px solid #1a1d29;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
             font-size: 0.95rem;
         }
         .stat-item:last-child { border: none; }
-        .buyer-name { color: #fff; font-weight: bold; }
-        .buyer-product { color: var(--success-color); }
-        .buyer-amount { color: #ffd700; font-weight: bold; }
-        .no-data { color: #718096; text-align: center; padding: 20px 0; font-style: italic; }
+        .buyer-name { color: #fff; font-weight: 600; }
+        .buyer-product { background: rgba(139, 92, 246, 0.15); color: #c084fc; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; }
+        .buyer-amount { color: #fbbf24; font-weight: 700; }
+        .no-data { color: #6b7280; text-align: center; padding: 30px 0; font-style: italic; }
 
-        /* Sistema de Modales (Auth y Pasarela GiftCard) */
+        /* Sistema de Modales Estilizados */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(5, 6, 10, 0.95);
+            background-color: rgba(3, 4, 7, 0.95);
+            backdrop-filter: blur(8px);
             display: flex;
             justify-content: center;
             align-items: center;
             z-index: 9999;
         }
         .auth-box {
-            background-color: var(--card-bg);
-            border: 2px solid var(--accent-color);
+            background-color: #0f111a;
+            border: 1px solid rgba(139, 92, 246, 0.3);
             padding: 40px;
-            border-radius: 16px;
+            border-radius: 20px;
             width: 90%;
-            max-width: 420px;
-            box-shadow: 0 0 30px rgba(121, 40, 202, 0.3);
+            max-width: 440px;
+            box-shadow: 0 0 40px rgba(139, 92, 246, 0.15);
             position: relative;
         }
         .close-modal {
             position: absolute;
-            top: 15px; right: 20px;
-            font-size: 1.5rem;
-            color: #a0aec0;
+            top: 20px; right: 20px;
+            font-size: 1.8rem;
+            color: #6b7280;
             cursor: pointer;
             background: none;
             border: none;
+            line-height: 1;
         }
         .close-modal:hover { color: #fff; }
-        .auth-box h2 { margin-top: 0; color: #b388ff; margin-bottom: 20px; }
+        .auth-box h2 { margin-top: 0; color: #fff; font-weight: 800; font-size: 1.8rem; }
+        .auth-box h3 { margin-top: 0; color: #fff; font-weight: 700; }
         
         .auth-tabs {
             display: flex;
             justify-content: space-around;
             margin-bottom: 25px;
-            border-bottom: 1px solid #23283d;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
         .tab-btn {
             background: none;
             border: none;
-            color: #a0aec0;
-            padding: 10px;
-            font-size: 1.1rem;
+            color: #6b7280;
+            padding: 12px;
+            font-size: 1rem;
+            font-weight: 600;
             cursor: pointer;
+            transition: color 0.2s;
         }
         .tab-btn.active {
-            color: white;
+            color: #fff;
             border-bottom: 2px solid var(--accent-color);
-            font-weight: bold;
         }
         
-        /* Pestañas específicas de Tarjetas de Regalo */
-        .tab-btn.steam-tab.active { border-bottom: 2px solid #107c10; color: #00ffa3; }
-        .tab-btn.discord-tab.active { border-bottom: 2px solid var(--discord-color); color: #b388ff; }
+        .tab-btn.steam-tab.active { border-bottom: 2px solid #00ffa3; color: #00ffa3; }
+        .tab-btn.discord-tab.active { border-bottom: 2px solid var(--discord-color); color: #a5b4fc; }
 
         .auth-form {
             display: none;
             flex-direction: column;
-            gap: 15px;
+            gap: 18px;
         }
         .auth-form.active { display: flex; }
-        .auth-form input {
-            background-color: #0d0e15;
-            border: 1px solid #23283d;
-            padding: 12px;
-            border-radius: 6px;
+        .auth-form input, .auth-form select {
+            background-color: #06070d;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 14px;
+            border-radius: 8px;
             color: white;
             font-size: 1rem;
+            transition: border-color 0.2s;
         }
         .auth-form input:focus {
             outline: none;
             border-color: var(--accent-color);
+            box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
         }
-        .auth-box button[type="submit"] {
-            background-color: var(--accent-color);
+        .auth-box button[type="submit"], .btn-staff-action {
+            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
             color: white;
             border: none;
-            padding: 12px;
-            border-radius: 6px;
+            padding: 14px;
+            border-radius: 8px;
             font-size: 1rem;
-            font-weight: bold;
+            font-weight: 700;
             cursor: pointer;
+            transition: opacity 0.2s;
         }
-        .auth-box button[type="submit"]:hover { background-color: #621b9e; }
+        .auth-box button[type="submit"]:hover { opacity: 0.9; }
         
         .security-note {
-            font-size: 0.75rem;
-            color: #ffb74d;
-            margin-top: 10px;
+            font-size: 0.8rem;
+            color: #f59e0b;
+            margin-top: 5px;
             text-align: left;
-            line-height: 1.3;
+            line-height: 1.4;
+            background: rgba(245, 158, 11, 0.05);
+            padding: 10px;
+            border-radius: 6px;
+            border-left: 2px solid #f59e0b;
         }
         .giftcard-desc {
             font-size: 0.9rem;
-            color: #a0aec0;
+            color: #9ca3af;
             text-align: left;
-            background: #0d0e15;
-            padding: 12px;
-            border-radius: 6px;
-            margin-bottom: 5px;
+            background: #06070d;
+            padding: 14px;
+            border-radius: 8px;
+            line-height: 1.4;
             border-left: 3px solid var(--accent-color);
+        }
+        
+        /* Estilos del Modo Staff */
+        .staff-action-btn {
+            background: rgba(259, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            color: #f87171;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .staff-action-btn:hover {
+            background: var(--danger-color);
+            color: white;
+        }
+        .panel-danger {
+            border: 1px solid rgba(239, 68, 68, 0.3) !important;
+            box-shadow: 0 0 30px rgba(239, 68, 68, 0.1) !important;
         }
     </style>
 </head>
 <body>
 
-    <!-- Ventana de Login / Registro Obligatoria -->
+    <div id="banOverlay" class="auth-overlay" style="display: none; background-color: #000;">
+        <div class="auth-box" style="border-color: var(--danger-color); text-align: center;">
+            <h1 style="color: var(--danger-color); font-size: 3rem; margin: 0;">✖ BANEADO ✖</h1>
+            <h3 style="color: #fff; margin-top: 20px;">Tu cuenta ha sido suspendida de la tienda de EclipseMC</h3>
+            <p style="color: #9ca3af; font-size: 0.95rem;">Razón: Intento fraudulento de validación de códigos de tarjetas falsas, usadas o alteradas.</p>
+            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 30px;">Si crees que esto es un error, apela abriendo un Ticket formal en el Discord del Servidor.</p>
+        </div>
+    </div>
+
     <div id="authOverlay" class="auth-overlay">
         <div class="auth-box">
             <h2>🌙 EclipseMC</h2>
@@ -263,14 +383,12 @@
                 <button id="tabRegister" class="tab-btn active" onclick="switchTab('register')">/register</button>
             </div>
 
-            <!-- Formulario Login -->
             <form id="loginForm" class="auth-form" onsubmit="handleAuth(event, 'login')">
                 <input type="text" id="loginUser" placeholder="Usuario de Minecraft" required>
                 <input type="password" id="loginPass" placeholder="Contraseña" required>
                 <button type="submit">Ingresar a la Tienda</button>
             </form>
 
-            <!-- Formulario Registro -->
             <form id="registerForm" class="auth-form active" onsubmit="handleAuth(event, 'register')">
                 <input type="text" id="registerUser" placeholder="Usuario de Minecraft" required>
                 <input type="password" id="registerPass" placeholder="Contraseña del Servidor o nueva" required>
@@ -281,114 +399,131 @@
     </div>
 
 
-    <!-- NUEVA VENTANA: SELECCIÓN Y CANJE DE TARJETAS DE REGALO -->
     <div id="payOverlay" class="auth-overlay" style="display: none;">
         <div class="auth-box">
             <button class="close-modal" onclick="closePayModal()">×</button>
-            <h3 style="margin-top:0; color:#fff;">Método de Pago: Tarjeta</h3>
-            <p style="font-size:0.85rem; margin-top:-10px; color:#00ffa3;">Adquiriendo: <span id="pendingProduct">Ninguno</span></p>
+            <h3>Método de Pago: Tarjeta</h3>
+            <p style="font-size:0.85rem; margin-top:-10px; color:var(--success-color); font-weight: 600;">Adquiriendo: <span id="pendingProduct">Ninguno</span></p>
             
-            <!-- Pestañas de Selección de Tarjeta -->
             <div class="auth-tabs">
                 <button id="tabSteam" class="tab-btn steam-tab active" onclick="switchPayTab('steam')">🕹️ Steam Card</button>
                 <button id="tabNitro" class="tab-btn discord-tab" onclick="switchPayTab('nitro')">🔮 Discord Nitro</button>
             </div>
 
-            <!-- Formulario Tarjeta Steam -->
             <form id="steamForm" class="auth-form active" onsubmit="processGiftCard(event, 'Steam')">
                 <div class="giftcard-desc">
-                    <strong>Instrucciones:</strong> Compra una tarjeta digital o física de Steam. Pega el código de activación aquí abajo para validar tu rango en el servidor.
+                    <strong>Instrucciones:</strong> Compra una tarjeta digital o física de Steam. Pega el código de activación aquí abajo para validar tu rango.
                 </div>
-                <input type="text" id="steamCode" placeholder="CÓDIGO DE LA TARJETA (Ej: A1B2C-D3E4F-G5H6I)" required>
-                <button type="submit" style="background-color: #107c10;">Enviar y Activar Rango</button>
+                <input type="text" id="steamCode" placeholder="CÓDIGO (Ej: A1B2C-D3E4F-G5H6I)" required>
+                <button type="submit" style="background: #107c10; box-shadow: 0 4px 12px rgba(16,124,16,0.3);">Enviar y Activar Rango</button>
             </form>
 
-            <!-- Formulario Código Discord Nitro -->
             <form id="nitroForm" class="auth-form" onsubmit="processGiftCard(event, 'Discord Nitro')">
                 <div class="giftcard-desc" style="border-left-color: var(--discord-color);">
-                    <strong>Instrucciones:</strong> Compra un enlace de regalo (Gift Link) de Discord Nitro mensual. Pega el enlace completo o el código del regalo aquí abajo.
+                    <strong>Instrucciones:</strong> Compra un enlace de regalo de Discord Nitro mensual. Pega el enlace completo aquí abajo.
                 </div>
                 <input type="text" id="nitroCode" placeholder="Enlace de Regalo (Ej: discord.gift/xxxxxx)" required>
-                <button type="submit" style="background-color: var(--discord-color);">Enviar y Activar Rango</button>
+                <button type="submit" style="background: var(--discord-color); box-shadow: 0 4px 12px rgba(88,101,242,0.3);">Enviar y Activar Rango</button>
             </form>
             
-            <p class="security-note" style="color: #ff4a4a; text-align: center;">🛑 Intentar enviar códigos falsos o usados resultará en un baneo permanente de EclipseMC.</p>
+            <p class="security-note" style="color: var(--danger-color); text-align: center; background: rgba(239,68,68,0.05); border-left-color: var(--danger-color);">🛑 Intentar enviar códigos falsos o usados resultará en un baneo permanente de EclipseMC.</p>
         </div>
     </div>
 
 
-    <!-- Barra Superior de Usuario -->
+    <div id="staffOverlay" class="auth-overlay" style="display: none;">
+        <div class="auth-box panel-danger" style="max-width: 480px;">
+            <button class="close-modal" onclick="closeStaffModal()">×</button>
+            <h2 style="color: var(--danger-color); display: flex; align-items: center; justify-content: center; gap: 8px;">⚙️ Panel Administrativo</h2>
+            <p style="color: #9ca3af; font-size: 0.85rem; margin-top: -10px;">Gestión y moderación global de EclipseMC Store</p>
+            
+            <div style="background: #06070d; padding: 15px; border-radius: 10px; text-align: left; margin-bottom: 15px;">
+                <h4 style="margin: 0 0 10px 0; color: #fff;">🔨 Banear Usuario de la Tienda</h4>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="banTargetInput" placeholder="Nick del jugador" style="flex: 1; padding: 10px; font-size: 0.9rem; background: #111322; border: 1px solid #23283d; color: white; border-radius: 6px;">
+                    <button onclick="executeBanPlayer()" class="btn-staff-action" style="background: var(--danger-color); padding: 10px 15px;">Banear</button>
+                </div>
+            </div>
+
+            <div style="background: #06070d; padding: 15px; border-radius: 10px; text-align: left; display: flex; flex-direction: column; gap: 12px;">
+                <h4 style="margin: 0; color: #fff;">🧹 Limpieza de Datos Visuales</h4>
+                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                    <button onclick="clearRecentPurchases()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Borrar Compras Recientes</button>
+                    <button onclick="clearTopBuyers()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Resetear Top Compradores</button>
+                </div>
+            </div>
+            
+            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 15px; text-align: center;">Los cambios toman efecto de manera inmediata para los navegadores locales.</p>
+        </div>
+    </div>
+
+
     <div class="user-bar">
-        <span>Conectado como: <strong id="userDisplay" style="color: #00ffa3;">Jugador</strong></span>
-        <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        <div class="user-info">
+            <span>Conectado como: <strong id="userDisplay" style="color: #a78bfa;">Jugador</strong></span>
+            <span id="staffIndicator" class="user-badge" style="display: none; background: rgba(139,92,246,0.15); color: #c084fc; border: 1px solid var(--accent-color);">STAFF ACTIVADO</span>
+        </div>
+        <div class="btn-group">
+            <button id="staffTriggerBtn" class="staff-btn" onclick="openStaffModal()">Modo Staff</button>
+            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
+        </div>
     </div>
 
     <header>
         <h1>🌙 EclipseMC Store</h1>
-        <p>Apoya al servidor y consigue ventajas exclusivas</p>
+        <p>Apoya el desarrollo del servidor y adquiere beneficios exclusivos globales</p>
     </header>
 
-    <!-- Sección de Productos -->
     <div class="container">
-        <!-- RANGO VIP -->
         <div class="card">
             <h2>Rango VIP</h2>
-            <div class="price">$500 / mes</div>
+            <div class="price">$500 <span style="font-size: 1rem; color: #6b7280; font-weight: normal;">/ mes</span></div>
             <ul class="features">
-                <li>Prefijo [VIP] en el chat</li>
-                <li>Acceso a /fly en el Lobby</li>
-                <li>Entrada con el servidor lleno</li>
-                <li>Kit VIP exclusivo semanal</li>
+                <li>Prefijo [VIP] exclusivo en el chat</li>
+                <li>Acceso completo a /fly en el Lobby</li>
+                <li>Entrada prioritaria con servidor lleno</li>
+                <li>Kit VIP único semanal</li>
             </ul>
             <button class="btn-buy" onclick="openPayModal('Rango VIP', 500)">Comprar Rango</button>
         </div>
 
-        <!-- RANGO ECLIPSE -->
-        <div class="card" style="border-color: #b388ff;">
+        <div class="card" style="border-color: rgba(167, 139, 250, 0.45);">
             <h2>Rango ECLIPSE</h2>
-            <div class="price">$1200 / mes</div>
+            <div class="price">$1200 <span style="font-size: 1rem; color: #6b7280; font-weight: normal;">/ mes</span></div>
             <ul class="features">
-                <li>Prefijo ⭐ [ECLIPSE]</li>
-                <li>Todos los beneficios del VIP</li>
-                <li>Acceso a /fly en todas partes</li>
-                <li>3 Llaves de Caja Mythic al mes</li>
+                <li>Prefijo ⭐ [ECLIPSE] animado</li>
+                <li>Todos los beneficios del rango VIP</li>
+                <li>Acceso a /fly en todas las modalidades</li>
+                <li>3 Llaves de Caja Mythic mensuales</li>
             </ul>
             <button class="btn-buy" onclick="openPayModal('Rango ECLIPSE', 1200)">Comprar Rango</button>
         </div>
     </div>
 
-    <!-- SECCIONES DE ESTADÍSTICAS REALES -->
     <div class="stats-section">
         
-        <!-- Historial de compras recientes dinámico -->
         <div class="stats-box">
             <h3>🛒 Compras Recientes</h3>
-            <div id="recentPurchasesContainer">
-                <!-- Se rellena con JavaScript -->
-            </div>
+            <div id="recentPurchasesContainer"></div>
         </div>
 
-        <!-- Tabla de Mayores Compradores dinámica -->
         <div class="stats-box">
             <h3>🏆 Mayores Compradores</h3>
-            <div id="topBuyersContainer">
-                <!-- Se rellena con JavaScript -->
-            </div>
+            <div id="topBuyersContainer"></div>
         </div>
 
     </div>
 
-    <!-- Lógica de control en JavaScript -->
     <script>
-        // Variables globales para rastrear lo que el usuario quiere comprar temporalmente
+        const STAFF_PASSWORD = "admin123"; // CAMBIA TU CLAVE AQUÍ SI LO DESEAS
+
         let currentPendingProduct = "";
         let currentPendingPrice = 0;
 
-        // Cambiar entre pestañas de Login y Registro
         function switchTab(tab) {
             const savedUser = localStorage.getItem('mc_user');
             if (tab === 'login' && !savedUser) {
-                alert('No hay ninguna cuenta registrada en este navegador. Por favor usa /register primero.');
+                alert('No hay ninguna cuenta registrada. Por favor usa /register primero.');
                 return;
             }
 
@@ -411,7 +546,6 @@
             }
         }
 
-        // Cambiar entre pestañas de tipo de Tarjeta de Regalo
         function switchPayTab(method) {
             const tabSteam = document.getElementById('tabSteam');
             const tabNitro = document.getElementById('tabNitro');
@@ -432,7 +566,6 @@
             }
         }
 
-        // Abrir y cerrar la pasarela de pagos interna de Tarjetas
         function openPayModal(productName, price) {
             currentPendingProduct = productName;
             currentPendingPrice = price;
@@ -442,39 +575,91 @@
 
         function closePayModal() {
             document.getElementById('payOverlay').style.display = 'none';
-            // Limpiar inputs
             document.getElementById('steamCode').value = "";
             document.getElementById('nitroCode').value = "";
         }
 
-        // Procesar el envío de la tarjeta de regalo
+        /* MANEJO MODO STAFF EXCLUSIVO */
+        function openStaffModal() {
+            const isAlreadyStaff = sessionStorage.getItem('isStaff') === 'true';
+            
+            if (isAlreadyStaff) {
+                document.getElementById('staffOverlay').style.display = 'flex';
+            } else {
+                const accessPass = prompt("🔑 Ingrese la contraseña del Staff de EclipseMC:");
+                if (accessPass === STAFF_PASSWORD) {
+                    sessionStorage.setItem('isStaff', 'true');
+                    document.getElementById('staffIndicator').style.display = 'inline-block';
+                    document.getElementById('staffOverlay').style.display = 'flex';
+                } else if (accessPass !== null) {
+                    alert("❌ Contraseña incorrecta de acceso Staff.");
+                }
+            }
+        }
+
+        function closeStaffModal() {
+            document.getElementById('staffOverlay').style.display = 'none';
+        }
+
+        function executeBanPlayer() {
+            const target = document.getElementById('banTargetInput').value.trim();
+            if(!target) return;
+
+            let bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
+            if(!bannedList.includes(target.toLowerCase())) {
+                bannedList.push(target.toLowerCase());
+                localStorage.setItem('shop_banned_users', JSON.stringify(bannedList));
+                alert(`🔨 El jugador "${target}" ha sido completamente baneado de la tienda.`);
+                document.getElementById('banTargetInput').value = "";
+                closeStaffModal();
+                checkBanStatus();
+            } else {
+                alert("Este jugador ya se encuentra en la lista de baneados.");
+            }
+        }
+
+        function clearRecentPurchases() {
+            if(confirm("¿Seguro que deseas borrar el historial de compras recientes de la pantalla?")) {
+                localStorage.removeItem('shop_recent_purchases');
+                updateStatsUI();
+                closeStaffModal();
+            }
+        }
+
+        function clearTopBuyers() {
+            if(confirm("¿Seguro que deseas resetear la tabla completa de mayores compradores a $0?")) {
+                localStorage.removeItem('shop_top_buyers');
+                updateStatsUI();
+                closeStaffModal();
+            }
+        }
+
+        function checkBanStatus() {
+            const currentUser = localStorage.getItem('currentUser');
+            let bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
+            
+            if(currentUser && bannedList.includes(currentUser.toLowerCase())) {
+                document.getElementById('banOverlay').style.display = 'flex';
+                if(document.getElementById('authOverlay')) document.getElementById('authOverlay').style.display = 'none';
+                if(document.getElementById('payOverlay')) document.getElementById('payOverlay').style.display = 'none';
+                if(document.getElementById('staffOverlay')) document.getElementById('staffOverlay').style.display = 'none';
+            }
+        }
+
         function processGiftCard(event, cardType) {
             event.preventDefault();
             const currentUser = localStorage.getItem('currentUser') || "Jugador";
-            let codeValue = "";
-
-            if (cardType === 'Steam') {
-                codeValue = document.getElementById('steamCode').value.trim();
-            } else {
-                codeValue = document.getElementById('nitroCode').value.trim();
-            }
+            let codeValue = cardType === 'Steam' ? document.getElementById('steamCode').value.trim() : document.getElementById('nitroCode').value.trim();
 
             if (!codeValue) return;
 
-            // 1. Mostrar confirmación visual al usuario
-            alert(`¡Procesando! Tu código de ${cardType} ha sido enviado al equipo de EclipseMC.\nEl rango se activará en tu cuenta de Minecraft (${currentUser}) tras validar los fondos.`);
-            
-            // 2. Registrar estadísticamente la compra en las listas locales del navegador
+            alert(`¡Procesando! Tu código de ${cardType} ha sido enviado a la administración de EclipseMC.\nEl rango se activará en tu cuenta (${currentUser}) luego de verificar su validez.`);
             registerPurchase(currentPendingProduct, currentPendingPrice);
-            
-            // 3. Cerrar ventana flotante
             closePayModal();
         }
 
-        // Manejo del sistema de autenticación
         function handleAuth(event, type) {
             event.preventDefault();
-            
             if (type === 'register') {
                 const user = document.getElementById('registerUser').value.trim();
                 const pass = document.getElementById('registerPass').value;
@@ -482,13 +667,12 @@
                 if(user && pass) {
                     localStorage.setItem('mc_user', user);
                     localStorage.setItem('mc_pass', pass);
-                    alert('¡Registro exitoso para ' + user + '!');
+                    alert('¡Registro exitoso!');
                     loadStore(user);
                 }
             } else if (type === 'login') {
                 const user = document.getElementById('loginUser').value.trim();
                 const pass = document.getElementById('loginPass').value;
-                
                 const savedUser = localStorage.getItem('mc_user');
                 const savedPass = localStorage.getItem('mc_pass');
 
@@ -505,44 +689,34 @@
             localStorage.setItem('currentUser', username);
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('userDisplay').innerText = username;
+            checkBanStatus();
             updateStatsUI();
         }
 
         function logout() {
             localStorage.removeItem('isLoggedIn');
             localStorage.removeItem('currentUser');
+            sessionStorage.removeItem('isStaff');
             location.reload();
         }
 
-        // REGISTRO DE COMPRAS REALES Y DINÁMICAS
         function registerPurchase(productName, price) {
             const currentUser = localStorage.getItem('currentUser') || "Invitado";
             
-            // 1. Guardar en Compras Recientes
             let recent = JSON.parse(localStorage.getItem('shop_recent_purchases')) || [];
-            const newPurchase = {
-                name: currentUser,
-                product: productName,
-                time: "Ahora mismo"
-            };
+            const newPurchase = { name: currentUser, product: productName, time: "Ahora mismo" };
             recent.unshift(newPurchase);
             if(recent.length > 5) recent.pop();
             localStorage.setItem('shop_recent_purchases', JSON.stringify(recent));
 
-            // 2. Guardar/Sumar en Mayores Compradores
             let tops = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
-            if(tops[currentUser]) {
-                tops[currentUser] += price;
-            } else {
-                tops[currentUser] = price;
-            }
+            tops[currentUser] = (tops[currentUser] || 0) + price;
             localStorage.setItem('shop_top_buyers', JSON.stringify(tops));
 
             updateStatsUI();
         }
 
         function updateStatsUI() {
-            // Renderizar Compras Recientes
             const recentContainer = document.getElementById('recentPurchasesContainer');
             let recent = JSON.parse(localStorage.getItem('shop_recent_purchases')) || [];
             
@@ -553,15 +727,13 @@
                     <div class="stat-item">
                         <span class="buyer-name">${p.name}</span>
                         <span class="buyer-product">${p.product}</span>
-                        <span style="color: #a0aec0; font-size: 0.85rem;">${p.time}</span>
+                        <span style="color: #6b7280; font-size: 0.85rem;">${p.time}</span>
                     </div>
                 `).join('');
             }
 
-            // Renderizar Mayores Compradores
             const topContainer = document.getElementById('topBuyersContainer');
             let topsObj = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
-            
             let sortedTops = [];
             for (let player in topsObj) {
                 sortedTops.push({ name: player, amount: topsObj[player] });
@@ -584,6 +756,10 @@
             const savedUser = localStorage.getItem('mc_user');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
 
+            if (sessionStorage.getItem('isStaff') === 'true') {
+                document.getElementById('staffIndicator').style.display = 'inline-block';
+            }
+
             if (!savedUser) {
                 document.getElementById('tabLogin').style.display = 'none';
                 switchTab('register');
@@ -596,6 +772,7 @@
                 const user = localStorage.getItem('currentUser');
                 document.getElementById('authOverlay').style.display = 'none';
                 document.getElementById('userDisplay').innerText = user;
+                checkBanStatus();
             }
 
             updateStatsUI();
