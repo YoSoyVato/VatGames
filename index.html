@@ -26,7 +26,6 @@
             background-color: #06070a;
             padding: 10px 20px;
             display: flex;
-            justify-content:间;
             justify-content: space-between;
             align-items: center;
             font-size: 0.9rem;
@@ -121,6 +120,7 @@
             border-radius: 12px;
             padding: 20px;
             text-align: left;
+            min-height: 150px;
         }
         .stats-box h3 {
             margin-top: 0;
@@ -139,8 +139,9 @@
         .buyer-name { color: #fff; font-weight: bold; }
         .buyer-product { color: var(--success-color); }
         .buyer-amount { color: #ffd700; font-weight: bold; }
+        .no-data { color: #718096; text-align: center; padding: 20px 0; font-style: italic; }
 
-        /* Sistema Anti-Intrusos del Modal Auth */
+        /* Sistema de Modal Auth */
         .auth-overlay {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -159,7 +160,7 @@
             max-width: 400px;
             box-shadow: 0 0 30px rgba(121, 40, 202, 0.3);
         }
-        .auth-box h2 { margin-top: 0; color: #b388ff; }
+        .auth-box h2 { margin-top: 0; color: #b388ff; margin-bottom: 20px; }
         .auth-tabs {
             display: flex;
             justify-content: space-around;
@@ -212,6 +213,7 @@
             font-size: 0.75rem;
             color: #ffb74d;
             margin-top: 10px;
+            text-align: left;
         }
     </style>
 </head>
@@ -221,20 +223,22 @@
     <div id="authOverlay" class="auth-overlay">
         <div class="auth-box">
             <h2>🌙 EclipseMC</h2>
-            <div class="auth-tabs">
-                <button class="tab-btn active" onclick="switchTab('login')">/login</button>
-                <button class="tab-btn" onclick="switchTab('register')">/register</button>
+            
+            <!-- Las pestañas cambiarán dinámicamente si hay o no usuario registrado -->
+            <div class="auth-tabs" id="authTabsContainer">
+                <button id="tabLogin" class="tab-btn" onclick="switchTab('login')">/login</button>
+                <button id="tabRegister" class="tab-btn active" onclick="switchTab('register')">/register</button>
             </div>
 
             <!-- Formulario Login -->
-            <form id="loginForm" class="auth-form active" onsubmit="handleAuth(event, 'login')">
+            <form id="loginForm" class="auth-form" onsubmit="handleAuth(event, 'login')">
                 <input type="text" id="loginUser" placeholder="Usuario de Minecraft" required>
                 <input type="password" id="loginPass" placeholder="Contraseña" required>
                 <button type="submit">Ingresar a la Tienda</button>
             </form>
 
             <!-- Formulario Registro -->
-            <form id="registerForm" class="auth-form" onsubmit="handleAuth(event, 'register')">
+            <form id="registerForm" class="auth-form active" onsubmit="handleAuth(event, 'register')">
                 <input type="text" id="registerUser" placeholder="Usuario de Minecraft" required>
                 <input type="password" id="registerPass" placeholder="Contraseña del Servidor o nueva" required>
                 <p class="security-note">⚠️ Por seguridad, si usas una contraseña nueva, no la olvides. La necesitarás para futuras compras.</p>
@@ -243,7 +247,7 @@
         </div>
     </div>
 
-    <!-- Barra Superior de Usuario (Aparece tras loguearse) -->
+    <!-- Barra Superior de Usuario -->
     <div class="user-bar">
         <span>Conectado como: <strong id="userDisplay" style="color: #00ffa3;">Jugador</strong></span>
         <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
@@ -266,7 +270,8 @@
                 <li>Entrada con el servidor lleno</li>
                 <li>Kit VIP exclusivo semanal</li>
             </ul>
-            <a href="TU_LINK_DE_PAGO_AQUÍ" target="_blank" class="btn-buy">Comprar Rango</a>
+            <!-- Se añade la función 'registerPurchase' para capturar la compra antes de ir al enlace externo -->
+            <a href="TU_LINK_DE_PAGO_AQUÍ" target="_blank" class="btn-buy" onclick="registerPurchase('Rango VIP', 500)">Comprar Rango</a>
         </div>
 
         <!-- RANGO ECLIPSE -->
@@ -279,47 +284,26 @@
                 <li>Acceso a /fly en todas partes</li>
                 <li>3 Llaves de Caja Mythic al mes</li>
             </ul>
-            <a href="TU_LINK_DE_PAGO_AQUÍ" target="_blank" class="btn-buy">Comprar Rango</a>
+            <a href="TU_LINK_DE_PAGO_AQUÍ" target="_blank" class="btn-buy" onclick="registerPurchase('Rango ECLIPSE', 1200)">Comprar Rango</a>
         </div>
     </div>
 
-    <!-- SECCIONES NUEVAS: COMPRAS Y TOPS -->
+    <!-- SECCIONES DE ESTADÍSTICAS REALES -->
     <div class="stats-section">
         
-        <!-- Historial de compras recientes (Edítalo manualmente aquí cuando vendas) -->
+        <!-- Historial de compras recientes dinámico -->
         <div class="stats-box">
             <h3>🛒 Compras Recientes</h3>
-            <div class="stat-item">
-                <span class="buyer-name">xX_Juan_Xx</span>
-                <span class="buyer-product">Rango ECLIPSE</span>
-                <span style="color: #a0aec0; font-size: 0.85rem;">Hace 10 min</span>
-            </div>
-            <div class="stat-item">
-                <span class="buyer-name">MineCraftero99</span>
-                <span class="buyer-product">Rango VIP</span>
-                <span style="color: #a0aec0; font-size: 0.85rem;">Hace 2 horas</span>
-            </div>
-            <div class="stat-item">
-                <span class="buyer-name">GamerGirl_206</span>
-                <span class="buyer-product">Kit Mythic x5</span>
-                <span style="color: #a0aec0; font-size: 0.85rem;">Ayer</span>
+            <div id="recentPurchasesContainer">
+                <!-- Se rellena con JavaScript -->
             </div>
         </div>
 
-        <!-- Tabla de Mayores Compradores (Edítalo manualmente) -->
+        <!-- Tabla de Mayores Compradores dinámica -->
         <div class="stats-box">
             <h3>🏆 Mayores Compradores</h3>
-            <div class="stat-item">
-                <div><span>1. </span><span class="buyer-name">ElProInmortal</span></div>
-                <span class="buyer-amount">$3400</span>
-            </div>
-            <div class="stat-item">
-                <div><span>2. </span><span class="buyer-name">xX_Juan_Xx</span></div>
-                <span class="buyer-amount">$1200</span>
-            </div>
-            <div class="stat-item">
-                <div><span>3. </span><span class="buyer-name">Steve_Donador</span></div>
-                <span class="buyer-amount">$1000</span>
+            <div id="topBuyersContainer">
+                <!-- Se rellena con JavaScript -->
             </div>
         </div>
 
@@ -327,24 +311,35 @@
 
     <!-- Lógica de control en JavaScript -->
     <script>
-        // Pestañas del Modal (Login / Register)
+        // Cambiar entre pestañas de Login y Registro
         function switchTab(tab) {
-            const tabs = document.querySelectorAll('.tab-btn');
-            const forms = document.querySelectorAll('.auth-form');
+            const savedUser = localStorage.getItem('mc_user');
+            // Bloqueo estricto: Si no hay usuario registrado, no puede ir a login
+            if (tab === 'login' && !savedUser) {
+                alert('No hay ninguna cuenta registrada en este navegador. Por favor usa /register primero.');
+                return;
+            }
+
+            const tabLogin = document.getElementById('tabLogin');
+            const tabRegister = document.getElementById('tabRegister');
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
             
-            tabs.forEach(t => t.classList.remove('active'));
-            forms.forEach(f => f.classList.remove('active'));
+            tabLogin.classList.remove('active');
+            tabRegister.classList.remove('active');
+            loginForm.classList.remove('active');
+            registerForm.classList.remove('active');
 
             if(tab === 'login') {
-                tabs[0].classList.add('active');
-                document.getElementById('loginForm').classList.add('active');
+                tabLogin.classList.add('active');
+                loginForm.classList.add('active');
             } else {
-                tabs[1].classList.add('active');
-                document.getElementById('registerForm').classList.add('active');
+                tabRegister.classList.add('active');
+                registerForm.classList.add('active');
             }
         }
 
-        // Manejo del registro y login local
+        // Manejo del sistema de autenticación
         function handleAuth(event, type) {
             event.preventDefault();
             
@@ -354,7 +349,7 @@
                 
                 if(user && pass) {
                     localStorage.setItem('mc_user', user);
-                    localStorage.setItem('mc_pass', pass); // Se guarda localmente
+                    localStorage.setItem('mc_pass', pass);
                     alert('¡Registro exitoso para ' + user + '!');
                     loadStore(user);
                 }
@@ -365,18 +360,10 @@
                 const savedUser = localStorage.getItem('mc_user');
                 const savedPass = localStorage.getItem('mc_pass');
 
-                // Si no hay usuarios registrados, creamos uno de prueba por defecto
-                if(!savedUser) {
-                    localStorage.setItem('mc_user', user);
-                    localStorage.setItem('mc_pass', pass);
-                    loadStore(user);
-                    return;
-                }
-
-                if(user.toLowerCase() === savedUser.toLowerCase() && pass === savedPass) {
-                    loadStore(user);
+                if(savedUser && user.toLowerCase() === savedUser.toLowerCase() && pass === savedPass) {
+                    loadStore(savedUser); // Mantiene las mayúsculas originales guardadas
                 } else {
-                    alert('Usuario o contraseña incorrectos. Si no te has registrado ve a /register.');
+                    alert('Usuario o contraseña incorrectos.');
                 }
             }
         }
@@ -386,6 +373,7 @@
             localStorage.setItem('currentUser', username);
             document.getElementById('authOverlay').style.display = 'none';
             document.getElementById('userDisplay').innerText = username;
+            updateStatsUI();
         }
 
         function logout() {
@@ -394,13 +382,100 @@
             location.reload();
         }
 
-        // Al cargar la página comprueba si ya inició sesión antes
+        // REGISTRO DE COMPRAS REALES Y DINÁMICAS
+        function registerPurchase(productName, price) {
+            const currentUser = localStorage.getItem('currentUser') || "Invitado";
+            
+            // 1. Guardar en Compras Recientes
+            let recent = JSON.parse(localStorage.getItem('shop_recent_purchases')) || [];
+            const newPurchase = {
+                name: currentUser,
+                product: productName,
+                time: "Ahora mismo"
+            };
+            recent.unshift(newPurchase); // Agrega al principio
+            if(recent.length > 5) recent.pop(); // Limita a los últimos 5
+            localStorage.setItem('shop_recent_purchases', JSON.stringify(recent));
+
+            // 2. Guardar/Sumar en Mayores Compradores
+            let tops = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
+            if(tops[currentUser]) {
+                tops[currentUser] += price;
+            } else {
+                tops[currentUser] = price;
+            }
+            localStorage.setItem('shop_top_buyers', JSON.stringify(tops));
+
+            // Refrescar la interfaz para ver el cambio instantáneo antes de ir al link de pago
+            updateStatsUI();
+        }
+
+        // Función para actualizar las listas dinámicas en pantalla
+        function updateStatsUI() {
+            // Renderizar Compras Recientes
+            const recentContainer = document.getElementById('recentPurchasesContainer');
+            let recent = JSON.parse(localStorage.getItem('shop_recent_purchases')) || [];
+            
+            if(recent.length === 0) {
+                recentContainer.innerHTML = '<div class="no-data">No hay compras recientes aún</div>';
+            } else {
+                recentContainer.innerHTML = recent.map(p => `
+                    <div class="stat-item">
+                        <span class="buyer-name">${p.name}</span>
+                        <span class="buyer-product">${p.product}</span>
+                        <span style="color: #a0aec0; font-size: 0.85rem;">${p.time}</span>
+                    </div>
+                `).join('');
+            }
+
+            // Renderizar Mayores Compradores (Ordenados de mayor a menor)
+            const topContainer = document.getElementById('topBuyersContainer');
+            let topsObj = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
+            
+            // Convertir el objeto en una lista ordered array
+            let sortedTops = [];
+            for (let player in topsObj) {
+                sortedTops.push({ name: player, amount: topsObj[player] });
+            }
+            sortedTops.sort((a, b) => b.amount - a.amount); // Ordenar
+
+            if(sortedTops.length === 0) {
+                topContainer.innerHTML = '<div class="no-data">Aún no hay registros de compradores</div>';
+            } else {
+                topContainer.innerHTML = sortedTops.slice(0, 5).map((p, index) => `
+                    <div class="stat-item">
+                        <div><span>${index + 1}. </span><span class="buyer-name">${p.name}</span></div>
+                        <span class="buyer-amount">$${p.amount}</span>
+                    </div>
+                `).join('');
+            }
+        }
+
+        // Control de inicio al cargar la página
         window.onload = function() {
-            if(localStorage.getItem('isLoggedIn') === 'true') {
+            const savedUser = localStorage.getItem('mc_user');
+            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
+
+            // Comportamiento del Modal según si existe cuenta previa
+            if (!savedUser) {
+                // PRIMERA VEZ: Oculta el botón de login por completo para obligar a registrarse
+                document.getElementById('tabLogin').style.display = 'none';
+                switchTab('register');
+            } else {
+                // YA TIENE CUENTA: Habilita el login y lo pone por defecto
+                document.getElementById('tabLogin').style.display = 'block';
+                switchTab('login');
+            }
+
+            // Si ya está logueado, saltar el modal
+            if(isLoggedIn && savedUser) {
                 const user = localStorage.getItem('currentUser');
                 document.getElementById('authOverlay').style.display = 'none';
                 document.getElementById('userDisplay').innerText = user;
             }
+
+            // Cargar datos en las tablas
+            updateStatsUI();
         }
     </script>
 </body>
