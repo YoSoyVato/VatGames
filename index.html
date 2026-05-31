@@ -15,6 +15,7 @@
             --steam-color: #1b2838;
             --discord-color: #5865F2;
             --danger-color: #ef4444;
+            --warning-color: #f59e0b;
         }
 
         body {
@@ -249,6 +250,8 @@
             max-width: 440px;
             box-shadow: 0 0 40px rgba(139, 92, 246, 0.15);
             position: relative;
+            max-height: 85vh;
+            overflow-y: auto;
         }
         .close-modal {
             position: absolute;
@@ -344,22 +347,42 @@
         }
         
         /* Estilos del Modo Staff */
-        .staff-action-btn {
-            background: rgba(259, 68, 68, 0.1);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            color: #f87171;
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 4px;
-            cursor: pointer;
-        }
-        .staff-action-btn:hover {
-            background: var(--danger-color);
-            color: white;
-        }
         .panel-danger {
-            border: 1px solid rgba(239, 68, 68, 0.3) !important;
-            box-shadow: 0 0 30px rgba(239, 68, 68, 0.1) !important;
+            border: 1px solid rgba(139, 92, 246, 0.3) !important;
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15) !important;
+        }
+        .staff-section-box {
+            background: #06070d; 
+            padding: 15px; 
+            border-radius: 10px; 
+            text-align: left; 
+            margin-bottom: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+        }
+        .staff-section-box h4 {
+            margin: 0 0 10px 0; 
+            color: #fff;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .staff-input-group {
+            display: flex; 
+            gap: 10px;
+        }
+        .staff-input-group input {
+            flex: 1; 
+            padding: 10px; 
+            font-size: 0.9rem; 
+            background: #111322; 
+            border: 1px solid #23283d; 
+            color: white; 
+            border-radius: 6px;
+        }
+        .staff-input-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
         }
     </style>
 </head>
@@ -431,29 +454,63 @@
     </div>
 
 
+    <!-- PANEL ADMINISTRATIVO MEJORADO -->
     <div id="staffOverlay" class="auth-overlay" style="display: none;">
         <div class="auth-box panel-danger" style="max-width: 480px;">
             <button class="close-modal" onclick="closeStaffModal()">×</button>
-            <h2 style="color: var(--danger-color); display: flex; align-items: center; justify-content: center; gap: 8px;">⚙️ Panel Administrativo</h2>
+            <h2 style="color: #c084fc; display: flex; align-items: center; justify-content: center; gap: 8px;">⚙️ Panel Administrativo</h2>
             <p style="color: #9ca3af; font-size: 0.85rem; margin-top: -10px;">Gestión y moderación global de EclipseMC Store</p>
             
-            <div style="background: #06070d; padding: 15px; border-radius: 10px; text-align: left; margin-bottom: 15px;">
-                <h4 style="margin: 0 0 10px 0; color: #fff;">🔨 Banear Usuario de la Tienda</h4>
-                <div style="display: flex; gap: 10px;">
-                    <input type="text" id="banTargetInput" placeholder="Nick del jugador" style="flex: 1; padding: 10px; font-size: 0.9rem; background: #111322; border: 1px solid #23283d; color: white; border-radius: 6px;">
+            <!-- Bloque Banear -->
+            <div class="staff-section-box">
+                <h4>🔨 Banear Usuario de la Tienda</h4>
+                <div class="staff-input-group">
+                    <input type="text" id="banTargetInput" placeholder="Nick del jugador">
                     <button onclick="executeBanPlayer()" class="btn-staff-action" style="background: var(--danger-color); padding: 10px 15px;">Banear</button>
                 </div>
             </div>
 
-            <div style="background: #06070d; padding: 15px; border-radius: 10px; text-align: left; display: flex; flex-direction: column; gap: 12px;">
-                <h4 style="margin: 0; color: #fff;">🧹 Limpieza de Datos Visuales</h4>
+            <!-- Bloque Desbanear (Unban) -->
+            <div class="staff-section-box">
+                <h4>🛡️ Desbanear Usuario (Unban)</h4>
+                <div class="staff-input-group">
+                    <input type="text" id="unbanTargetInput" placeholder="Nick del jugador">
+                    <button onclick="executeUnbanPlayer()" class="btn-staff-action" style="background: var(--success-color); padding: 10px 15px;">Perdonar</button>
+                </div>
+            </div>
+
+            <!-- NUEVO: Generador de Códigos VIP -->
+            <div class="staff-section-box">
+                <h4>🎁 Generar Código de Regalo (Cupón)</h4>
+                <div class="staff-input-group" style="margin-bottom: 8px;">
+                    <select id="staffGiftRank" style="flex: 1; padding: 10px; background: #111322; border: 1px solid #23283d; color: white; border-radius: 6px;">
+                        <option value="Rango VIP">Rango VIP</option>
+                        <option value="Rango ECLIPSE">Rango ECLIPSE</option>
+                    </select>
+                    <button onclick="generateGiftCode()" class="btn-staff-action" style="background: var(--accent-color); padding: 10px 12px;">Generar</button>
+                </div>
+                <input type="text" id="generatedCodeOutput" readonly placeholder="El código aparecerá aquí" style="width: 95%; padding: 8px; font-size: 0.85rem; text-align: center; background: #06070d; border: 1px dashed #4c1d95; color: #c084fc; border-radius: 4px;">
+            </div>
+
+            <!-- NUEVO: Buscador / Auditoría de Cuentas -->
+            <div class="staff-section-box">
+                <h4>🔍 Buscar Estado de Cuenta</h4>
+                <div class="staff-input-group">
+                    <input type="text" id="searchTargetInput" placeholder="Nick del jugador">
+                    <button onclick="auditPlayerAccount()" class="btn-staff-action" style="background: #4f46e5; padding: 10px 15px;">Auditar</button>
+                </div>
+            </div>
+
+            <!-- Limpieza Visual -->
+            <div class="staff-section-box" style="display: flex; flex-direction: column; gap: 12px;">
+                <h4>🧹 Limpieza de Datos Visuales</h4>
                 <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button onclick="clearRecentPurchases()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Borrar Compras Recientes</button>
-                    <button onclick="clearTopBuyers()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Resetear Top Compradores</button>
+                    <button onclick="clearRecentPurchases()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Borrar Compras</button>
+                    <button onclick="clearTopBuyers()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Resetear Tops</button>
                 </div>
             </div>
             
-            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 15px; text-align: center;">Los cambios toman efecto de manera inmediata para los navegadores locales.</p>
+            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 15px; text-align: center;">Los cambios toman efecto de manera inmediata en los datos globales guardados en la tienda.</p>
         </div>
     </div>
 
@@ -515,7 +572,8 @@
     </div>
 
     <script>
-        const STAFF_PASSWORD = "admin123"; // CAMBIA TU CLAVE AQUÍ SI LO DESEAS
+        // CONTRASEÑA ACTUALIZADA DE STAFF
+        const STAFF_PASSWORD = "Sol!23Azul#"; 
 
         let currentPendingProduct = "";
         let currentPendingPrice = 0;
@@ -601,6 +659,7 @@
             document.getElementById('staffOverlay').style.display = 'none';
         }
 
+        // ACCIÓN: Banear jugador
         function executeBanPlayer() {
             const target = document.getElementById('banTargetInput').value.trim();
             if(!target) return;
@@ -616,6 +675,60 @@
             } else {
                 alert("Este jugador ya se encuentra en la lista de baneados.");
             }
+        }
+
+        // ACCIÓN: Desbanear jugador (Unban)
+        function executeUnbanPlayer() {
+            const target = document.getElementById('unbanTargetInput').value.trim();
+            if(!target) return;
+
+            let bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
+            
+            if(bannedList.includes(target.toLowerCase())) {
+                // Filtrar la lista quitando al usuario especificado
+                bannedList = bannedList.filter(user => user !== target.toLowerCase());
+                localStorage.setItem('shop_banned_users', JSON.stringify(bannedList));
+                alert(`🛡️ El jugador "${target}" ha sido desbaneado con éxito de la tienda.`);
+                document.getElementById('unbanTargetInput').value = "";
+                closeStaffModal();
+                
+                // Si el mismo jugador se autodesbaneó desde otra pestaña, refrescar el estado de ban
+                const currentUser = localStorage.getItem('currentUser');
+                if (currentUser && currentUser.toLowerCase() === target.toLowerCase()) {
+                    document.getElementById('banOverlay').style.display = 'none';
+                    location.reload();
+                }
+            } else {
+                alert(`El jugador "${target}" no está en la lista negra.`);
+            }
+        }
+
+        // ACCIÓN EXTRA: Generar código VIP falso/cupón para regalar
+        function generateGiftCode() {
+            const rank = document.getElementById('staffGiftRank').value;
+            const randomHex = Math.random().toString(36).substring(2, 7).toUpperCase();
+            const randomHex2 = Math.random().toString(36).substring(2, 7).toUpperCase();
+            const fullCode = `ECLIPSE-${randomHex}-${randomHex2}`;
+            
+            document.getElementById('generatedCodeOutput').value = `${fullCode} (${rank})`;
+            alert(`Código promocional generado para el ${rank}.\n¡Copia el código de la caja inferior!`);
+        }
+
+        // ACCIÓN EXTRA: Auditar/Verificar estadísticas de una cuenta
+        function auditPlayerAccount() {
+            const target = document.getElementById('searchTargetInput').value.trim();
+            if(!target) return;
+
+            const bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
+            const topsObj = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
+            const registeredUser = localStorage.getItem('mc_user');
+            
+            const isBanned = bannedList.includes(target.toLowerCase()) ? "SÍ (Sancionado)" : "NO (Limpio)";
+            const totalSpent = topsObj[target] ? `$${topsObj[target]}` : "$0";
+            const exists = (registeredUser && registeredUser.toLowerCase() === target.toLowerCase()) ? "Sí, está registrado en este navegador." : "No se detecta sesión local activa.";
+
+            alert(`📊 AUDITORÍA DE CUENTA: ${target}\n\n• ¿Está Baneado?: ${isBanned}\n• Dinero aportado: ${totalSpent}\n• Registro Local: ${exists}`);
+            document.getElementById('searchTargetInput').value = "";
         }
 
         function clearRecentPurchases() {
@@ -755,26 +868,14 @@
         window.onload = function() {
             const savedUser = localStorage.getItem('mc_user');
             const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-
-            if (sessionStorage.getItem('isStaff') === 'true') {
+            const isAlreadyStaff = sessionStorage.getItem('isStaff') === 'true';
+            
+            if (isLoggedIn && savedUser) {
+                loadStore(savedUser);
+            }
+            if (isAlreadyStaff) {
                 document.getElementById('staffIndicator').style.display = 'inline-block';
             }
-
-            if (!savedUser) {
-                document.getElementById('tabLogin').style.display = 'none';
-                switchTab('register');
-            } else {
-                document.getElementById('tabLogin').style.display = 'block';
-                switchTab('login');
-            }
-
-            if(isLoggedIn && savedUser) {
-                const user = localStorage.getItem('currentUser');
-                document.getElementById('authOverlay').style.display = 'none';
-                document.getElementById('userDisplay').innerText = user;
-                checkBanStatus();
-            }
-
             updateStatsUI();
         }
     </script>
