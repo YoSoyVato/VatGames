@@ -33,7 +33,7 @@
             transition: transform 0.05s ease-out;
         }
 
-        /* --- PANTALLA DE REGISTRO DE USUARIO --- */
+        /* --- PANTALLA DE REGISTRO Y SELECCIÓN DE ROL --- */
         #login-screen {
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
@@ -53,6 +53,7 @@
             border-radius: 4px;
             text-align: center;
             box-shadow: 0 0 30px rgba(0,0,0,0.7);
+            max-width: 500px;
         }
 
         .login-box h2 {
@@ -69,33 +70,66 @@
             padding: 10px;
             font-family: monospace;
             font-size: 1.2rem;
-            width: 250px;
+            width: 280px;
             text-align: center;
             outline: none;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
         }
 
-        .login-box button {
+        .role-selection {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 15px;
+            gap: 15px;
+        }
+
+        .role-btn {
             background-color: #1c221f;
             color: #33ff33;
             border: 1px solid #33ff33;
-            padding: 10px 20px;
+            padding: 15px 20px;
             font-family: monospace;
             font-size: 1rem;
+            font-weight: bold;
             cursor: none;
             transition: 0.2s;
+            flex: 1;
         }
 
-        .login-box button:hover {
+        .role-btn:hover {
             background-color: #33ff33;
             color: #000;
         }
 
-        /* --- ESCENARIO: LA HABITACIÓN --- */
+        /* --- VISTA EXCLUSIVA DEL GUÍA (MANUAL) --- */
+        #guide-view {
+            width: 100vw;
+            height: 100vh;
+            background-color: #0f1110;
+            color: #33ff33;
+            padding: 40px;
+            overflow-y: auto;
+            display: none;
+            box-shadow: inset 0 0 100px rgba(0,0,0,0.9);
+        }
+
+        .manual-container {
+            max-width: 800px;
+            margin: 0 auto;
+            border: 1px solid #224422;
+            padding: 30px;
+            background-color: #070807;
+        }
+
+        .manual-container h1 { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #33ff33; padding-bottom: 10px; }
+        .manual-section { margin-bottom: 25px; border-left: 3px solid #116611; padding-left: 15px; }
+        .manual-section h3 { color: #ffffff; margin-bottom: 8px; }
+
+        /* --- ESCENARIO: LA HABITACIÓN (VISTA DESACTIVADOR) --- */
         .room {
             width: 100vw;
             height: 100vh;
-            display: flex;
+            display: none; /* Se activa dinámicamente si eres desactivador */
             justify-content: center;
             align-items: center;
             background: 
@@ -105,28 +139,17 @@
             box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.95);
         }
 
-        .room::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            opacity: 0.05;
-            background-image: repeating-linear-gradient(45deg, #000 25px, transparent 50px);
-            pointer-events: none;
-        }
-
         /* --- LA MESA --- */
         .table {
-            width: 780px;
-            height: 320px;
+            width: 820px;
+            height: 340px;
             background: linear-gradient(to bottom, #2b2e2c 0%, #181a19 20%, #0d0e0d 100%);
             border: 4px solid #3a3f3c;
             border-bottom: none;
             border-radius: 8px 8px 0 0;
             position: absolute;
             bottom: 0;
-            box-shadow: 
-                0 -20px 50px rgba(0, 0, 0, 0.8),
-                inset 0 10px 20px rgba(255, 255, 255, 0.05);
+            box-shadow: 0 -20px 50px rgba(0, 0, 0, 0.8);
             display: flex;
             justify-content: center;
             align-items: center;
@@ -139,7 +162,7 @@
             background: linear-gradient(135deg, #c2b280 0%, #a89968 100%);
             border-radius: 2px;
             position: absolute;
-            left: 40px;
+            left: 30px;
             bottom: 60px;
             transform: rotate(-15deg);
             box-shadow: 3px 5px 10px rgba(0,0,0,0.6);
@@ -148,91 +171,72 @@
             flex-direction: column;
             justify-content: center;
             padding: 5px;
-            overflow: hidden;
         }
-
         .note-paper::before {
-            content: 'LEEME';
-            color: #4a3e1a;
-            font-size: 0.7rem;
-            font-weight: bold;
-            text-align: center;
-            letter-spacing: 1px;
-            border: 1px dashed #4a3e1a;
-            padding: 2px;
+            content: 'LEEME'; color: #4a3e1a; font-size: 0.7rem; font-weight: bold; text-align: center; border: 1px dashed #4a3e1a; padding: 2px;
         }
+        .note-paper:hover { filter: brightness(1.1); transform: rotate(-12deg) scale(1.05); }
 
-        .note-paper:hover {
-            filter: brightness(1.1);
-            transform: rotate(-12deg) scale(1.05);
-        }
-
-        /* --- MODAL DE LECTURA DE LA NOTA --- */
-        #note-modal {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.85);
-            z-index: 4000;
-            display: none;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .note-content {
-            background: #e6dfc3;
-            color: #1a1508;
-            width: 500px;
-            padding: 40px;
-            border-radius: 4px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            font-family: 'Courier New', Courier, monospace;
-            line-height: 1.6;
-            position: relative;
-            border: 1px solid #b3a986;
-        }
-
-        .note-content p {
-            margin-bottom: 20px;
-            font-size: 1.1rem;
-            font-weight: bold;
-        }
-
-        .note-content .close-btn {
-            display: block;
-            margin-top: 30px;
-            background-color: #2b2515;
-            color: #e6dfc3;
-            border: none;
-            padding: 8px 16px;
-            font-family: monospace;
-            font-weight: bold;
-            text-align: center;
+        /* --- OBJETO: EL MARTILLO EN LA MESA --- */
+        #table-hammer {
+            width: 100px;
+            height: 40px;
+            position: absolute;
+            right: 40px;
+            bottom: 50px;
             cursor: none;
+            filter: drop-shadow(3px 5px 4px rgba(0,0,0,0.7));
+            transition: 0.2s;
         }
-
-        .note-content .close-btn:hover {
-            background-color: #473e24;
-        }
+        #table-hammer:hover { transform: scale(1.1) rotate(5deg); filter: brightness(1.2); }
+        
+        .equipped-hammer { animation: swing 0.3s ease; }
 
         /* --- EL DISPOSITIVO (LA BOMBA) --- */
         .device {
-            width: 460px;
-            height: 220px;
+            width: 520px;
+            height: 250px;
             background: linear-gradient(135deg, #404543 0%, #202322 100%);
             border: 5px solid #1a1c1b;
             border-radius: 12px;
             position: relative;
-            bottom: 40px;
-            box-shadow: 
-                0 30px 60px rgba(0,0,0,0.9),
-                inset 2px 2px 5px rgba(255,255,255,0.1);
+            bottom: 20px;
+            box-shadow: 0 30px 60px rgba(0,0,0,0.9);
             display: flex;
             padding: 20px;
             justify-content: space-between;
             align-items: center;
         }
 
-        /* --- SUB-MÓDULOS DE LA BOMBA --- */
+        /* --- LADO POSTERIOR DE LA BOMBA (MINITECLADO) --- */
+        .device-back {
+            display: none;
+            width: 100%;
+            height: 100%;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #fff;
+        }
+        .back-title { font-size: 0.9rem; color: #aaa; margin-bottom: 10px; text-transform: uppercase; }
+        .keyboard-screen {
+            width: 200px; height: 35px; background-color: #111; border: 2px solid #444;
+            color: #00ff00; text-align: center; line-height: 31px; font-size: 1.2rem; margin-bottom: 15px;
+            letter-spacing: 2px; box-shadow: inset 0 0 5px #000;
+        }
+        .keyboard-grid { display: grid; grid-template-columns: repeat(4, 45px); gap: 5px; }
+        .key-btn {
+            background-color: #333; color: white; border: 1px solid #555; height: 35px;
+            font-family: monospace; font-weight: bold; cursor: none; border-radius: 3px;
+        }
+        .key-btn:hover { background-color: #555; }
+
+        /* --- COMPONENTES FRONTALES DE LA BOMBA --- */
+        .device-front {
+            display: flex; width: 100%; justify-content: space-between; align-items: center;
+        }
+
+        /* Monitor / Temporizador */
         .timer-display {
             width: 180px;
             height: 90px;
@@ -240,118 +244,93 @@
             border: 4px solid #282c2a;
             border-radius: 6px;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
-        }
-
-        .timer-text {
-            color: #33ff33;
-            font-size: 3.2rem;
-            font-weight: bold;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(51, 255, 51, 0.6);
-        }
-
-        .timer-text.critical {
-            color: #ff3333;
-            text-shadow: 0 0 15px rgba(255, 51, 51, 0.8);
-            animation: pulse 1s infinite;
-        }
-
-        .wire-panel {
-            width: 200px;
-            height: 160px;
-            background-color: #151716;
-            border: 3px solid #282c2a;
-            border-radius: 6px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-around;
-            padding: 15px 10px;
-        }
-
-        .wire-container {
-            width: 100%;
-            height: 20px;
-            display: flex;
-            align-items: center;
             position: relative;
         }
+        .timer-text { color: #33ff33; font-size: 2.8rem; font-weight: bold; font-family: monospace; }
+        .timer-text.critical { color: #ff3333; animation: pulse 1s infinite; }
+        
+        .serial-text { font-size: 0.75rem; color: #888; margin-top: 2px; letter-spacing: 1px; }
 
-        .wire {
-            width: 85%;
-            height: 8px;
-            border-radius: 4px;
-            box-shadow: 0 3px 5px rgba(0,0,0,0.5);
-            transition: opacity 0.2s ease, transform 0.1s ease;
+        /* Monitor Roto Visualmente */
+        .timer-display.broken {
+            background: linear-gradient(135deg, #111 0%, #050505 100%);
+            border-color: #1a1a1a;
+        }
+        .timer-display.broken .timer-text, .timer-display.broken .serial-text { display: none; }
+        .timer-display.broken::after {
+            content: ''; position: absolute; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.05);
+            clip-path: polygon(0 20%, 40% 50%, 0 70%, 100% 40%, 30% 100%, 80% 0);
+            border: 1px solid rgba(255,255,255,0.2);
         }
 
+        /* Panel Central Interactivos (Botón Rojo e Inversión) */
+        .center-controls {
+            display: flex; flex-direction: column; align-items: center; gap: 20px;
+        }
+        .red-button {
+            width: 55px; height: 55px; background: radial-gradient(circle, #ff4d4d, #990000);
+            border: 4px solid #1a1c1b; border-radius: 5px; box-shadow: 0 4px 0 #660000, 0 5px 10px rgba(0,0,0,0.5);
+            cursor: none;
+        }
+        .red-button:active { transform: translateY(3px); box-shadow: 0 1px 0 #660000; }
+
+        .flip-btn {
+            background-color: #222; color: #888; border: 1px solid #444; padding: 4px 8px;
+            font-size: 0.7rem; font-family: monospace; cursor: none; border-radius: 3px;
+        }
+        .flip-btn:hover { background-color: #333; color: #fff; }
+
+        /* Panel de Cables */
+        .wire-panel {
+            width: 170px; height: 160px; background-color: #151716;
+            border: 3px solid #282c2a; border-radius: 6px;
+            display: flex; flex-direction: column; justify-content: space-around; padding: 15px 10px;
+        }
+        .wire-container { width: 100%; height: 20px; display: flex; align-items: center; position: relative; }
+        .wire { width: 85%; height: 8px; border-radius: 4px; box-shadow: 0 3px 5px rgba(0,0,0,0.5); transition: 0.1s; }
         .wire.red    { background: linear-gradient(to bottom, #ff3b30, #991a13); }
         .wire.blue   { background: linear-gradient(to bottom, #007aff, #004599); }
         .wire.yellow { background: linear-gradient(to bottom, #ffcc00, #997a00); }
+        .wire:not(.cut):hover { transform: scaleY(1.3); filter: brightness(1.2); }
+        .wire.cut { width: 30%; background: #222 !important; box-shadow: none; transform: rotate(-12deg); }
+        .wire-container::before, .wire-container::after { content: ''; width: 10px; height: 12px; background-color: #666; border-radius: 2px; }
 
-        .wire-container::before, .wire-container::after {
-            content: '';
-            width: 12px;
-            height: 14px;
-            background-color: #666;
-            border: 1px solid #333;
-            border-radius: 2px;
+        /* --- MODAL DE LA NOTA DE TEXTO --- */
+        #note-modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85); z-index: 4000;
+            display: none; justify-content: center; align-items: center;
+        }
+        .note-content {
+            background: #e6dfc3; color: #1a1508; width: 500px; padding: 40px;
+            border-radius: 4px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); font-family: monospace;
+            line-height: 1.6; border: 1px solid #b3a986;
+        }
+        .note-content p { margin-bottom: 20px; font-size: 1.05rem; font-weight: bold; }
+        .note-content .close-btn {
+            display: block; margin-top: 30px; background-color: #2b2515; color: #e6dfc3;
+            border: none; padding: 8px 16px; font-family: monospace; font-weight: bold; cursor: none;
         }
 
-        .wire:not(.cut):hover {
-            transform: scaleY(1.3);
-            filter: brightness(1.2);
-        }
-
-        .wire.cut {
-            width: 35%;
-            background: #222 !important;
-            box-shadow: none;
-            transform: rotate(-10deg);
-        }
-
-        /* --- ALERTAS DE JUEGO --- */
+        /* --- PANTALLAS FINALES --- */
         #game-over-screen {
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            z-index: 1000;
-            display: none;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: #ff3333;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.95); z-index: 6000;
+            display: none; flex-direction: column; justify-content: center; align-items: center;
         }
-
-        #game-over-screen h1 {
-            font-size: 4rem;
-            margin-bottom: 20px;
-            text-shadow: 0 0 20px red;
-        }
-
+        #game-over-screen h1 { font-size: 3.5rem; margin-bottom: 20px; text-shadow: 0 0 20px red; }
         #game-over-screen button {
-            padding: 12px 24px;
-            background-color: #222;
-            color: #fff;
-            border: 2px solid #ff3333;
-            cursor: none;
-            font-family: monospace;
-            font-weight: bold;
-            transition: 0.3s;
+            padding: 12px 24px; background-color: #222; color: #fff; border: 2px solid #ff3333;
+            cursor: none; font-family: monospace; font-weight: bold;
         }
+        #game-over-screen button:hover { background-color: #ff3333; color: #000; }
 
-        #game-over-screen button:hover {
-            background-color: #ff3333;
-            color: #000;
-        }
-
-        @keyframes pulse {
-            0% { opacity: 1; }
-            50% { opacity: 0.4; }
-            100% { opacity: 1; }
-        }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
     </style>
 </head>
 <body>
@@ -359,35 +338,85 @@
     <svg id="custom-cursor" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
         <path d="M24,32 C20,24 16,18 16,12 C16,8 20,6 22,10 C24,14 26,22 26,22 C26,22 27,10 29,6 C31,2 34,2 35,6 C36,10 37,20 37,20 C37,20 39,11 41,8 C43,5 46,5 47,9 C48,13 47,22 47,22 C47,22 50,14 52,13 C54,12 56,14 55,18 C53,24 49,32 46,38 C42,46 36,54 30,56 C24,54 20,44 24,32 Z" fill="#2d3130" stroke="#141615" stroke-width="2"/>
         <rect x="24" y="44" width="18" height="8" rx="2" fill="#1a1c1b"/>
-        <circle cx="29" cy="24" r="2" fill="#555"/>
-        <circle cx="35" cy="22" r="2" fill="#555"/>
-        <circle cx="41" cy="24" r="2" fill="#555"/>
     </svg>
 
     <div id="login-screen">
         <div class="login-box">
             <h2>REGISTRO DE SUJETO</h2>
             <input type="text" id="username-input" placeholder="Introduce tu nombre" maxlength="15" autocomplete="off">
-            <br>
-            <button onclick="startGame()">INGRESAR AL DISPOSITIVO</button>
+            <p style="color:#666; font-size:0.8rem; margin-bottom:15px;">SELECCIONA TU ROL EN ESTA OPERACIÓN:</p>
+            <div class="role-selection">
+                <button class="role-btn" onclick="selectRole('DESACTIVADOR')">DESACTIVADOR<br><span style="font-size:0.65rem;font-weight:normal;color:#aaa;">(Ves la bomba)</span></button>
+                <button class="role-btn" onclick="selectRole('GUIA')">GUIA TÉCNICO<br><span style="font-size:0.65rem;font-weight:normal;color:#aaa;">(Ves el manual)</span></button>
+            </div>
         </div>
     </div>
 
-    <div class="room">
+    <div id="guide-view">
+        <div class="manual-container">
+            <h1>MANUAL DE DESACTIVACIÓN ESTRATÉGICA</h1>
+            <p style="color:#888; margin-bottom:20px; text-align:center;">Dicta los pasos calmadamente al Desactivador. Un fallo provocará la muerte inmediata.</p>
+            
+            <div class="manual-section">
+                <h3>PASO 1: ANÁLISIS E IDENTIFICACIÓN</h3>
+                <p>Pide al desactivador que analice el módulo de la bomba y lea el <strong>NÚMERO DE SERIE</strong> ubicado debajo del reloj.</p>
+                <p>-> <strong>Si empieza por "XXXXX":</strong> Se debe cortar inmediatamente el <strong>CABLE AZUL</strong>.</p>
+                <p>-> <strong>Si empieza por "KJG-":</strong> Se debe destruir/romper el monitor usando el <strong>MARTILLO</strong> disponible en la mesa.</p>
+            </div>
+
+            <div class="manual-section">
+                <h3>PASO 2: SEGUNDA FASE DE SEGURIDAD</h3>
+                <p>-> <strong>SERIAL XXXXX:</strong> Luego de cortar el cable azul, presionar el <strong>BOTÓN ROJO DE APAGADO</strong> ubicado en el centro de la bomba.</p>
+                <p>-> <strong>SERIAL KJG-:</strong> Luego de romper la pantalla, proceder a cortar el <strong>CABLE AMARILLO</strong>.</p>
+            </div>
+
+            <div class="manual-section">
+                <h3>PASO 3: ANULACIÓN CRÍTICA FINAL</h3>
+                <p>-> <strong>SERIAL XXXXX:</strong> Dar la vuelta a la bomba usando el control trasero, localizar el miniteclado e introducir exactamente el modelo de la bomba: <strong>XXXXX</strong>.</p>
+                <p>-> <strong>SERIAL KJG-:</strong> Presionar el <strong>BOTÓN ROJO DE APAGADO</strong> central de la bomba para finalizar la secuencia.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="room" id="desactivador-view">
         <div class="table">
             
             <div class="note-paper" onclick="openNote()"></div>
+
+            <img id="table-hammer" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M45,10 L55,20 L50,25 L40,15 Z' fill='%23777'/><path d='M10,50 L42,18 L46,22 L14,54 Z' fill='%238b5a2b'/><rect x='42' y='10' width='8' height='12' fill='%23444' transform='rotate(45 42 10)'/></svg>" onclick="equipHammer()" title="Equipar Martillo">
             
-            <div class="device">
-                <div class="timer-display">
-                    <div id="timer" class="timer-text">05:00</div>
+            <div class="device" id="bomb-box">
+                
+                <div class="device-front" id="bomb-front">
+                    <div class="timer-display" id="monitor-target" onclick="useHammerOnScreen()">
+                        <div id="timer" class="timer-text">05:00</div>
+                        <div id="serial-display" class="serial-text">S/N: XXXXX</div>
+                    </div>
+
+                    <div class="center-controls">
+                        <div class="red-button" onclick="pressRedButton()"></div>
+                        <button class="flip-btn" onclick="flipBomb(true)">DAR VUELTA</button>
+                    </div>
+
+                    <div class="wire-panel">
+                        <div class="wire-container"><div class="wire red" data-wire="red" onclick="cutWire(this)"></div></div>
+                        <div class="wire-container"><div class="wire blue" data-wire="blue" onclick="cutWire(this)"></div></div>
+                        <div class="wire-container"><div class="wire yellow" data-wire="yellow" onclick="cutWire(this)"></div></div>
+                    </div>
                 </div>
 
-                <div class="wire-panel">
-                    <div class="wire-container"><div class="wire red" data-wire="1" onclick="cutWire(this)"></div></div>
-                    <div class="wire-container"><div class="wire blue" data-wire="2" onclick="cutWire(this)"></div></div>
-                    <div class="wire-container"><div class="wire yellow" data-wire="3" onclick="cutWire(this)"></div></div>
+                <div class="device-back" id="bomb-back">
+                    <div class="back-title">Teclado de Bypass Mecánico</div>
+                    <div class="keyboard-screen" id="kb-screen">_</div>
+                    <div class="keyboard-grid">
+                        <button class="key-btn" onclick="pressKey('X')">X</button>
+                        <button class="key-btn" onclick="pressKey('K')">K</button>
+                        <button class="key-btn" onclick="pressKey('J')">J</button>
+                        <button class="key-btn" onclick="pressKey('G')">G</button>
+                    </div>
+                    <button class="flip-btn" style="margin-top:15px;" onclick="flipBomb(false)">VOLVER AL FRENTE</button>
                 </div>
+
             </div>
 
         </div>
@@ -406,119 +435,184 @@
     </div>
 
     <script>
-        // --- Controladores de Cursor ---
+        // --- Lógica del Cursor ---
         const cursor = document.getElementById('custom-cursor');
         document.addEventListener('mousemove', (e) => {
             cursor.style.left = e.clientX + 'px';
             cursor.style.top = e.clientY + 'px';
         });
-        document.addEventListener('mousedown', () => { cursor.style.transform = 'translate(-20%, -20%) scale(0.9) rotate(-5deg)'; });
-        document.addEventListener('mouseup', () => { cursor.style.transform = 'translate(-20%, -20%) scale(1) rotate(0deg)'; });
 
-        // --- Estado Global del Juego ---
-        let timeLeft = 300; 
+        // --- Estado Inicial del Motor del Juego ---
+        let timeLeft = 300;
         let timerInterval = null;
-        let username = "Desconocido";
-        const correctWire = "2"; 
+        let username = "Sujeto";
+        let chosenRole = "";
+        
+        let bombSerial = "XXXXX"; // Puede ser XXXXX o KJG-402
+        let currentStep = 1; // Control estricto de la secuencia obligatoria
+        let hammerEquipped = false;
+        let inputCode = "";
 
+        // Elementos del DOM
         const timerElement = document.getElementById('timer');
+        const serialElement = document.getElementById('serial-display');
         const gameOverScreen = document.getElementById('game-over-screen');
         const gameResultText = document.getElementById('game-result');
         const loginScreen = document.getElementById('login-screen');
         const noteModal = document.getElementById('note-modal');
         const noteText = document.getElementById('note-text');
 
-        // --- Gestión del Inicio ---
-        function startGame() {
+        // --- Registro e Inicio de Roles ---
+        function selectRole(role) {
             const input = document.getElementById('username-input').value.trim();
             if (input === "") {
-                alert("Debes ingresar un nombre para continuar el juego.");
+                alert("Por favor, regístrate ingresando tu nombre.");
                 return;
             }
             username = input;
-            
-            // Estructura el mensaje dinámico con el nombre del usuario registrado
-            noteText.innerHTML = `Hola, <span style="color:#900; font-weight:bold;">${username}</span>.<br><br>Seguro te estás preguntando dónde estás, pero eso no es lo que importa ahora mismo.<br><br>Lo que realmente importa es... ¿confías tanto en tu compañero como para que te ayude a salvar tu vida?`;
-            
-            // Ocultar login e iniciar sistema
-            loginScreen.style.display = 'none';
-            startTimer();
-        }
+            chosenRole = role;
 
-        // --- Control de Tiempos ---
-        function startTimer() {
-            if(timerInterval) clearInterval(timerInterval);
+            // Mensaje de la Nota adaptado
+            noteText.innerHTML = `Hola, <span style="color:#900; font-weight:bold;">${username}</span>.<br><br>Seguro te estás preguntando dónde estás, pero eso no es lo que importa ahora mismo.<br><br>Lo que realmente importa es... ¿confías tanto en tu compañero como para que te ayude a salvar tu vida?`;
+
+            // Configurar Serial de la Bomba de forma aleatoria
+            bombSerial = Math.random() > 0.5 ? "XXXXX" : "KJG-402";
+            serialElement.textContent = "S/N: " + bombSerial;
+
+            loginScreen.style.display = 'none';
+
+            if (chosenRole === 'DESACTIVADOR') {
+                document.getElementById('desactivador-view').style.display = 'flex';
+            } else {
+                document.getElementById('guide-view').style.display = 'block';
+            }
+
+            // El tiempo corre globalmente para ambos
+            if (timerInterval) clearInterval(timerInterval);
             timerInterval = setInterval(updateTimer, 1000);
         }
 
         function updateTimer() {
             let minutes = Math.floor(timeLeft / 60);
             let seconds = timeLeft % 60;
-
             minutes = minutes < 10 ? '0' + minutes : minutes;
             seconds = seconds < 10 ? '0' + seconds : seconds;
 
             timerElement.textContent = `${minutes}:${seconds}`;
 
-            if (timeLeft <= 60) {
-                timerElement.classList.add('critical');
+            if (timeLeft <= 60) timerElement.classList.add('critical');
+            if (timeLeft <= 0) endGame(false);
+            timeLeft--;
+        }
+
+        // --- Mecánicas del Desactivador ---
+        function equipHammer() {
+            hammerEquipped = true;
+            document.getElementById('table-hammer').style.opacity = "0.3";
+            alert("Has recogido el martillo de la mesa. Haz clic en la pantalla de la bomba si necesitas romperla.");
+        }
+
+        function useHammerOnScreen() {
+            if (!hammerEquipped) return;
+            
+            if (bombSerial === "KJG-402" && currentStep === 1) {
+                document.getElementById('monitor-target').classList.add('broken');
+                currentStep = 2; // Avanza de paso para KJG
+                hammerEquipped = false;
+                document.getElementById('table-hammer').style.display = "none";
             } else {
-                timerElement.classList.remove('critical');
-            }
-
-            if (timeLeft <= 0) {
-                endGame(false);
-            } else {
-                timeLeft--;
+                endGame(false); // Acción incorrecta destructiva = Detonación
             }
         }
 
-        // --- Interacción con la Nota ---
-        function openNote() {
-            noteModal.style.display = 'flex';
-        }
-
-        function closeNote() {
-            noteModal.style.display = 'none';
-        }
-
-        // --- Mecánica de Cables ---
         function cutWire(wireElement) {
-            if (wireElement.classList.contains('cut') || gameOverScreen.style.display === 'flex') return;
-
+            if (wireElement.classList.contains('cut')) return;
             wireElement.classList.add('cut');
-            const wireID = wireElement.getAttribute('data-wire');
+            const wireColor = wireElement.getAttribute('data-wire');
 
-            if (wireID === correctWire) {
-                endGame(true);
+            if (bombSerial === "XXXXX" && currentStep === 1 && wireColor === "blue") {
+                currentStep = 2; // Avanza paso para XXXXX
+            } else if (bombSerial === "KJG-402" && currentStep === 2 && wireColor === "yellow") {
+                currentStep = 3; // Avanza paso para KJG
+            } else {
+                endGame(false); // Cable incorrecto o cortado a destiempo = Explosión
+            }
+        }
+
+        function pressRedButton() {
+            if (bombSerial === "XXXXX" && currentStep === 2) {
+                currentStep = 3;
+                alert("Módulo central bloqueado. Busca otra entrada en el dispositivo.");
+            } else if (bombSerial === "KJG-402" && currentStep === 3) {
+                endGame(true); // ¡Victoria para ruta KJG!
             } else {
                 endGame(false);
             }
         }
 
-        // --- Finalización ---
+        function flipBomb(showBack) {
+            if (showBack) {
+                document.getElementById('bomb-front').style.display = 'none';
+                document.getElementById('bomb-back').style.display = 'flex';
+            } else {
+                document.getElementById('bomb-back').style.display = 'none';
+                document.getElementById('bomb-front').style.display = 'flex';
+            }
+        }
+
+        function pressKey(char) {
+            if (bombSerial === "XXXXX" && currentStep === 3) {
+                inputCode += char;
+                document.getElementById('kb-screen').textContent = inputCode;
+                
+                if (inputCode === "XXXXX") {
+                    endGame(true); // ¡Victoria para ruta XXXXX!
+                } else if (inputCode.length >= 5) {
+                    endGame(false); // Código erróneo fatal
+                }
+            } else {
+                endGame(false);
+            }
+        }
+
+        // --- Modales e Interfaz de Nota ---
+        function openNote() { noteModal.style.display = 'flex'; }
+        function closeNote() { noteModal.style.display = 'none'; }
+
+        // --- Cierre de Partida ---
         function endGame(victory) {
             clearInterval(timerInterval);
-            noteModal.style.display = 'none'; // Cierra la nota si estaba abierta al explotar
             gameOverScreen.style.display = 'flex';
-            
+            noteModal.style.display = 'none';
             if (victory) {
                 gameResultText.textContent = "SISTEMA DESACTIVADO";
                 gameResultText.style.color = "#33ff33";
                 gameResultText.style.textShadow = "0 0 20px green";
             } else {
-                gameResultText.textContent = "¡BOOM! EJECUCIÓN COMPLETADA";
+                gameResultText.textContent = "¡BOOM! EXECUCIÓN COMPLETADA";
                 gameResultText.style.color = "#ff3333";
                 gameResultText.style.textShadow = "0 0 20px red";
             }
         }
 
-        // --- Reinicio de Partida ---
         function resetGame() {
             timeLeft = 300;
-            gameOverScreen.style.display = 'none';
+            currentStep = 1;
+            hammerEquipped = false;
+            inputCode = "";
+            document.getElementById('kb-screen').textContent = "_";
+            document.getElementById('monitor-target').classList.remove('broken');
+            document.getElementById('table-hammer').style.display = "block";
+            document.getElementById('table-hammer').style.opacity = "1";
             document.querySelectorAll('.wire').forEach(w => w.classList.remove('cut'));
-            startTimer();
+            gameOverScreen.style.display = 'none';
+            flipBomb(false);
+            
+            // Re-sorteo de bomba
+            bombSerial = Math.random() > 0.5 ? "XXXXX" : "KJG-402";
+            serialElement.textContent = "S/N: " + bombSerial;
+            
+            timerInterval = setInterval(updateTimer, 1000);
         }
     </script>
 </body>
