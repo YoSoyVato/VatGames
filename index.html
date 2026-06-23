@@ -3,923 +3,387 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tienda Oficial | EclipseMC</title>
+    <title>Escape Room: El Dilema</title>
     <style>
-        :root {
-            --bg-color: #06070d;
-            --card-bg: #111322;
-            --accent-color: #8b5cf6;
-            --accent-glow: rgba(139, 92, 246, 0.4);
-            --text-color: #f3f4f6;
-            --success-color: #10b981;
-            --steam-color: #1b2838;
-            --discord-color: #5865F2;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-        }
-
-        body {
-            font-family: 'Plus Jakarta Sans', 'Segoe UI', Roboto, sans-serif;
-            background-color: var(--bg-color);
-            background-image: 
-                radial-gradient(at 0% 0%, rgba(31, 17, 53, 0.3) 0px, transparent 50%),
-                radial-gradient(at 100% 100%, rgba(121, 40, 202, 0.15) 0px, transparent 50%);
-            color: var(--text-color);
+        /* --- ESTILOS GENERALES Y CONFIGURACIÓN --- */
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
-            text-align: center;
-            min-height: 100vh;
-        }
-        
-        /* Barra de Usuario Mejorada */
-        .user-bar {
-            background-color: rgba(6, 7, 13, 0.8);
-            backdrop-filter: blur(10px);
-            padding: 12px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-size: 0.9rem;
-            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
-        }
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .user-badge {
-            background: rgba(0, 255, 163, 0.1);
-            color: var(--success-color);
-            padding: 2px 8px;
-            border-radius: 20px;
-            font-weight: bold;
-            font-size: 0.75rem;
-        }
-        .btn-group {
-            display: flex;
-            gap: 10px;
-        }
-        .staff-btn {
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid var(--accent-color);
-            color: var(--accent-color);
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            transition: all 0.2s;
-        }
-        .staff-btn:hover {
-            background: var(--accent-color);
-            color: white;
-            box-shadow: 0 0 10px var(--accent-glow);
-        }
-        .logout-btn {
-            background: none;
-            border: 1px solid rgba(239, 68, 68, 0.5);
-            color: var(--danger-color);
-            padding: 6px 14px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-        .logout-btn:hover { background-color: var(--danger-color); color: white; }
-
-        header {
-            padding: 60px 20px 30px;
-        }
-        header h1 {
-            margin: 0;
-            font-size: 3.5rem;
-            font-weight: 800;
-            letter-spacing: -1px;
-            background: linear-gradient(135deg, #c084fc 0%, #a78bfa 50%, #818cf8 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 15px rgba(167, 139, 250, 0.3));
-        }
-        header p {
-            color: #9ca3af;
-            font-size: 1.1rem;
-            margin-top: 10px;
+            user-select: none;
         }
 
-        /* Contenedores y Tarjetas de Rangos */
-        .container {
-            max-width: 1100px;
-            margin: 20px auto 40px;
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Courier New', Courier, monospace;
+            /* Ocultamos el cursor por defecto para usar nuestra mano personalizada */
+            cursor: none; 
+        }
+
+        /* --- CURSOR PERSONALIZADO (MANO) --- */
+        #custom-cursor {
+            width: 64px;
+            height: 64px;
+            position: fixed;
+            pointer-events: none; /* Evita que el cursor interfiera con los clicks */
+            z-index: 9999;
+            transform: translate(-20%, -20%); /* Ajusta el punto de agarre de la mano */
+            transition: transform 0.05s ease-out;
+        }
+
+        /* --- ESCENARIO: LA HABITACIÓN (Perspectiva 3D con CSS) --- */
+        .room {
+            width: 100vw;
+            height: 100vh;
             display: flex;
             justify-content: center;
-            gap: 30px;
-            flex-wrap: wrap;
-            padding: 0 20px;
-        }
-        .card {
-            background-color: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 16px;
-            width: 300px;
-            padding: 30px;
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
-            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), border-color 0.3s, box-shadow 0.3s;
+            align-items: center;
+            background: 
+                radial-gradient(circle at 50% 30%, rgba(40, 50, 45, 0.4) 0%, rgba(10, 15, 12, 0.9) 70%),
+                linear-gradient(to bottom, #141916 0%, #0a0d0b 100%);
             position: relative;
-            overflow: hidden;
+            box-shadow: inset 0 0 150px rgba(0, 0, 0, 0.95);
         }
-        .card::before {
+
+        /* Textura de suciedad/paredes de fondo simulada */
+        .room::before {
             content: '';
             position: absolute;
-            top: 0; left: 0; width: 100%; height: 4px;
-            background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
-            transition: opacity 0.3s;
-            opacity: 0;
-        }
-        .card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(139, 92, 246, 0.4);
-            box-shadow: 0 15px 30px rgba(139, 92, 246, 0.1);
-        }
-        .card:hover::before { opacity: 1; }
-        .card h2 { color: #fff; margin-top: 0; font-size: 1.6rem; font-weight: 700; }
-        .price {
-            font-size: 2.2rem;
-            color: var(--success-color);
-            margin: 20px 0;
-            font-weight: 800;
-            letter-spacing: -1px;
-        }
-        .features {
-            list-style: none;
-            padding: 0;
-            text-align: left;
-            margin: 25px 0;
-            font-size: 0.95rem;
-            color: #9ca3af;
-        }
-        .features li {
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .features li::before {
-            content: "✦";
-            color: var(--success-color);
-            font-weight: bold;
-        }
-        
-        .btn-buy {
-            display: block;
-            width: 100%;
-            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-            color: white;
-            padding: 14px;
-            border-radius: 8px;
-            font-weight: 700;
-            cursor: pointer;
-            border: none;
-            font-size: 1rem;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-            box-shadow: 0 4px 12px rgba(109, 40, 217, 0.3);
-        }
-        .btn-buy:hover {
-            background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-            box-shadow: 0 6px 18px rgba(139, 92, 246, 0.5);
-            transform: scale(1.02);
-        }
-
-        /* Secciones: Compras y Tops */
-        .stats-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
-            gap: 30px;
-            max-width: 1100px;
-            margin: 40px auto 60px;
-            padding: 0 20px;
-        }
-        .stats-box {
-            background-color: var(--card-bg);
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            border-radius: 16px;
-            padding: 24px;
-            text-align: left;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-        }
-        .stats-box h3 {
-            margin-top: 0;
-            color: #c084fc;
-            font-weight: 700;
-            font-size: 1.2rem;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .stat-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.04);
-            font-size: 0.95rem;
-        }
-        .stat-item:last-child { border: none; }
-        .buyer-name { color: #fff; font-weight: 600; }
-        .buyer-product { background: rgba(139, 92, 246, 0.15); color: #c084fc; padding: 2px 8px; border-radius: 4px; font-size: 0.85rem; }
-        .buyer-amount { color: #fbbf24; font-weight: 700; }
-        .no-data { color: #6b7280; text-align: center; padding: 30px 0; font-style: italic; }
-
-        /* Sistema de Modales Estilizados */
-        .auth-overlay {
-            position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(3, 4, 7, 0.95);
-            backdrop-filter: blur(8px);
+            opacity: 0.05;
+            background-image: repeating-linear-gradient(45deg, #000 25px, transparent 50px);
+            pointer-events: none;
+        }
+
+        /* --- LA MESA --- */
+        .table {
+            width: 750px;
+            height: 320px;
+            background: linear-gradient(to bottom, #2b2e2c 0%, #181a19 20%, #0d0e0d 100%);
+            border: 4px solid #3a3f3c;
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            position: absolute;
+            bottom: 0;
+            box-shadow: 
+                0 -20px 50px rgba(0, 0, 0, 0.8),
+                inset 0 10px 20px rgba(255, 255, 255, 0.05);
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 9999;
         }
-        .auth-box {
-            background-color: #0f111a;
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            padding: 40px;
-            border-radius: 20px;
-            width: 90%;
-            max-width: 440px;
-            box-shadow: 0 0 40px rgba(139, 92, 246, 0.15);
-            position: relative;
-            max-height: 85vh;
-            overflow-y: auto;
-        }
-        .close-modal {
-            position: absolute;
-            top: 20px; right: 20px;
-            font-size: 1.8rem;
-            color: #6b7280;
-            cursor: pointer;
-            background: none;
-            border: none;
-            line-height: 1;
-        }
-        .close-modal:hover { color: #fff; }
-        .auth-box h2 { margin-top: 0; color: #fff; font-weight: 800; font-size: 1.8rem; }
-        .auth-box h3 { margin-top: 0; color: #fff; font-weight: 700; }
-        
-        .auth-tabs {
-            display: flex;
-            justify-content: space-around;
-            margin-bottom: 25px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        }
-        .tab-btn {
-            background: none;
-            border: none;
-            color: #6b7280;
-            padding: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-        .tab-btn.active {
-            color: #fff;
-            border-bottom: 2px solid var(--accent-color);
-        }
-        
-        .tab-btn.steam-tab.active { border-bottom: 2px solid #00ffa3; color: #00ffa3; }
-        .tab-btn.discord-tab.active { border-bottom: 2px solid var(--discord-color); color: #a5b4fc; }
 
-        .auth-form {
-            display: none;
-            flex-direction: column;
-            gap: 18px;
+        /* Raspones/Óxido en la mesa */
+        .table::after {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(ellipse at 30% 40%, rgba(139, 69, 19, 0.15) 0%, transparent 40%);
+            pointer-events: none;
         }
-        .auth-form.active { display: flex; }
-        .auth-form input, .auth-form select {
-            background-color: #06070d;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 14px;
-            border-radius: 8px;
-            color: white;
-            font-size: 1rem;
-            transition: border-color 0.2s;
+
+        /* --- EL DISPOSITIVO (LA BOMBA) --- */
+        .device {
+            width: 460px;
+            height: 220px;
+            background: linear-gradient(135deg, #404543 0%, #202322 100%);
+            border: 5px solid #1a1c1b;
+            border-radius: 12px;
+            position: relative;
+            bottom: 40px; /* Eleva el dispositivo sobre la mesa */
+            box-shadow: 
+                0 30px 60px rgba(0,0,0,0.9),
+                inset 2px 2px 5px rgba(255,255,255,0.1);
+            display: flex;
+            padding: 20px;
+            justify-content: space-between;
+            align-items: center;
+            cursor: none;
         }
-        .auth-form input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 8px rgba(139, 92, 246, 0.2);
-        }
-        .auth-box button[type="submit"], .btn-staff-action {
-            background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
-            color: white;
-            border: none;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: opacity 0.2s;
-        }
-        .auth-box button[type="submit"]:hover { opacity: 0.9; }
+
+        /* --- SUB-MÓDULOS DE LA BOMBA --- */
         
-        .security-note {
-            font-size: 0.8rem;
-            color: #f59e0b;
-            margin-top: 5px;
-            text-align: left;
-            line-height: 1.4;
-            background: rgba(245, 158, 11, 0.05);
-            padding: 10px;
+        /* 1. Pantalla del Temporizador (Crono) */
+        .timer-display {
+            width: 180px;
+            height: 90px;
+            background-color: #08100c;
+            border: 4px solid #282c2a;
             border-radius: 6px;
-            border-left: 2px solid #f59e0b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.9);
         }
-        .giftcard-desc {
-            font-size: 0.9rem;
-            color: #9ca3af;
-            text-align: left;
-            background: #06070d;
-            padding: 14px;
-            border-radius: 8px;
-            line-height: 1.4;
-            border-left: 3px solid var(--accent-color);
+
+        .timer-text {
+            color: #33ff33;
+            font-size: 3.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+            text-shadow: 0 0 10px rgba(51, 255, 51, 0.6);
+            font-family: monospace;
         }
-        
-        /* Estilos del Modo Staff */
-        .panel-danger {
-            border: 1px solid rgba(139, 92, 246, 0.3) !important;
-            box-shadow: 0 0 30px rgba(139, 92, 246, 0.15) !important;
+
+        /* Estado crítico cuando queda poco tiempo */
+        .timer-text.critical {
+            color: #ff3333;
+            text-shadow: 0 0 15px rgba(255, 51, 51, 0.8);
+            animation: pulse 1s infinite;
         }
-        .staff-section-box {
-            background: #06070d; 
-            padding: 15px; 
-            border-radius: 10px; 
-            text-align: left; 
-            margin-bottom: 15px;
-            border: 1px solid rgba(255, 255, 255, 0.03);
+
+        /* 2. Panel de Cables Interactivos */
+        .wire-panel {
+            width: 200px;
+            height: 160px;
+            background-color: #151716;
+            border: 3px solid #282c2a;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            padding: 15px 10px;
         }
-        .staff-section-box h4 {
-            margin: 0 0 10px 0; 
-            color: #fff;
-            font-size: 0.95rem;
+
+        .wire-container {
+            width: 100%;
+            height: 20px;
             display: flex;
             align-items: center;
-            gap: 6px;
+            position: relative;
         }
-        .staff-input-group {
-            display: flex; 
-            gap: 10px;
+
+        /* El cable físico */
+        .wire {
+            width: 85%;
+            height: 8px;
+            border-radius: 4px;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.5);
+            transition: opacity 0.2s ease, transform 0.1s ease;
         }
-        .staff-input-group input {
-            flex: 1; 
-            padding: 10px; 
-            font-size: 0.9rem; 
-            background: #111322; 
-            border: 1px solid #23283d; 
-            color: white; 
-            border-radius: 6px;
+
+        /* Colores individuales de cables */
+        .wire.red    { background: linear-gradient(to bottom, #ff3b30, #991a13); }
+        .wire.blue   { background: linear-gradient(to bottom, #007aff, #004599); }
+        .wire.yellow { background: linear-gradient(to bottom, #ffcc00, #997a00); }
+
+        /* Conectores en los extremos */
+        .wire-container::before, .wire-container::after {
+            content: '';
+            width: 12px;
+            height: 14px;
+            background-color: #666;
+            border: 1px solid #333;
+            border-radius: 2px;
         }
-        .staff-input-group input:focus {
-            outline: none;
-            border-color: var(--accent-color);
+
+        /* Efecto al pasar la mano por encima de un cable activo */
+        .wire:not(.cut):hover {
+            transform: scaleY(1.3);
+            filter: brightness(1.2);
+        }
+
+        /* Estado del cable cortado */
+        .wire.cut {
+            width: 35%;
+            background: #222 !important;
+            box-shadow: none;
+            transform: rotate(-10deg);
+        }
+
+        /* --- ALERTAS DE JUEGO --- */
+        #game-over-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.9);
+            z-index: 1000;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ff3333;
+        }
+
+        #game-over-screen h1 {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            text-shadow: 0 0 20px red;
+        }
+
+        #game-over-screen button {
+            padding: 12px 24px;
+            background-color: #222;
+            color: #fff;
+            border: 2px solid #ff3333;
+            cursor: none;
+            font-family: monospace;
+            font-weight: bold;
+            transition: 0.3s;
+        }
+
+        #game-over-screen button:hover {
+            background-color: #ff3333;
+            color: #000;
+        }
+
+        /* Animaciones */
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
 <body>
 
-    <div id="banOverlay" class="auth-overlay" style="display: none; background-color: #000;">
-        <div class="auth-box" style="border-color: var(--danger-color); text-align: center;">
-            <h1 style="color: var(--danger-color); font-size: 3rem; margin: 0;">✖ BANEADO ✖</h1>
-            <h3 style="color: #fff; margin-top: 20px;">Tu cuenta ha sido suspendida de la tienda de EclipseMC</h3>
-            <p style="color: #9ca3af; font-size: 0.95rem;">Razón: Intento fraudulento de validación de códigos de tarjetas falsas, usadas o alteradas.</p>
-            <p style="color: #6b7280; font-size: 0.8rem; margin-top: 30px;">Si crees que esto es un error, apela abriendo un Ticket formal en el Discord del Servidor.</p>
-        </div>
-    </div>
+    <!-- Renderizado del Cursor de la Mano (SVG embebido para que no necesites archivos externos) -->
+    <svg id="custom-cursor" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+        <!-- Guante táctico gris/militar -->
+        <path d="M24,32 C20,24 16,18 16,12 C16,8 20,6 22,10 C24,14 26,22 26,22 C26,22 27,10 29,6 C31,2 34,2 35,6 C36,10 37,20 37,20 C37,20 39,11 41,8 C43,5 46,5 47,9 C48,13 47,22 47,22 C47,22 50,14 52,13 C54,12 56,14 55,18 C53,24 49,32 46,38 C42,46 36,54 30,56 C24,54 20,44 24,32 Z" fill="#2d3130" stroke="#141615" stroke-width="2"/>
+        <!-- Detalles de nudillos y correa del guante -->
+        <rect x="24" y="44" width="18" height="8" rx="2" fill="#1a1c1b"/>
+        <circle cx="29" cy="24" r="2" fill="#555"/>
+        <circle cx="35" cy="22" r="2" fill="#555"/>
+        <circle cx="41" cy="24" r="2" fill="#555"/>
+    </svg>
 
-    <div id="authOverlay" class="auth-overlay">
-        <div class="auth-box">
-            <h2>🌙 EclipseMC</h2>
-            
-            <div class="auth-tabs" id="authTabsContainer">
-                <button id="tabLogin" class="tab-btn" onclick="switchTab('login')">/login</button>
-                <button id="tabRegister" class="tab-btn active" onclick="switchTab('register')">/register</button>
-            </div>
-
-            <form id="loginForm" class="auth-form" onsubmit="handleAuth(event, 'login')">
-                <input type="text" id="loginUser" placeholder="Usuario de Minecraft" required>
-                <input type="password" id="loginPass" placeholder="Contraseña" required>
-                <button type="submit">Ingresar a la Tienda</button>
-            </form>
-
-            <form id="registerForm" class="auth-form active" onsubmit="handleAuth(event, 'register')">
-                <input type="text" id="registerUser" placeholder="Usuario de Minecraft" required>
-                <input type="password" id="registerPass" placeholder="Contraseña del Servidor o nueva" required>
-                <p class="security-note">⚠️ Por seguridad, si usas una contraseña nueva, no la olvides. La necesitarás para futuras compras.</p>
-                <button type="submit">Registrarse e Ingresar</button>
-            </form>
-        </div>
-    </div>
-
-
-    <div id="payOverlay" class="auth-overlay" style="display: none;">
-        <div class="auth-box">
-            <button class="close-modal" onclick="closePayModal()">×</button>
-            <h3>Método de Pago: Tarjeta</h3>
-            <p style="font-size:0.85rem; margin-top:-10px; color:var(--success-color); font-weight: 600;">Adquiriendo: <span id="pendingProduct">Ninguno</span></p>
-            
-            <div class="auth-tabs">
-                <button id="tabSteam" class="tab-btn steam-tab active" onclick="switchPayTab('steam')">🕹️ Steam Card</button>
-                <button id="tabNitro" class="tab-btn discord-tab" onclick="switchPayTab('nitro')">🔮 Discord Nitro</button>
-            </div>
-
-            <form id="steamForm" class="auth-form active" onsubmit="processGiftCard(event, 'Steam')">
-                <div class="giftcard-desc">
-                    <strong>Instrucciones:</strong> Compra una tarjeta digital o física de Steam. Pega el código de activación aquí abajo para validar tu rango.
-                </div>
-                <input type="text" id="steamCode" placeholder="CÓDIGO (Ej: A1B2C-D3E4F-G5H6I)" required>
-                <button type="submit" style="background: #107c10; box-shadow: 0 4px 12px rgba(16,124,16,0.3);">Enviar y Activar Rango</button>
-            </form>
-
-            <form id="nitroForm" class="auth-form" onsubmit="processGiftCard(event, 'Discord Nitro')">
-                <div class="giftcard-desc" style="border-left-color: var(--discord-color);">
-                    <strong>Instrucciones:</strong> Compra un enlace de regalo de Discord Nitro mensual. Pega el enlace completo aquí abajo.
-                </div>
-                <input type="text" id="nitroCode" placeholder="Enlace de Regalo (Ej: discord.gift/xxxxxx)" required>
-                <button type="submit" style="background: var(--discord-color); box-shadow: 0 4px 12px rgba(88,101,242,0.3);">Enviar y Activar Rango</button>
-            </form>
-            
-            <p class="security-note" style="color: var(--danger-color); text-align: center; background: rgba(239,68,68,0.05); border-left-color: var(--danger-color);">🛑 Intentar enviar códigos falsos o usados resultará en un baneo permanente de EclipseMC.</p>
-        </div>
-    </div>
-
-
-    <div id="staffOverlay" class="auth-overlay" style="display: none;">
-        <div class="auth-box panel-danger" style="max-width: 480px;">
-            <button class="close-modal" onclick="closeStaffModal()">×</button>
-            <h2 style="color: #c084fc; display: flex; align-items: center; justify-content: center; gap: 8px;">⚙️ Panel Administrativo</h2>
-            <p style="color: #9ca3af; font-size: 0.85rem; margin-top: -10px;">Gestión y moderación global de EclipseMC Store</p>
-            
-            <div class="staff-section-box">
-                <h4>🔨 Banear Usuario de la Tienda</h4>
-                <div class="staff-input-group">
-                    <input type="text" id="banTargetInput" placeholder="Nick del jugador">
-                    <button onclick="executeBanPlayer()" class="btn-staff-action" style="background: var(--danger-color); padding: 10px 15px;">Banear</button>
-                </div>
-            </div>
-
-            <div class="staff-section-box">
-                <h4>🛡️ Desbanear Usuario (Unban)</h4>
-                <div class="staff-input-group">
-                    <input type="text" id="unbanTargetInput" placeholder="Nick del jugador">
-                    <button onclick="executeUnbanPlayer()" class="btn-staff-action" style="background: var(--success-color); padding: 10px 15px;">Perdonar</button>
-                </div>
-            </div>
-
-            <div class="staff-section-box">
-                <h4>🎁 Generar Código de Regalo (Cupón Real)</h4>
-                <div class="staff-input-group" style="margin-bottom: 8px;">
-                    <select id="staffGiftRank" style="flex: 1; padding: 10px; background: #111322; border: 1px solid #23283d; color: white; border-radius: 6px;">
-                        <option value="Rango VIP">Rango VIP</option>
-                        <option value="Rango ECLIPSE">Rango ECLIPSE</option>
-                    </select>
-                    <button onclick="generateGiftCode()" class="btn-staff-action" style="background: var(--accent-color); padding: 10px 12px;">Generar</button>
-                </div>
-                <input type="text" id="generatedCodeOutput" readonly placeholder="El código aparecerá aquí" style="width: 95%; padding: 8px; font-size: 0.85rem; text-align: center; background: #06070d; border: 1px dashed #4c1d95; color: #c084fc; border-radius: 4px;">
-            </div>
-
-            <div class="staff-section-box">
-                <h4>🔍 Buscar Estado de Cuenta</h4>
-                <div class="staff-input-group">
-                    <input type="text" id="searchTargetInput" placeholder="Nick del jugador">
-                    <button onclick="auditPlayerAccount()" class="btn-staff-action" style="background: #4f46e5; padding: 10px 15px;">Auditar</button>
-                </div>
-            </div>
-
-            <div class="staff-section-box" style="display: flex; flex-direction: column; gap: 12px;">
-                <h4>🧹 Limpieza de Datos Visuales</h4>
-                <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <button onclick="clearRecentPurchases()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Borrar Compras</button>
-                    <button onclick="clearTopBuyers()" class="btn-staff-action" style="background: #4b5563; flex: 1; font-size: 0.85rem; padding: 10px;">Resetear Tops</button>
-                </div>
-            </div>
-            
-            <p style="font-size: 0.75rem; color: #6b7280; margin-top: 15px; text-align: center;">Los cambios toman efecto de manera inmediata en los datos globales guardados en la tienda.</p>
-        </div>
-    </div>
-
-
-    <div class="user-bar">
-        <div class="user-info">
-            <span>Conectado como: <strong id="userDisplay" style="color: #a78bfa;">Jugador</strong></span>
-            <span id="staffIndicator" class="user-badge" style="display: none; background: rgba(139,92,246,0.15); color: #c084fc; border: 1px solid var(--accent-color);">STAFF ACTIVADO</span>
-        </div>
-        <div class="btn-group">
-            <button id="staffTriggerBtn" class="staff-btn" onclick="openStaffModal()">Modo Staff</button>
-            <button class="logout-btn" onclick="logout()">Cerrar Sesión</button>
-        </div>
-    </div>
-
-    <header>
-        <h1>🌙 EclipseMC Store</h1>
-        <p>Apoya el desarrollo del servidor y adquiere beneficios exclusivos globales</p>
-    </header>
-
-    <div class="container">
-        <div class="card">
-            <h2>Rango VIP</h2>
-            <div class="price">$500 <span style="font-size: 1rem; color: #6b7280; font-weight: normal;">/ mes</span></div>
-            <ul class="features">
-                <li>Prefijo [VIP] exclusivo en el chat</li>
-                <li>Acceso completo a /fly en el Lobby</li>
-                <li>Entrada prioritaria con servidor lleno</li>
-                <li>Kit VIP único semanal</li>
-            </ul>
-            <button class="btn-buy" onclick="openPayModal('Rango VIP', 500)">Comprar Rango</button>
-        </div>
-
-        <div class="card" style="border-color: rgba(167, 139, 250, 0.45);">
-            <h2>Rango ECLIPSE</h2>
-            <div class="price">$1200 <span style="font-size: 1rem; color: #6b7280; font-weight: normal;">/ mes</span></div>
-            <ul class="features">
-                <li>Prefijo ⭐ [ECLIPSE] animado</li>
-                <li>Todos los beneficios del rango VIP</li>
-                <li>Acceso a /fly en todas las modalidades</li>
-                <li>3 Llaves de Caja Mythic mensuales</li>
-            </ul>
-            <button class="btn-buy" onclick="openPayModal('Rango ECLIPSE', 1200)">Comprar Rango</button>
-        </div>
-    </div>
-
-    <div class="stats-section">
+    <!-- La Habitación Oscura -->
+    <div class="room">
         
-        <div class="stats-box">
-            <h3>🛒 Compras Recientes</h3>
-            <div id="recentPurchasesContainer"></div>
-        </div>
+        <!-- La Mesa de Operaciones -->
+        <div class="table">
+            
+            <!-- El Artefacto (Bomba) -->
+            <div class="device">
+                
+                <!-- Módulo 1: Tiempo Cortante -->
+                <div class="timer-display">
+                    <div id="timer" class="timer-text">05:00</div>
+                </div>
 
-        <div class="stats-box">
-            <h3>🏆 Mayores Compradores</h3>
-            <div id="topBuyersContainer"></div>
+                <!-- Módulo 2: Sistema Mecánico de Cables -->
+                <div class="wire-panel">
+                    <div class="wire-container">
+                        <div class="wire red" data-wire="1" onclick="cutWire(this)"></div>
+                    </div>
+                    <div class="wire-container">
+                        <div class="wire blue" data-wire="2" onclick="cutWire(this)"></div>
+                    </div>
+                    <div class="wire-container">
+                        <div class="wire yellow" data-wire="3" onclick="cutWire(this)"></div>
+                    </div>
+                </div>
+
+            </div>
+
         </div>
 
     </div>
 
+    <!-- Pantalla de Fin de Juego -->
+    <div id="game-over-screen">
+        <h1 id="game-result">¡BOOM!</h1>
+        <button onclick="resetGame()">REINTENTAR</button>
+    </div>
+
+    <!-- LÓGICA DE INTERACCIÓN -->
     <script>
-        // CONTRASEÑA DE STAFF DE ECLIPSEMC
-        const STAFF_PASSWORD = "Sol!23Azul#"; 
+        // 1. Seguimiento del ratón para el cursor de la mano
+        const cursor = document.getElementById('custom-cursor');
+        document.addEventListener('mousemove', (e) => {
+            cursor.style.left = e.clientX + 'px';
+            cursor.style.top = e.clientY + 'px';
+        });
 
-        let currentPendingProduct = "";
-        let currentPendingPrice = 0;
+        // Cambio visual de la mano al presionar el click (simula cerrar el puño)
+        document.addEventListener('mousedown', () => {
+            cursor.style.transform = 'translate(-20%, -20%) scale(0.9) rotate(-5deg)';
+        });
+        document.addEventListener('mouseup', () => {
+            cursor.style.transform = 'translate(-20%, -20%) scale(1) rotate(0deg)';
+        });
 
-        function switchTab(tab) {
-            const savedUser = localStorage.getItem('mc_user');
-            if (tab === 'login' && !savedUser) {
-                alert('No hay ninguna cuenta registrada. Por favor usa /register primero.');
-                return;
-            }
 
-            const tabLogin = document.getElementById('tabLogin');
-            const tabRegister = document.getElementById('tabRegister');
-            const loginForm = document.getElementById('loginForm');
-            const registerForm = document.getElementById('registerForm');
-            
-            tabLogin.classList.remove('active');
-            tabRegister.classList.remove('active');
-            loginForm.classList.remove('active');
-            registerForm.classList.remove('active');
+        // 2. Sistema del Temporizador Regresivo
+        let timeLeft = 300; // 5 minutos en segundos
+        let timerInterval;
+        const timerElement = document.getElementById('timer');
+        const gameOverScreen = document.getElementById('game-over-screen');
+        const gameResultText = document.getElementById('game-result');
 
-            if(tab === 'login') {
-                tabLogin.classList.add('active');
-                loginForm.classList.add('active');
+        function updateTimer() {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+
+            // Formato de dos dígitos
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            seconds = seconds < 10 ? '0' + seconds : seconds;
+
+            timerElement.textContent = `${minutes}:${seconds}`;
+
+            // Alerta visual si queda menos de 1 minuto
+            if (timeLeft <= 60) {
+                timerElement.classList.add('critical');
             } else {
-                tabRegister.classList.add('active');
-                registerForm.classList.add('active');
+                timerElement.classList.remove('critical');
             }
-        }
 
-        function switchPayTab(method) {
-            const tabSteam = document.getElementById('tabSteam');
-            const tabNitro = document.getElementById('tabNitro');
-            const steamForm = document.getElementById('steamForm');
-            const nitroForm = document.getElementById('nitroForm');
-
-            tabSteam.classList.remove('active');
-            tabNitro.classList.remove('active');
-            steamForm.classList.remove('active');
-            nitroForm.classList.remove('active');
-
-            if(method === 'steam') {
-                tabSteam.classList.add('active');
-                steamForm.classList.add('active');
+            if (timeLeft <= 0) {
+                endGame(false); // Fin del juego por tiempo terminado
             } else {
-                tabNitro.classList.add('active');
-                nitroForm.classList.add('active');
+                timeLeft--;
             }
         }
 
-        function openPayModal(productName, price) {
-            currentPendingProduct = productName;
-            currentPendingPrice = price;
-            document.getElementById('pendingProduct').innerText = productName + " ($" + price + ")";
-            document.getElementById('payOverlay').style.display = 'flex';
-        }
+        // 3. Mecánica del juego: Cortar cables
+        // Para este prototipo local, definimos que el cable AZUL (2) desarma la bomba, los otros explotan.
+        const correctWire = "2"; 
 
-        function closePayModal() {
-            document.getElementById('payOverlay').style.display = 'none';
-            document.getElementById('steamCode').value = "";
-            document.getElementById('nitroCode').value = "";
-        }
+        function cutWire(wireElement) {
+            if (wireElement.classList.contains('cut')) return; // Ya está cortado
 
-        /* MANEJO MODO STAFF EXCLUSIVO */
-        function openStaffModal() {
-            const isAlreadyStaff = sessionStorage.getItem('isStaff') === 'true';
+            // Marcar el cable visualmente como destruido/cortado
+            wireElement.classList.add('cut');
             
-            if (isAlreadyStaff) {
-                document.getElementById('staffOverlay').style.display = 'flex';
+            const wireID = wireElement.getAttribute('data-wire');
+
+            if (wireID === correctWire) {
+                endGame(true); // ¡Salvaste el juego!
             } else {
-                const accessPass = prompt("🔑 Ingrese la contraseña del Staff de EclipseMC:");
-                if (accessPass === STAFF_PASSWORD) {
-                    sessionStorage.setItem('isStaff', 'true');
-                    document.getElementById('staffIndicator').style.display = 'inline-block';
-                    document.getElementById('staffOverlay').style.display = 'flex';
-                } else if (accessPass !== null) {
-                    alert("❌ Contraseña incorrecta de acceso Staff.");
-                }
+                endGame(false); // Cable incorrecto, detonación inmediata
             }
         }
 
-        function closeStaffModal() {
-            document.getElementById('staffOverlay').style.display = 'none';
-        }
-
-        function executeBanPlayer() {
-            const target = document.getElementById('banTargetInput').value.trim();
-            if(!target) return;
-
-            let bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
-            if(!bannedList.includes(target.toLowerCase())) {
-                bannedList.push(target.toLowerCase());
-                localStorage.setItem('shop_banned_users', JSON.stringify(bannedList));
-                alert(`🔨 El jugador "${target}" ha sido completamente baneado de la tienda.`);
-                document.getElementById('banTargetInput').value = "";
-                closeStaffModal();
-                checkBanStatus();
+        // 4. Estados de finalización del juego
+        function endGame(victory) {
+            clearInterval(timerInterval);
+            gameOverScreen.style.display = 'flex';
+            
+            if (victory) {
+                gameResultText.textContent = "SISTEMA DESACTIVADO";
+                gameResultText.style.color = "#33ff33";
+                gameResultText.style.textShadow = "0 0 20px green";
             } else {
-                alert("Este jugador ya se encuentra en la lista de baneados.");
+                gameResultText.textContent = "¡BOOM! EXECUCIÓN COMPLETADA";
+                gameResultText.style.color = "#ff3333";
+                gameResultText.style.textShadow = "0 0 20px red";
             }
         }
 
-        function executeUnbanPlayer() {
-            const target = document.getElementById('unbanTargetInput').value.trim();
-            if(!target) return;
-
-            let bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
-            
-            if(bannedList.includes(target.toLowerCase())) {
-                bannedList = bannedList.filter(user => user !== target.toLowerCase());
-                localStorage.setItem('shop_banned_users', JSON.stringify(bannedList));
-                alert(`🛡️ El jugador "${target}" ha sido desbaneado con éxito de la tienda.`);
-                document.getElementById('unbanTargetInput').value = "";
-                closeStaffModal();
-                
-                const currentUser = localStorage.getItem('currentUser');
-                if (currentUser && currentUser.toLowerCase() === target.toLowerCase()) {
-                    document.getElementById('banOverlay').style.display = 'none';
-                    location.reload();
-                }
-            } else {
-                alert(`El jugador "${target}" no está en la lista negra.`);
-            }
+        // Reiniciar la partida
+        function resetGame() {
+            timeLeft = 300;
+            gameOverScreen.style.display = 'none';
+            document.querySelectorAll('.wire').forEach(w => w.classList.remove('cut'));
+            clearInterval(timerInterval);
+            timerInterval = setInterval(updateTimer, 1000);
         }
 
-        // MEMORIA REAL DEL STAFF: Generar y archivar códigos promocionales
-        function generateGiftCode() {
-            const rank = document.getElementById('staffGiftRank').value;
-            const randomHex = Math.random().toString(36).substring(2, 7).toUpperCase();
-            const randomHex2 = Math.random().toString(36).substring(2, 7).toUpperCase();
-            const fullCode = `ECLIPSE-${randomHex}-${randomHex2}`;
-            
-            // Archivar el código en la base de datos local para que sea auto-canjeable
-            let activeCoupons = JSON.parse(localStorage.getItem('shop_active_coupons')) || {};
-            activeCoupons[fullCode] = rank;
-            localStorage.setItem('shop_active_coupons', JSON.stringify(activeCoupons));
-
-            document.getElementById('generatedCodeOutput').value = fullCode;
-            alert(`¡CUPÓN REAL GENERADO!\nCódigo: ${fullCode}\n\nEste código es 100% real y otorgará el ${rank} de forma inmediata a quien lo use.`);
-        }
-
-        function auditPlayerAccount() {
-            const target = document.getElementById('searchTargetInput').value.trim();
-            if(!target) return;
-
-            const bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
-            const topsObj = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
-            const registeredUser = localStorage.getItem('mc_user');
-            
-            const isBanned = bannedList.includes(target.toLowerCase()) ? "SÍ (Sancionado)" : "NO (Limpio)";
-            const totalSpent = topsObj[target] ? `$${topsObj[target]}` : "$0";
-            const exists = (registeredUser && registeredUser.toLowerCase() === target.toLowerCase()) ? "Sí, registrado aquí." : "No se detecta sesión local.";
-
-            alert(`📊 AUDITORÍA DE CUENTA: ${target}\n\n• ¿Está Baneado?: ${isBanned}\n• Dinero aportado: ${totalSpent}\n• Registro Local: ${exists}`);
-            document.getElementById('searchTargetInput').value = "";
-        }
-
-        function clearRecentPurchases() {
-            if(confirm("¿Seguro que deseas borrar el historial de compras recientes de la pantalla?")) {
-                localStorage.removeItem('shop_recent_purchases');
-                updateStatsUI();
-                closeStaffModal();
-            }
-        }
-
-        function clearTopBuyers() {
-            if(confirm("¿Seguro que deseas resetear la tabla completa de mayores compradores a $0?")) {
-                localStorage.removeItem('shop_top_buyers');
-                updateStatsUI();
-                closeStaffModal();
-            }
-        }
-
-        function checkBanStatus() {
-            const currentUser = localStorage.getItem('currentUser');
-            let bannedList = JSON.parse(localStorage.getItem('shop_banned_users')) || [];
-            
-            if(currentUser && bannedList.includes(currentUser.toLowerCase())) {
-                document.getElementById('banOverlay').style.display = 'flex';
-                if(document.getElementById('authOverlay')) document.getElementById('authOverlay').style.display = 'none';
-                if(document.getElementById('payOverlay')) document.getElementById('payOverlay').style.display = 'none';
-                if(document.getElementById('staffOverlay')) document.getElementById('staffOverlay').style.display = 'none';
-            }
-        }
-
-        // DETECTOR INTELIGENTE DE CÓDIGOS REALES O FALSOS (SINTÁCTICO)
-        function processGiftCard(event, cardType) {
-            event.preventDefault();
-            const currentUser = localStorage.getItem('currentUser') || "Jugador";
-            
-            if (cardType === 'Steam') {
-                const code = document.getElementById('steamCode').value.trim().toUpperCase();
-                
-                // CONTROL 1: ¿Es un cupón real generado por el modo Staff?
-                let activeCoupons = JSON.parse(localStorage.getItem('shop_active_coupons')) || {};
-                if (activeCoupons[code]) {
-                    const assignedRank = activeCoupons[code];
-                    alert(`✅ [CÓDIGO VERIFICADO]: ¡Felicidades! Has canjeado un cupón legítimo de EclipseMC.\nEl ${assignedRank} ha sido activado de forma instantánea para tu cuenta.`);
-                    
-                    // Asignar precio simbólico en base al rango del cupón
-                    const price = assignedRank === 'Rango ECLIPSE' ? 1200 : 500;
-                    registerPurchase(assignedRank, price);
-                    
-                    // Eliminar cupón para que no sea reutilizable
-                    delete activeCoupons[code];
-                    localStorage.setItem('shop_active_coupons', JSON.stringify(activeCoupons));
-                    
-                    closePayModal();
-                    return;
-                }
-
-                // CONTROL 2: Validación estructural de tarjeta Steam real (Patrón: XXXXX-XXXXX-XXXXX)
-                const steamRegex = /^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/;
-                if (steamRegex.test(code)) {
-                    alert(`📩 [PROCESANDO TARJETA STEAM]: Estructura de código válida.\nTu tarjeta ha entrado a la cola de validación de fondos manual. El rango se activará en tu cuenta (${currentUser}) en los próximos minutos.`);
-                    registerPurchase(currentPendingProduct, currentPendingPrice);
-                    closePayModal();
-                } else {
-                    alert(`❌ [CÓDIGO RECHAZADO]: Tarjeta inválida.\nEl código de Steam ingresado no cumple con el formato estándar internacional (XXXXX-XXXXX-XXXXX).\nPor favor, revísalo bien.`);
-                }
-
-            } else if (cardType === 'Discord Nitro') {
-                const link = document.getElementById('nitroCode').value.trim();
-                
-                // CONTROL STRUCT: Validación estructural de Enlace Nitro verídico (discord.gift/letras)
-                const nitroRegex = /^(https?:\/\/)?(www\.)?discord\.gift\/[A-Za-z0-9]{16,19}$/;
-                if (nitroRegex.test(link)) {
-                    alert(`📩 [PROCESANDO NITRO]: El enlace es estructuralmente correcto.\nEl bot administrativo de EclipseMC está reclamando el link de regalo. Tu ${currentPendingProduct} se activará al concluir la validación.`);
-                    registerPurchase(currentPendingProduct, currentPendingPrice);
-                    closePayModal();
-                } else {
-                    alert(`❌ [ENLACE RECHAZADO]: Enlace fraudulento o mal escrito.\nLos regalos de Discord Nitro deben ser links oficiales con formato: discord.gift/CODIGO (de 16 a 19 letras/números).\nEvita ingresar textos aleatorios.`);
-                }
-            }
-        }
-
-        function handleAuth(event, type) {
-            event.preventDefault();
-            if (type === 'register') {
-                const user = document.getElementById('registerUser').value.trim();
-                const pass = document.getElementById('registerPass').value;
-                
-                if(user && pass) {
-                    localStorage.setItem('mc_user', user);
-                    localStorage.setItem('mc_pass', pass);
-                    alert('¡Registro exitoso!');
-                    loadStore(user);
-                }
-            } else if (type === 'login') {
-                const user = document.getElementById('loginUser').value.trim();
-                const pass = document.getElementById('loginPass').value;
-                const savedUser = localStorage.getItem('mc_user');
-                const savedPass = localStorage.getItem('mc_pass');
-
-                if(savedUser && user.toLowerCase() === savedUser.toLowerCase() && pass === savedPass) {
-                    loadStore(savedUser);
-                } else {
-                    alert('Usuario o contraseña incorrectos.');
-                }
-            }
-        }
-
-        function loadStore(username) {
-            localStorage.setItem('isLoggedIn', 'true');
-            localStorage.setItem('currentUser', username);
-            document.getElementById('authOverlay').style.display = 'none';
-            document.getElementById('userDisplay').innerText = username;
-            checkBanStatus();
-            updateStatsUI();
-        }
-
-        function logout() {
-            localStorage.removeItem('isLoggedIn');
-            localStorage.removeItem('currentUser');
-            sessionStorage.removeItem('isStaff');
-            location.reload();
-        }
-
-        function registerPurchase(productName, price) {
-            const currentUser = localStorage.getItem('currentUser') || "Invitado";
-            
-            let recent = JSON.parse(localStorage.getItem('shop_recent_purchases')) || [];
-            const newPurchase = { name: currentUser, product: productName, time: "Ahora mismo" };
-            recent.unshift(newPurchase);
-            if(recent.length > 5) recent.pop();
-            localStorage.setItem('shop_recent_purchases', JSON.stringify(recent));
-
-            let tops = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
-            tops[currentUser] = (tops[currentUser] || 0) + price;
-            localStorage.setItem('shop_top_buyers', JSON.stringify(tops));
-
-            updateStatsUI();
-        }
-
-        function updateStatsUI() {
-            const recentContainer = document.getElementById('recentPurchasesContainer');
-            let recent = JSON.parse(localStorage.getItem('shop_recent_purchases')) || [];
-            
-            if(recent.length === 0) {
-                recentContainer.innerHTML = '<div class="no-data">No hay compras recientes aún</div>';
-            } else {
-                recentContainer.innerHTML = recent.map(p => `
-                    <div class="stat-item">
-                        <span class="buyer-name">${p.name}</span>
-                        <span class="buyer-product">${p.product}</span>
-                        <span style="color: #6b7280; font-size: 0.85rem;">${p.time}</span>
-                    </div>
-                `).join('');
-            }
-
-            const topContainer = document.getElementById('topBuyersContainer');
-            let topsObj = JSON.parse(localStorage.getItem('shop_top_buyers')) || {};
-            let sortedTops = [];
-            for (let player in topsObj) {
-                sortedTops.push({ name: player, amount: topsObj[player] });
-            }
-            sortedTops.sort((a, b) => b.amount - a.amount);
-
-            if(sortedTops.length === 0) {
-                topContainer.innerHTML = '<div class="no-data">Aún no hay registros de compradores</div>';
-            } else {
-                topContainer.innerHTML = sortedTops.slice(0, 5).map((p, index) => `
-                    <div class="stat-item">
-                        <div><span>${index + 1}. </span><span class="buyer-name">${p.name}</span></div>
-                        <span class="buyer-amount">$${p.amount}</span>
-                    </div>
-                `).join('');
-            }
-        }
-
-        window.onload = function() {
-            const savedUser = localStorage.getItem('mc_user');
-            const isLoggedIn = localStorage.getItem('isLoggedIn') === 'true';
-            const isAlreadyStaff = sessionStorage.getItem('isStaff') === 'true';
-            
-            if (isLoggedIn && savedUser) {
-                loadStore(savedUser);
-            }
-            if (isAlreadyStaff) {
-                document.getElementById('staffIndicator').style.display = 'inline-block';
-            }
-            
-            if (!savedUser) {
-                document.getElementById('tabLogin').style.display = 'none';
-                switchTab('register');
-            } else if (!isLoggedIn) {
-                document.getElementById('tabLogin').style.display = 'block';
-                switchTab('login');
-            }
-
-            updateStatsUI();
-        }
+        // Iniciar el reloj al cargar la página
+        timerInterval = setInterval(updateTimer, 1000);
     </script>
 </body>
 </html>
