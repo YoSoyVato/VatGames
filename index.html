@@ -4,33 +4,295 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Slasher Chronicles - Víctima 1</title>
-    <link rel="stylesheet" href="css/estilo.css">
+    <style>
+        /* IMPORTAMOS FUENTE RETRO ESTILO ARCADE */
+        @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'VT323', monospace;
+            letter-spacing: 1px;
+        }
+
+        body {
+            background-color: #050508;
+            color: #ff3333; /* Rojo Sangre / Slasher */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+            /* CURSOR EN REPOSO: Mano abierta (Estilo clásico de aventura gráfica) */
+            cursor: grab, auto;
+        }
+
+        /* FILTRO ESTILO MONITOR CRT (PANTALLA DE TUBO VIEJA) */
+        .crt-overlay {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.35) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+            background-size: 100% 4px, 6px 100%;
+            z-index: 10;
+            pointer-events: none;
+            animation: flicker 0.15s infinite;
+        }
+
+        @keyframes flicker {
+            0% { opacity: 0.98; }
+            50% { opacity: 1; }
+            100% { opacity: 0.99; }
+        }
+
+        /* CONTENEDOR PRINCIPAL DEL JUEGO */
+        .game-container {
+            width: 850px;
+            height: 650px;
+            border: 6px solid #1a1a24;
+            background: #000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 40px rgba(255, 0, 0, 0.15);
+            border-radius: 4px;
+            position: relative;
+        }
+
+        /* VISTA EN PRIMERA PERSONA (El escenario visual) */
+        .viewport {
+            flex: 1;
+            /* Reemplaza este gradiente por una imagen de fondo (ej: background-image: url('living.png')) cuando las tengas */
+            background: radial-gradient(circle at center, #151821 0%, #05060a 80%);
+            position: relative;
+            display: flex;
+            align-items: flex-end;
+            padding: 30px;
+            border-bottom: 4px solid #1a1a24;
+            transition: background 0.5s ease;
+        }
+
+        /* EFECTO DE MÁSCARA / CLAUSTROFOBIA EN LOS BORDES */
+        .vignette {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.95) 95%);
+            pointer-events: none;
+        }
+
+        /* TEXTO DE AMBIENTACIÓN DENTRO DE LA ESCENA */
+        .ambient-text {
+            font-size: 1.8rem;
+            color: #7a8296;
+            z-index: 1;
+            text-shadow: 2px 2px 4px #000;
+            max-width: 80%;
+            line-height: 1.1;
+        }
+
+        /* INTERFAZ INFERIOR (CONTROLES Y TEXTO DE HISTORIA) */
+        .ui-panel {
+            height: 240px;
+            background: #0a0a0f;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .status-bar {
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.4rem;
+            color: #8f9aa8;
+            border-bottom: 1px dashed #333344;
+            padding-bottom: 6px;
+        }
+
+        #game-status {
+            color: #ffcc00;
+            font-weight: bold;
+        }
+
+        /* CAJA DE TEXTO PRINCIPAL DE LA HISTORIA */
+        .story-box {
+            font-size: 1.5rem;
+            color: #e2e8f0;
+            min-height: 70px;
+            line-height: 1.3;
+        }
+
+        /* CONTENEDOR DE BOTONES (DECISIONES) */
+        .options-container {
+            display: flex;
+            gap: 12px;
+            margin-top: auto;
+        }
+
+        /* DISEÑO DE LOS BOTONES DE OPCIÓN */
+        .btn-option {
+            flex: 1;
+            background: #111116;
+            border: 2px solid #ff3333;
+            color: #ff3333;
+            padding: 12px;
+            font-size: 1.4rem;
+            text-align: left;
+            transition: all 0.2s ease;
+            border-radius: 2px;
+            /* CURSOR INTERACTIVO: Mano con dedo apuntando */
+            cursor: pointer;
+        }
+
+        .btn-option:hover {
+            background: #ff3333;
+            color: #050508;
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.5);
+            transform: translateY(-2px);
+        }
+
+        .btn-option:active {
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
 
     <div class="crt-overlay"></div>
 
     <div class="game-container">
+        
         <div class="viewport" id="viewport">
             <div class="vignette"></div>
-            <p class="ambient-text" id="ambient-text">Estás dentro. Llueve fuerte afuera. A través de la rendija del ropero, ves a tu primera víctima de espaldas en el living...</p>
+            <p class="ambient-text" id="ambient-text">Cargando entorno...</p>
         </div>
 
         <div class="ui-panel">
             <div class="status-bar">
-                <span>OBJETIVO: El Analista</span>
-                <span id="game-status">ESTADO: Acechando...</span>
+                <span>OBJETIVO 1: EL ANALISTA</span>
+                <span id="game-status">ESTADO: ACECHANDO</span>
             </div>
             
             <div class="story-box">
-                <p id="story-text">La televisión parpadea iluminando la habitación. El suelo de madera cruje si te movés rápido. El objetivo está distraído escribiendo en su computadora. Tenés que actuar antes de que apague las luces.</p>
+                <p id="story-text">Iniciando protocolo de infiltración...</p>
             </div>
 
-            <div class="options-container" id="options-container">
-                </div>
+            <div class="options-container" id="options-container"></div>
         </div>
     </div>
 
-    <script src="js/motor.js"></script>
+    <script>
+        // ÁRBOL DE DECISIONES DE LA PRIMERA MISIÓN
+        const misiones = {
+            inicio: {
+                ambient: "Estás dentro. El sonido de la tormenta golpea las ventanas. A través de la rendija del ropero, ves a tu primera víctima de espaldas en el living...",
+                story: "El analista está concentrado tipeando código en su monitor. A tu izquierda ves la caja de fusibles principal de la casa. En la cocina trasera, una ventana golpea suavemente por el viento.",
+                background: "radial-gradient(circle at center, #1b2030 0%, #05060a 80%)",
+                options: [
+                    { text: "⚡ Sabotear la caja de fusibles (Cortar Luz)", nextNode: "cortar_luz" },
+                    { text: "🍽️ Provocar un ruido en la cocina", nextNode: "ruido_cocina" },
+                    { text: "👣 Salir del ropero y avanzar en silencio", nextNode: "ataque_directo" }
+                ]
+            },
+            cortar_luz: {
+                ambient: "Apagón total. El living queda a oscuras. Solo se escucha el viento afuera.",
+                story: "El objetivo lanza una maldición. Sentís cómo se levanta de la silla y enciende la linterna de su celular. Sus pasos se dirigen directo hacia el pasillo donde estás oculto.",
+                background: "radial-gradient(circle at center, #0d0d13 0%, #000000 95%)",
+                options: [
+                    { text: "👁️ Esperar en las sombras a que abra la caja", nextNode: "victoria_limpia" },
+                    { text: "🪓 Salir de golpe para atacarlo de frente", nextNode: "escape_victima" }
+                ]
+            },
+            ruido_cocina: {
+                ambient: "¡CRASH! Empujás la puerta y una taza se estrella contra el suelo de la cocina.",
+                story: "El analista se sobresalta. Agarra un bolígrafo pesado de su escritorio como defensa y camina lentamente hacia la cocina, dándote completamente la espalda en el living.",
+                background: "radial-gradient(circle at center, #1f1a24 0%, #050508 85%)",
+                options: [
+                    { text: "👣 Acecharlo por la espalda hacia la cocina", nextNode: "victoria_cocina" },
+                    { text: "💻 Ir a su computadora a ver qué ocultaba", nextNode: "descubierto_ruido" }
+                ]
+            },
+            ataque_directo: {
+                ambient: "¡CRAC! Una tabla del suelo de madera vieja cruje con fuerza bajo tu peso.",
+                story: "El ruido rompe el silencio. El objetivo se da la vuelta al instante, ve tu máscara en la penumbra y grita de terror mientras se arroja por la ventana hacia la calle. Te descubrieron.",
+                background: "radial-gradient(circle at center, #3a1a1a 0%, #0a0505 90%)",
+                options: [
+                    { text: "🔄 Reintentar Escenario", nextNode: "inicio" }
+                ]
+            },
+            descubierto_ruido: {
+                ambient: "Te gana la curiosidad. Al tocar el teclado, el monitor brilla con fuerza.",
+                story: "El brillo de la pantalla delata tu silueta en el vidrio. El analista regresa corriendo de la cocina y te encuentra. Forcejean, logra golpearte con una silla y escapa. Fin del juego.",
+                background: "radial-gradient(circle at center, #3a1a1a 0%, #0a0505 90%)",
+                options: [
+                    { text: "🔄 Reintentar Escenario", nextNode: "inicio" }
+                ]
+            },
+            escape_victima: {
+                ambient: "El impulso arruinó tu ventaja táctica.",
+                story: "Al salir corriendo de frente, el brillo del teléfono te encandila. El objetivo reacciona por pura adrenalina, te empuja y logra encerrarse en el baño blindado a llamar al 911. Game Over.",
+                background: "radial-gradient(circle at center, #3a1a1a 0%, #0a0505 90%)",
+                options: [
+                    { text: "🔄 Reintentar Escenario", nextNode: "inicio" }
+                ]
+            },
+            victoria_limpia: {
+                ambient: "Trabajo quirúrgico. Cero ruidos. Cero testigos.",
+                story: "Esperaste el momento exacto. Lo neutralizaste desde atrás mientras revisaba los fusibles sin que pudiera reaccionar. Limpiás la escena y salís por la parte trasera. Misión 1 Completada.",
+                background: "radial-gradient(circle at center, #1a2e1a 0%, #020502 90%)",
+                options: [
+                    { text: "➔ Siguiente Objetivo (Próximamente)", nextNode: "inicio" }
+                ]
+            },
+            victoria_cocina: {
+                ambient: "La oscuridad de la cocina ocultó el desenlace.",
+                story: "Lo sorprendiste justo cuando entraba a revisar el suelo. El plan cambió sobre la marcha, pero tu ejecución fue impecable. La noche recién comienza... Misión 1 Completada.",
+                background: "radial-gradient(circle at center, #1a2e1a 0%, #020502 90%)",
+                options: [
+                    { text: "➔ Siguiente Objetivo (Próximamente)", nextNode: "inicio" }
+                ]
+            }
+        };
+
+        // LÓGICA DEL MOTOR DEL JUEGO
+        function cargarEscena(nodoId) {
+            const escena = misiones[nodoId];
+            const viewport = document.getElementById("viewport");
+            const statusText = document.getElementById("game-status");
+            const contenedorOpciones = document.getElementById("options-container");
+
+            // Cambiar atmósfera visual según el estado de la escena
+            viewport.style.background = escena.background;
+            document.getElementById("ambient-text").innerText = escena.ambient;
+            document.getElementById("story-text").innerText = escena.story;
+            
+            // Administrador de estados en la interfaz
+            if (nodoId.startsWith("victoria")) {
+                statusText.innerText = "ESTADO: COMPLETADO";
+                statusText.style.color = "#52ff52"; // Verde Éxito
+            } else if (nodoId === "escape_victima" || nodoId === "descubierto_ruido" || nodoId === "ataque_directo") {
+                statusText.innerText = "ESTADO: FALLIDO";
+                statusText.style.color = "#ff3333"; // Rojo Fracaso
+            } else {
+                statusText.innerText = "ESTADO: ACECHANDO";
+                statusText.style.color = "#ffcc00"; // Ámbar Alerta
+            }
+
+            // Limpieza e inyección de nuevas opciones de decisión
+            contenedorOpciones.innerHTML = "";
+            escena.options.forEach(opcion => {
+                const boton = document.createElement("button");
+                boton.className = "btn-option";
+                boton.innerText = opcion.text;
+                boton.onclick = () => cargarEscena(opcion.nextNode);
+                contenedorOpciones.appendChild(boton);
+            });
+        }
+
+        // Inicialización automática al cargar el navegador
+        window.onload = () => {
+            cargarEscena("inicio");
+        };
+    </script>
 </body>
 </html>
