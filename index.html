@@ -3,28 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Retro City Simulator - Top-Down</title>
+    <title>Retro City Outlaw - Top-Down Edition</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #111; color: white; font-family: sans-serif; overflow: hidden; }
-        canvas { display: block; margin: 0 auto; background: #222; }
-        #ui {
-            position: absolute; top: 10px; left: 10px;
-            background: rgba(0,0,0,0.7); padding: 15px; border-radius: 5px;
-            border: 1px solid #444; pointer-events: none;
+        body { background-color: #0a0a0a; color: white; font-family: 'Courier New', Courier, monospace; overflow: hidden; select: none; }
+        canvas { display: block; background: #151515; }
+        #hud {
+            position: absolute; top: 15px; right: 15px;
+            background: rgba(0,0,0,0.85); padding: 15px; border-radius: 6px;
+            border: 2px solid #ff3333; pointer-events: none; text-align: right;
+            box-shadow: 0 0 15px rgba(255, 51, 51, 0.3);
         }
-        h3 { color: #00ffcc; margin-bottom: 5px; }
-        kbd { background: #444; padding: 2px 6px; border-radius: 3px; font-size: 0.8em; }
+        #controls {
+            position: absolute; top: 15px; left: 15px;
+            background: rgba(0,0,0,0.8); padding: 15px; border-radius: 6px;
+            border: 1px solid #444; pointer-events: none; font-size: 0.85em;
+        }
+        .wanted-star { color: #555; font-size: 24px; font-weight: bold; transition: color 0.2s; }
+        .active-star { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; }
+        kbd { background: #333; padding: 2px 5px; border-radius: 3px; border: 1px solid #555; color: #00ffcc; }
+        .stat-bar { width: 150px; height: 12px; background: #333; display: inline-block; border: 1px solid #fff; }
+        #health-fill { width: 100%; height: 100%; background: #ff3333; transition: width 0.1s; }
     </style>
 </head>
 <body>
 
-    <div id="ui">
-        <h3>CONTROLES</h3>
-        <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> : Moverse / Manejar</p>
-        <p><kbd>E</kbd> : Entrar / Salir del Vehículo</p>
-        <hr style="margin: 8px 0; border-color: #333;">
-        <p id="status">Estado: A pie</p>
+    <div id="controls">
+        <h3 style="color: #00ffcc; margin-bottom: 5px;">CONTROLES TÁCTICOS</h3>
+        <p><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd> : Movimiento</p>
+        <p><kbd>E</kbd> : Entrar / Robar / Salir de Vehículo</p>
+        <p><kbd>Click Izquierdo</kbd> : Disparar Arma (A pie)</p>
+        <p><kbd>Mouse</kbd> : Apuntar Dirección</p>
+    </div>
+
+    <div id="hud">
+        <div style="font-size: 1.2em; font-weight: bold; margin-bottom: 5px;" id="wanted-container">
+            <span class="wanted-star">★</span><span class="wanted-star">★</span><span class="wanted-star">★</span><span class="wanted-star">★</span><span class="wanted-star">★</span>
+        </div>
+        <p>SALUD: <span class="stat-bar"><div id="health-fill"></div></span></p>
+        <p style="margin-top: 5px; color: #00ffcc;" id="ammo-display">MUNICIÓN: 30 / ∞</p>
+        <p style="font-size: 0.8em; color: #aaa; margin-top: 5px;" id="status-display">Estado: Civil a pie</p>
     </div>
 
     <canvas id="gameCanvas"></canvas>
@@ -33,276 +51,419 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Ajustar pantalla
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-window.addEventListener("resize", () => {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-});
+window.addEventListener("resize", () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; });
 
-// CONFIGURACIÓN DEL MUNDO
-const WORLD_SIZE = 3000;
-const GRID_SIZE = 300; // Tamaño de cada manzana de edificios
-
-// Teclado
+// CONFIGURACIÓN GLOBAL
+const WORLD_SIZE = 4000;
+const GRID_SIZE = 400;
 const keys = {};
+const mouse = { x: 0, y: 0, worldX: 0, worldY: 0 };
+
 window.addEventListener("keydown", e => keys[e.key.toLowerCase()] = true);
 window.addEventListener("keyup", e => keys[e.key.toLowerCase()] = false);
+window.addEventListener("mousemove", e => {
+    mouse.x = e.clientX;
+    mouse.y = e.clientY;
+});
 
-// CLASE VEHÍCULO
-class Vehicle {
-    constructor(x, y, color) {
+// SISTEMA DE BALAS
+class Bullet {
+    constructor(x, y, angle, isPlayer = true) {
         this.x = x;
         this.y = y;
-        this.width = 60;
-        this.height = 30;
+        this.speed = 14;
+        this.dx = Math.cos(angle) * this.speed;
+        this.dy = Math.sin(angle) * this.speed;
+        this.life = 60; // Duración de la bala en frames
+        this.isPlayer = isPlayer;
+    }
+    update() {
+        this.x += this.dx;
+        this.y += this.dy;
+        this.life--;
+    }
+    draw(cx, cy) {
+        ctx.fillStyle = "#ffcc00";
+        ctx.beginPath();
+        ctx.arc(this.x - cx, this.y - cy, 3, 0, Math.PI * 2);
+        ctx.fill();
+    }
+}
+
+// CLASE VEHÍCULO GENERAL
+class Vehicle {
+    constructor(x, y, color, isPolice = false) {
+        this.x = x;
+        this.y = y;
+        this.width = 65;
+        this.height = 32;
         this.color = color;
-        this.angle = 0;
+        this.isPolice = isPolice;
+        this.angle = Math.random() * Math.PI * 2;
         this.speed = 0;
-        this.maxSpeed = 8;
-        this.acc = 0.15;
-        this.friction = 0.05;
+        this.maxSpeed = isPolice ? 9.5 : 7.5;
+        this.acc = 0.18;
+        this.friction = 0.06;
         this.isOccupied = false;
+        this.health = 100;
     }
 
-    update() {
+    update(targetX, targetY) {
         if (this.isOccupied) {
-            // Controles de manejo
             if (keys['w']) this.speed = Math.min(this.speed + this.acc, this.maxSpeed);
             if (keys['s']) this.speed = Math.max(this.speed - this.acc, -this.maxSpeed/2);
-            
-            // Solo gira si se está moviendo
             if (Math.abs(this.speed) > 0.5) {
-                const turnSpeed = 0.04 * (this.speed > 0 ? 1 : -1);
-                if (keys['a']) this.angle -= turnSpeed;
-                if (keys['d']) this.angle += turnSpeed;
+                const turn = 0.045 * (this.speed > 0 ? 1 : -1);
+                if (keys['a']) this.angle -= turn;
+                if (keys['d']) this.angle += turn;
             }
-        }
-
-        // Aplicar fricción natural
-        if (!keys['w'] && !keys['s']) {
+        } else if (this.isPolice && game.wantedLevel > 0) {
+            // Inteligencia Artificial de la Policía: Persecución pura
+            let angleToPlayer = Math.atan2(targetY - this.y, targetX - this.x);
+            // Suavizar giro de la IA
+            let diff = angleToPlayer - this.angle;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            this.angle += Math.sign(diff) * 0.04;
+            this.speed = Math.min(this.speed + this.acc, this.maxSpeed - 1);
+        } else {
+            // Desaceleración si queda vacío
             if (this.speed > 0) this.speed = Math.max(this.speed - this.friction, 0);
-            if (this.speed < 0) this.speed = Math.min(this.speed + this.friction, 0);
         }
 
-        // Mover basado en el ángulo
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
+        
+        // Límites del mundo
+        this.x = Math.max(100, Math.min(WORLD_SIZE - 100, this.x));
+        this.y = Math.max(100, Math.min(WORLD_SIZE - 100, this.y));
     }
 
-    draw(cameraX, cameraY) {
+    draw(cx, cy) {
         ctx.save();
-        ctx.translate(this.x - cameraX, this.y - cameraY);
+        ctx.translate(this.x - cx, this.y - cy);
         ctx.rotate(this.angle);
 
-        // Chasis del Auto
+        // Chasis del auto
         ctx.fillStyle = this.color;
         ctx.fillRect(-this.width/2, -this.height/2, this.width, this.height);
 
-        // Parabrisas / Ventanas
-        ctx.fillStyle = "#33aaff";
-        ctx.fillRect(10, -this.height/2 + 3, 8, this.height - 6); // Parabrisas delantero
-        ctx.fillRect(-15, -this.height/2 + 3, 6, this.height - 6); // Luneta trasera
+        // Ruedas
+        ctx.fillStyle = "#111";
+        ctx.fillRect(-this.width/3, -this.height/2 - 2, 12, 3);
+        ctx.fillRect(this.width/4, -this.height/2 - 2, 12, 3);
+        ctx.fillRect(-this.width/3, this.height/2 - 1, 12, 3);
+        ctx.fillRect(this.width/4, this.height/2 - 1, 12, 3);
 
-        // Luces delanteras
-        ctx.fillStyle = "#ffffaa";
-        ctx.fillRect(this.width/2 - 2, -this.height/2 + 4, 3, 5);
-        ctx.fillRect(this.width/2 - 2, this.height/2 - 9, 3, 5);
+        // Cristales
+        ctx.fillStyle = this.isPolice ? "#222" : "#55ccff";
+        ctx.fillRect(10, -this.height/2 + 4, 8, this.height - 8); 
+        ctx.fillRect(-16, -this.height/2 + 4, 6, this.height - 8);
+
+        // Sirena de policía interactiva
+        if (this.isPolice) {
+            ctx.fillStyle = (Math.floor(Date.now() / 150) % 2 === 0) ? "#ff0000" : "#0033ff";
+            ctx.beginPath();
+            ctx.arc(-2, 0, 6, 0, Math.PI*2);
+            ctx.fill();
+        }
 
         ctx.restore();
     }
 }
 
-// CLASE PEATÓN (IA Básica)
+// CLASE PEATÓN AVANZADO
 class Pedestrian {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = 8;
-        this.speed = 1.5;
+        this.radius = 9;
+        this.speed = 1.2;
         this.angle = Math.random() * Math.PI * 2;
-        this.changeDirTimer = Math.random() * 100;
+        this.timer = Math.random() * 120;
+        this.isPanicked = false;
+        this.dead = false;
     }
 
-    update() {
-        this.changeDirTimer--;
-        if (this.changeDirTimer <= 0) {
-            this.angle = Math.random() * Math.PI * 2;
-            this.changeDirTimer = Math.random() * 200 + 100;
+    update(px, py) {
+        if (this.dead) return;
+
+        let distToPlayer = Math.hypot(px - this.x, py - this.y);
+        if (game.wantedLevel > 0 && distToPlayer < 250) {
+            this.isPanicked = true;
+            this.speed = 3.2; // Corre por su vida
+            this.angle = Math.atan2(this.y - py, this.x - px); // Huye en dirección contraria
+        } else {
+            this.timer--;
+            if (this.timer <= 0) {
+                this.isPanicked = false;
+                this.speed = 1.2;
+                this.angle = Math.random() * Math.PI * 2;
+                this.timer = Math.random() * 200 + 100;
+            }
         }
 
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
-
-        // Límites del mapa para peatones
-        if (this.x < 0 || this.x > WORLD_SIZE) this.angle += Math.PI;
-        if (this.y < 0 || this.y > WORLD_SIZE) this.angle += Math.PI;
+        
+        this.x = Math.max(50, Math.min(WORLD_SIZE - 50, this.x));
+        this.y = Math.max(50, Math.min(WORLD_SIZE - 50, this.y));
     }
 
-    draw(cameraX, cameraY) {
+    draw(cx, cy) {
         ctx.beginPath();
-        ctx.arc(this.x - cameraX, this.y - cameraY, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "#e0a96d"; // Color piel/ropa
+        ctx.arc(this.x - cx, this.y - cy, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = this.dead ? "#aa2222" : (this.isPanicked ? "#ff6600" : "#eec590");
         ctx.fill();
         ctx.closePath();
     }
 }
 
-// CLASE JUGADOR (A pie)
+// CLASE JUGADOR ACTUALIZADA
 class Player {
     constructor(x, y) {
         this.x = x;
         this.y = y;
-        this.radius = 10;
-        this.speed = 4;
-        this.inVehicle = null; // Guarda la referencia del auto si está adentro
+        this.radius = 11;
+        this.speed = 4.5;
+        this.health = 100;
+        this.inVehicle = null;
+        this.angle = 0;
     }
 
     update() {
         if (this.inVehicle) {
-            // Si está en el auto, su posición es la del auto
             this.x = this.inVehicle.x;
             this.y = this.inVehicle.y;
+            this.angle = this.inVehicle.angle;
             return;
         }
 
-        // Movimiento a pie
-        let dx = 0;
-        let dy = 0;
+        // Movimiento direccional ordinario
+        let dx = 0, dy = 0;
         if (keys['w']) dy = -this.speed;
         if (keys['s']) dy = this.speed;
         if (keys['a']) dx = -this.speed;
         if (keys['d']) dx = this.speed;
 
-        // Normalizar diagonal
-        if (dx !== 0 && dy !== 0) {
-            dx *= 0.7071;
-            dy *= 0.7071;
+        if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
+        this.x += dx; this.y += dy;
+
+        // Apuntar con el mouse en coordenadas del mundo real
+        this.angle = Math.atan2(mouse.worldY - this.y, mouse.worldX - this.x);
+    }
+
+    draw(cx, cy) {
+        if (this.inVehicle) return;
+
+        ctx.save();
+        ctx.translate(this.x - cx, this.y - cy);
+        ctx.rotate(this.angle);
+
+        // Cuerpo principal
+        ctx.beginPath();
+        ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = "#00ffcc"; // Look criminal tecnológico moderno
+        ctx.fill();
+        ctx.stroke();
+
+        // Brazos sosteniendo arma
+        ctx.fillStyle = "#fff";
+        ctx.fillRect(5, -this.radius - 2, 12, 5); // Cañón del arma apuntando adelante
+
+        ctx.restore();
+    }
+}
+
+// GESTOR CENTRAL DEL MOTOR DEL JUEGO
+class GameEngine {
+    constructor() {
+        this.bullets = [];
+        this.vehicles = [];
+        this.pedestrians = [];
+        this.wantedLevel = 0;
+        this.policeSpawnTimer = 0;
+        this.ammo = 30;
+    }
+
+    init() {
+        // Población del mapa inicial
+        for (let i = 0; i < 6; i++) {
+            this.vehicles.push(new Vehicle(600 + i * 450, 500 + (i%2)*300, ["#ff33aa", "#ffcc00", "#3355ff", "#ffffff"][i%4]));
+        }
+        for (let i = 0; i < 80; i++) {
+            this.pedestrians.push(new Pedestrian(Math.random() * (WORLD_SIZE - 200) + 100, Math.random() * (WORLD_SIZE - 200) + 100));
+        }
+    }
+
+    triggerCrime(level) {
+        this.wantedLevel = Math.min(5, Math.max(this.wantedLevel, level));
+        this.updateStarsUI();
+    }
+
+    updateStarsUI() {
+        const stars = document.querySelectorAll(".wanted-star");
+        stars.forEach((star, index) => {
+            if (index < this.wantedLevel) star.classList.add("active-star");
+            else star.classList.remove("active-star");
+        });
+    }
+
+    spawnPolice() {
+        if (this.wantedLevel === 0) return;
+        this.policeSpawnTimer--;
+        if (this.policeSpawnTimer <= 0) {
+            // Spawnear patrullero fuera de cámara pero cerca del jugador
+            let spawnAngle = Math.random() * Math.PI * 2;
+            let sx = player.x + Math.cos(spawnAngle) * 700;
+            let sy = player.y + Math.sin(spawnAngle) * 700;
+            this.vehicles.push(new Vehicle(sx, sy, "#0a0a0a", true)); // Patrullero negro táctico
+            this.policeSpawnTimer = 350 / this.wantedLevel; // Frecuencia según nivel de búsqueda
+        }
+    }
+
+    checkCollisions() {
+        // Balas impactando entidades
+        for (let b of this.bullets) {
+            // Impacto en peatones
+            for (let p of this.pedestrians) {
+                if (!p.dead && Math.hypot(b.x - p.x, b.y - p.y) < p.radius + 3) {
+                    p.dead = true;
+                    b.life = 0;
+                    this.triggerCrime(2); // Matar civiles activa persecución policial
+                }
+            }
+            // Impacto en vehículos
+            for (let v of this.vehicles) {
+                if (Math.hypot(b.x - v.x, b.y - v.y) < 30) {
+                    v.speed *= 0.8; // Lo frena por el impacto
+                    b.life = 0;
+                }
+            }
         }
 
-        this.x += dx;
-        this.y += dy;
-    }
-
-    draw(cameraX, cameraY) {
-        if (this.inVehicle) return; // No se dibuja si está adentro del auto
-
-        ctx.beginPath();
-        ctx.arc(this.x - cameraX, this.y - cameraY, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "#ff3333"; // Remera roja estilo GTA 1
-        ctx.fill();
-        ctx.strokeStyle = "#fff";
-        ctx.stroke();
-        ctx.closePath();
+        // Patrullas policiales embistiendo al jugador
+        for (let v of this.vehicles) {
+            if (v.isPolice && v.speed > 2) {
+                let dist = Math.hypot(v.x - player.x, v.y - player.y);
+                if (player.inVehicle && player.inVehicle !== v) {
+                    if (dist < 40) { v.speed = -2; player.inVehicle.speed *= 0.4; } // Choque vehicular
+                } else if (!player.inVehicle) {
+                    if (dist < 22) { // Atropello letal directo al jugador
+                        player.health = Math.max(0, player.health - 25);
+                        document.getElementById("health-fill").style.width = player.health + "%";
+                        v.speed = -1;
+                        if(player.health <= 0) {
+                            alert("¡FUISTE ELIMINADO POR EL CIR! Juego reiniciado.");
+                            window.location.reload();
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
-// INICIALIZACIÓN DE OBJETOS
-const player = new Player(450, 450);
-const vehicles = [
-    new Vehicle(400, 500, "#ffcc00"), // Taxi
-    new Vehicle(800, 400, "#33cc33"), // Deportivo verde
-    new Vehicle(1200, 800, "#3355ff"), // Sedán azul
-    new Vehicle(500, 1200, "#ffffff")  // Blanco común
-];
+const game = new GameEngine();
+game.init();
 
-const pedestrians = [];
-for (let i = 0; i < 50; i++) {
-    pedestrians.push(new Pedestrian(Math.random() * WORLD_SIZE, Math.random() * WORLD_SIZE));
-}
+// LÓGICA DE DISPARO DIRECTO
+window.addEventListener("mousedown", e => {
+    if (e.button === 0 && !player.inVehicle) { // Click izquierdo a pie
+        let bAngle = Math.atan2(mouse.worldY - player.y, mouse.worldX - player.x);
+        game.bullets.push(new Bullet(player.x, player.y, bAngle));
+        game.triggerCrime(1); // Disparar al aire te da 1 estrella instantánea
+    }
+});
 
-// LÓGICA DE ENTRAR/SALIR DE AUTOS (Tecla E)
-let ePressed = false;
-function handleVehicleInteraction() {
+// INTERACCIÓN CON VEHÍCULOS (TECLA E)
+let eKeyLock = false;
+function updateVehicleInteraction() {
     if (keys['e']) {
-        if (!ePressed) {
-            ePressed = true;
-
+        if (!eKeyLock) {
+            eKeyLock = true;
             if (player.inVehicle) {
-                // SALIR DEL AUTO
-                const car = player.inVehicle;
-                car.isOccupied = false;
+                let v = player.inVehicle;
+                v.isOccupied = false;
                 player.inVehicle = null;
-                // Lo deja un toque al costado para que no quede encima
-                player.x = car.x + Math.cos(car.angle + Math.PI/2) * 40;
-                player.y = car.y + Math.sin(car.angle + Math.PI/2) * 40;
-                document.getElementById("status").innerText = "Estado: A pie";
+                player.x = v.x + Math.cos(v.angle + Math.PI/2) * 45;
+                player.y = v.y + Math.sin(v.angle + Math.PI/2) * 45;
+                document.getElementById("status-display").innerText = "Estado: A pie de nuevo";
             } else {
-                // INTENTAR ENTRAR A UN AUTO (Buscar el más cercano)
-                for (let car of vehicles) {
-                    const dist = Math.hypot(player.x - car.x, player.y - car.y);
-                    if (dist < 50) { // Distancia de rango de robo
-                        player.inVehicle = car;
-                        car.isOccupied = true;
-                        document.getElementById("status").innerText = "Estado: Manejando";
+                for (let v of this.game.vehicles) {
+                    if (Math.hypot(player.x - v.x, player.y - v.y) < 55) {
+                        player.inVehicle = v;
+                        v.isOccupied = true;
+                        if (v.isPolice) game.triggerCrime(3); // Robar un patrullero sube alerta al nivel 3
+                        document.getElementById("status-display").innerText = v.isPolice ? "¡MANEJANDO UN PATRULLERO ROBADO!" : "Estado: Conduciendo";
                         break;
                     }
                 }
             }
         }
-    } else {
-        ePressed = false;
-    }
+    } else { eKeyLock = false; }
 }
 
-// DIBUJAR EL MAPA (Ciudad procedural simple)
-function drawMap(cameraX, cameraY) {
-    ctx.fillStyle = "#333"; // Color del asfalto de las calles
+function drawCityGrid(cx, cy) {
+    ctx.fillStyle = "#222228"; // Calles oscuras asfaltadas
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Dibujar manzanas de edificios
-    ctx.fillStyle = "#1a1a1a"; // Color bloques
-    ctx.strokeStyle = "#444";
-    ctx.lineWidth = 5;
+    ctx.fillStyle = "#111116";
+    ctx.strokeStyle = "#33333d";
+    ctx.lineWidth = 6;
 
     for (let x = 0; x < WORLD_SIZE; x += GRID_SIZE) {
         for (let y = 0; y < WORLD_SIZE; y += GRID_SIZE) {
-            // Dejar espacio para las calles entre bloques
-            const blockX = x + 40 - cameraX;
-            const blockY = y + 40 - cameraY;
-            const blockSize = GRID_SIZE - 80;
+            let bx = x + 45 - cx;
+            let by = y + 45 - cy;
+            let bs = GRID_SIZE - 90;
 
-            // Solo dibujar si está en pantalla (Optimización)
-            if (blockX + blockSize > 0 && blockX < canvas.width && blockY + blockSize > 0 && blockY < canvas.height) {
-                ctx.fillRect(blockX, blockY, blockSize, blockSize);
-                ctx.strokeRect(blockX, blockY, blockSize, blockSize);
+            if (bx + bs > 0 && bx < canvas.width && by + bs > 0 && by < canvas.height) {
+                ctx.fillRect(bx, by, bs, bs);
+                ctx.strokeRect(bx, by, bs, bs);
                 
-                // Techos interiores estilo GTA antiguo
-                ctx.fillStyle = "#262626";
-                ctx.fillRect(blockX + 20, blockY + 20, blockSize - 40, blockSize - 40);
-                ctx.fillStyle = "#1a1a1a";
+                // Efecto pseudo-3D del techo (estilo GTA clásico)
+                ctx.fillStyle = "#0c0c0f";
+                ctx.fillRect(bx + 15, by + 15, bs - 30, bs - 30);
             }
         }
     }
 }
 
-// LOOP PRINCIPAL DEL JUEGO
-function gameLoop() {
-    // 1. ACTUALIZAR ESTADOS
+// BUCLE DE RENDERIZADO Y CONTROL
+function loop() {
+    // Vincular cámara y mouse al mundo real
+    let cx = player.x - canvas.width / 2;
+    let cy = player.y - canvas.height / 2;
+    mouse.worldX = mouse.x + cx;
+    mouse.worldY = mouse.y + cy;
+
+    // Actualizar Actores
     player.update();
-    vehicles.forEach(car => car.update());
-    pedestrians.forEach(p => p.update());
-    handleVehicleInteraction();
+    game.vehicles.forEach(v => v.update(player.x, player.y));
+    game.pedestrians.forEach(p => p.update(player.x, player.y));
+    game.bullets.forEach(b => b.update());
+    game.bullets = game.bullets.filter(b => b.life > 0); // Limpiar memoria de balas muertas
 
-    // 2. CONFIGURAR CÁMARA SUAVE (Centrada en el jugador)
-    const cameraX = player.x - canvas.width / 2;
-    const cameraY = player.y - canvas.height / 2;
+    game.spawnPolice();
+    game.checkCollisions();
+    updateVehicleInteraction();
 
-    // 3. RENDERIZAR TODO
+    // Renderizado en Pantalla
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawCityGrid(cx, cy);
 
-    drawMap(cameraX, cameraY);
-    pedestrians.forEach(p => p.draw(cameraX, cameraY));
-    vehicles.forEach(car => car.draw(cameraX, cameraY));
-    player.draw(cameraX, cameraY);
+    game.pedestrians.forEach(p => p.draw(cx, cy));
+    game.vehicles.forEach(v => v.draw(cx, cy));
+    game.bullets.forEach(b => b.draw(cx, cy));
+    player.draw(cx, cy);
 
-    requestAnimationFrame(gameLoop);
+    requestAnimationFrame(loop);
 }
 
-// Arrancar el juego
-gameLoop();
+loop();
 </script>
-
 </body>
 </html>
