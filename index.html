@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>The Slasher Chronicles - Infiltración</title>
+    <title>The Slasher Chronicles - Infiltración Avanzada</title>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
 
@@ -16,58 +16,56 @@
         }
 
         body {
-            background-color: #030305;
+            background-color: #020204;
             color: #ff3333;
             display: flex;
             justify-content: center;
             align-items: center;
             height: 100vh;
             overflow: hidden;
-            cursor: crosshair; /* Cursor de mira/acecho */
+            cursor: crosshair;
         }
 
-        /* EFECTO DE TELEVISOR CRT VIEJO */
+        /* FILTRO CRT MEJORADO CON INTERLACEADO FINGIDO */
         .crt-overlay {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%), 
-                        linear-gradient(90deg, rgba(255, 0, 0, 0.04), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.04));
-            background-size: 100% 4px, 6px 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.5) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 5px, 6px 100%;
             z-index: 10;
             pointer-events: none;
-            animation: flicker 0.2s infinite;
+            animation: flicker 0.15s infinite;
         }
 
         @keyframes flicker {
-            0% { opacity: 0.97; }
+            0% { opacity: 0.96; }
             50% { opacity: 1; }
-            100% { opacity: 0.98; }
+            100% { opacity: 0.97; }
         }
 
         .game-container {
-            width: 900px;
-            height: 680px;
-            border: 4px solid #15151c;
+            width: 950px;
+            height: 700px;
+            border: 4px solid #1a1a26;
             background: #000;
             display: flex;
             flex-direction: column;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 0 60px rgba(0, 0, 0, 0.9);
             position: relative;
         }
 
-        /* EL VISOR EN PRIMERA PERSONA */
         .viewport {
             flex: 1;
             position: relative;
-            background: #000;
+            background: #050508;
             overflow: hidden;
-            border-bottom: 4px solid #15151c;
+            border-bottom: 4px solid #1a1a26;
             display: flex;
             justify-content: center;
             align-items: center;
         }
 
-        /* Gráficos vectoriales dinámicos que cambian por escena */
         .scene-graphics {
             position: absolute;
             width: 100%;
@@ -77,26 +75,19 @@
             z-index: 1;
         }
 
+        /* EFECTO DE CLAUSTROFOBIA EN LOS BORDES (VIGNETTE) */
         .vignette {
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
-            background: radial-gradient(circle, transparent 20%, rgba(0,0,0,0.95) 90%);
+            background: radial-gradient(circle, transparent 10%, rgba(0,0,0,0.98) 85%);
             pointer-events: none;
             z-index: 2;
         }
 
-        .ambient-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            pointer-events: none;
-            z-index: 3;
-            mix-blend-mode: color-burn;
-        }
-
         /* INTERFAZ INFERIOR */
         .ui-panel {
-            height: 250px;
-            background: #07070a;
+            height: 240px;
+            background: #09090e;
             padding: 20px;
             display: flex;
             flex-direction: column;
@@ -109,43 +100,54 @@
             display: flex;
             justify-content: space-between;
             font-size: 1.5rem;
-            color: #707b8c;
-            border-bottom: 2px solid #15151c;
-            padding-bottom: 4px;
+            color: #64748b;
+            border-bottom: 2px dashed #1a1a26;
+            padding-bottom: 6px;
         }
 
         #game-status { color: #ffcc00; font-weight: bold; }
-        #inventory-status { color: #00ffcc; }
+        #inventory-status { color: #38bdf8; }
 
         .story-box {
             font-size: 1.6rem;
-            color: #d1d5db;
-            min-height: 65px;
+            color: #e2e8f0;
+            min-height: 60px;
             line-height: 1.3;
         }
 
         .options-container {
             display: flex;
-            gap: 10px;
+            gap: 12px;
             margin-top: auto;
         }
 
         .btn-option {
             flex: 1;
-            background: #0d0d13;
-            border: 2px solid #ff3333;
-            color: #ff3333;
-            padding: 14px;
+            background: #0f111a;
+            border: 2px solid #ef4444;
+            color: #ef4444;
+            padding: 12px;
             font-size: 1.4rem;
             text-align: center;
             transition: all 0.2s ease;
             cursor: pointer;
+            text-transform: uppercase;
         }
 
         .btn-option:hover {
-            background: #ff3333;
-            color: #000;
-            box-shadow: 0 0 15px rgba(255, 51, 51, 0.4);
+            background: #ef4444;
+            color: #050508;
+            box-shadow: 0 0 20px rgba(239, 68, 68, 0.5);
+        }
+
+        /* ANIMACIÓN DE LLUVIA POR CSS */
+        @keyframes rainFall {
+            0% { transform: translateY(-50px) translateX(0px); }
+            100% { transform: translateY(430px) translateX(-20px); }
+        }
+
+        .rain-drop {
+            animation: rainFall 0.8s linear infinite;
         }
     </style>
 </head>
@@ -154,24 +156,20 @@
     <div class="crt-overlay"></div>
 
     <div class="game-container">
-        <!-- Renderizador Visual Primera Persona -->
         <div class="viewport" id="viewport">
             <div class="vignette"></div>
-            <div class="ambient-overlay" id="ambient-overlay"></div>
-            <!-- Los vectores SVG de la escena se inyectan acá -->
             <div class="scene-graphics" id="scene-graphics"></div>
         </div>
 
-        <!-- Panel de Control e Historia -->
         <div class="ui-panel">
             <div class="status-bar">
-                <span>VISTA: PRIMERA PERSONA</span>
+                <span>CÁMARA: PRIMERA PERSONA SUBJETIVA</span>
                 <span id="inventory-status">INVENTARIO: VACÍO</span>
-                <span id="game-status">ESTADO: EXTERIOR</span>
+                <span id="game-status">ESTADO: ACECHANDO</span>
             </div>
             
             <div class="story-box">
-                <p id="story-text">Cargando...</p>
+                <p id="story-text">Cargando interfaz realista...</p>
             </div>
 
             <div class="options-container" id="options-container"></div>
@@ -179,208 +177,234 @@
     </div>
 
     <script>
-        // ESTADO GLOBAL DEL JUGADOR
         let inventario = { tieneArma: false, tipoArma: "Ninguna" };
 
-        // REPOSITORIO DE ESCENAS CON GRÁFICOS VECTORIALES (SVG) PARA GENERAR EL LOOK DE JUEGO 2D REALISTA
         const escenas = {
             exterior_ventana: {
                 status: "ACECHANDO",
                 inventoryUpdate: null,
-                story: "Estás afuera. La lluvia corre por los cristales. A través de la ventana iluminada ves la silueta de tu objetivo de espaldas en su escritorio. La parte inferior del marco está rota.",
-                // Dibuja una ventana en perspectiva con lluvia exterior y silueta al fondo
+                story: "La lluvia arrecia afuera. Apoyás tus manos contra el marco exterior de la ventana. El vidrio empañado distorsiona la luz cálida del living, revelando la nuca de tu objetivo absorto en su código.",
                 svg: `
-                    <svg viewBox="0 0 900 430" width="100%" height="100%">
-                        <rect width="900" height="430" fill="#0c101b"/>
-                        <!-- Pared de ladrillos exterior en penumbra -->
-                        <path d="M0,0 L250,0 L250,430 L0,430 Z" fill="#050608"/>
-                        <path d="M650,0 L900,0 L900,430 L650,430 Z" fill="#050608"/>
-                        <!-- Marco de la Ventana -->
-                        <rect x="250" y="30" width="400" height="370" fill="none" stroke="#222733" stroke-width="12"/>
-                        <line x1="450" y1="30" x2="450" y2="400" stroke="#222733" stroke-width="6"/>
-                        <!-- Interior Iluminado Cálido -->
-                        <rect x="262" y="42" width="376" height="346" fill="url(#interiorGlow)"/>
-                        <!-- Silueta de la Víctima de espaldas -->
-                        <path d="M410,320 Q450,220 490,320 Q480,380 490,400 L410,400 Z" fill="#07070a"/>
-                        <circle cx="450" cy="220" r="25" fill="#07070a"/>
-                        <!-- Efecto Lluvia en el vidrio -->
-                        <line x1="300" y1="50" x2="290" y2="120" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
-                        <line x1="550" y1="80" x2="540" y2="180" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
-                        <line x1="380" y1="150" x2="370" y2="230" stroke="rgba(255,255,255,0.2)" stroke-width="2"/>
+                    <svg viewBox="0 0 950 430" width="100%" height="100%">
                         <defs>
-                            <radialGradient id="interiorGlow" cx="50%" cy="50%" r="50%">
-                                <stop offset="0%" stop-color="#bf8a3c" stop-opacity="0.6"/>
-                                <stop offset="100%" stop-color="#181510"/>
+                            <filter id="blur-light">
+                                <feGaussianBlur stdDeviation="8" />
+                            </filter>
+                            <radialGradient id="room-glow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stop-color="#ea580c" stop-opacity="0.7"/>
+                                <stop offset="60%" stop-color="#7c2d12" stop-opacity="0.3"/>
+                                <stop offset="100%" stop-color="#020203"/>
                             </radialGradient>
                         </defs>
+                        
+                        <rect width="950" height="430" fill="#050508"/>
+                        
+                        <rect x="250" y="20" width="450" height="390" fill="url(#room-glow)" filter="url(#blur-light)"/>
+                        
+                        <path d="M0,0 L250,0 L250,430 L0,430 Z" fill="#09090d"/>
+                        <path d="M700,0 L950,0 L950,430 L700,430 Z" fill="#09090d"/>
+                        <rect x="0" y="0" width="950" height="20" fill="#09090d"/>
+                        <rect x="0" y="410" width="950" height="20" fill="#020203"/>
+
+                        <rect x="250" y="20" width="450" height="390" fill="none" stroke="#1e293b" stroke-width="14"/>
+                        <line x1="475" y1="20" x2="475" y2="410" stroke="#1e293b" stroke-width="8"/>
+                        <line x1="250" y1="200" x2="700" y2="200" stroke="#1e293b" stroke-width="6"/>
+
+                        <path d="M430,290 Q475,180 520,290 Q510,380 530,410 L420,410 Z" fill="#020203"/>
+                        <circle cx="475" cy="180" r="28" fill="#020203"/>
+                        <rect x="410" y="280" width="130" height="6" fill="#09090d" filter="url(#blur-light)"/> <g stroke="rgba(255,255,255,0.4)" stroke-width="2">
+                            <line x1="300" y1="10" x2="290" y2="40" class="rain-drop" style="animation-delay: 0s;"/>
+                            <line x1="450" y1="50" x2="440" y2="80" class="rain-drop" style="animation-delay: 0.3s;"/>
+                            <line x1="600" y1="100" x2="590" y2="130" class="rain-drop" style="animation-delay: 0.1s;"/>
+                            <line x1="380" y1="200" x2="370" y2="230" class="rain-drop" style="animation-delay: 0.5s;"/>
+                            <line x1="520" y1="180" x2="510" y2="210" class="rain-drop" style="animation-delay: 0.2s;"/>
+                            <line x1="670" y1="40" x2="660" y2="70" class="rain-drop" style="animation-delay: 0.4s;"/>
+                        </g>
                     </svg>
                 `,
                 options: [
                     { text: "🪟 Forzar la ventana y entrar directo", nextNode: "entrar_casa_desarmado" },
-                    { text: "🪵 Revisar el cobertizo oscuro del patio trasero", nextNode: "cobertizo" }
+                    { text: "🪵 Ir al cobertizo del patio a buscar herramientas", nextNode: "cobertizo" }
                 ]
             },
             cobertizo: {
                 status: "BUSCANDO ARMA",
                 inventoryUpdate: null,
-                story: "Entrás al cobertizo. Huele a humedad y fierro viejo. La luz de la luna apenas entra por las maderas del techo, iluminando un estante empotrado en la pared.",
-                // Dibuja el interior de un cobertizo con herramientas colgadas
+                story: "La linterna de tu celular recorta las sombras del galpón. Sobre el banco de madera cubierto de polvo y aserrín, descansa un pesado cuchillo táctico de supervivencia militar.",
                 svg: `
-                    <svg viewBox="0 0 900 430" width="100%" height="100%">
-                        <rect width="900" height="430" fill="#08080c"/>
-                        <!-- Estante -->
-                        <rect x="150" y="250" width="600" height="15" fill="#2c1e15"/>
-                        <!-- Siluetas de herramientas de fondo -->
-                        <path d="M220,100 L230,100 L230,220 L220,220 Z" fill="#1a1a24"/>
-                        <circle cx="225" cy="90" r="12" fill="#1a1a24"/>
-                        <!-- Cuchillo de Cazador Brillando en el estante -->
-                        <path d="M400,240 L520,240 L540,233 L510,235 L400,235 Z" fill="#e2e8f0" id="knife-blade"/>
-                        <rect x="360" y="235" width="40" height="7" fill="#5c4033"/>
-                        <!-- Linterna de luna filtrada -->
-                        <path d="M0,0 L900,430 L550,430 L0,150 Z" fill="url(#moonRay)" style="mix-blend-mode: screen;"/>
+                    <svg viewBox="0 0 950 430" width="100%" height="100%">
                         <defs>
-                            <linearGradient id="moonRay" x1="0%" y1="0%" x2="100%" y2="100%">
-                                <stop offset="0%" stop-color="#4a5568" stop-opacity="0.3"/>
-                                <stop offset="100%" stop-color="#000" stop-opacity="0"/>
-                            </linearGradient>
+                            <filter id="glow">
+                                <feGaussianBlur stdDeviation="5" result="coloredBlur"/>
+                                <feMerge>
+                                    <feMergeNode in="coloredBlur"/>
+                                    <feMergeNode in="SourceGraphic"/>
+                                </feMerge>
+                            </filter>
+                            <radialGradient id="flashlight" cx="45%" cy="60%" r="40%">
+                                <stop offset="0%" stop-color="#f8fafc" stop-opacity="0.8"/>
+                                <stop offset="50%" stop-color="#e2e8f0" stop-opacity="0.2"/>
+                                <stop offset="100%" stop-color="#050508" stop-opacity="0"/>
+                            </radialGradient>
                         </defs>
+                        <rect width="950" height="430" fill="#030305"/>
+                        
+                        <circle cx="450" cy="260" r="220" fill="url(#flashlight)"/>
+
+                        <polygon points="100,320 850,320 900,430 50,430" fill="#1e1b18" stroke="#0f0d0c" stroke-width="4"/>
+                        
+                        <path d="M200,60 L205,60 L205,180 L200,180 Z" fill="#09090d"/>
+                        <path d="M750,80 L770,100 L760,150 Z" fill="#09090d"/>
+
+                        <g transform="translate(320, 340)">
+                            <rect x="0" y="5" width="100" height="22" rx="4" fill="#1c1917" stroke="#0c0a09" stroke-width="2"/>
+                            <line x1="20" y1="5" x2="20" y2="27" stroke="#292524" stroke-width="3"/>
+                            <line x1="40" y1="5" x2="40" y2="27" stroke="#292524" stroke-width="3"/>
+                            <line x1="60" y1="5" x2="60" y2="27" stroke="#292524" stroke-width="3"/>
+                            <line x1="80" y1="5" x2="80" y2="27" stroke="#292524" stroke-width="3"/>
+                            <rect x="95" y="-5" width="10" height="42" rx="2" fill="#475569"/>
+                            <path d="M105,0 L280,0 L310,12 L270,18 L105,18 Z" fill="#94a3b8" stroke="#f1f5f9" stroke-width="1.5" filter="url(#glow)"/>
+                            <path d="M105,9 L275,9 L295,13 L265,17 L105,17 Z" fill="#cbd5e1"/>
+                        </g>
                     </svg>
                 `,
                 options: [
-                    { text: "🔪 Agarrar el Cuchillo de Caza", nextNode: "cobertizo_armado" },
-                    { text: "↩️ Volver a la ventana del frente", nextNode: "exterior_ventana" }
+                    { text: "🔪 Equipar el cuchillo táctico", nextNode: "cobertizo_armado" },
+                    { text: "↩️ Regresar al punto de infiltración", nextNode: "exterior_ventana" }
                 ]
             },
             cobertizo_armado: {
                 status: "ARMADO",
-                inventoryUpdate: { tieneArma: true, tipoArma: "Cuchillo de Caza" },
-                story: "Sopesás el metal frío en tu mano. El filo está impecable. Ahora estás listo para proceder con el analista.",
+                inventoryUpdate: { tieneArma: true, tipoArma: "Cuchillo Táctico" },
+                story: "Sostener el arma cambia tu perspectiva. El peso está perfectamente balanceado. Tu respiración se empaña tras la máscara. Volvés a la ventana decidído.",
                 svg: `
-                    <svg viewBox="0 0 900 430" width="100%" height="100%">
-                        <rect width="900" height="430" fill="#050508"/>
-                        <rect x="150" y="250" width="600" height="15" fill="#1c140e"/>
-                        <!-- Primer plano de la mano sosteniendo el arma -->
-                        <path d="M100,430 Q250,250 450,320 L400,430 Z" fill="#0d0d13"/>
-                        <!-- Hoja del cuchillo apuntando arriba -->
-                        <path d="M410,320 L580,120 L610,100 L590,150 L440,340 Z" fill="#94a3b8" stroke="#cbd5e1" stroke-width="2"/>
-                        <path d="M410,320 L440,340 L380,390 L350,370 Z" fill="#3e2723"/>
+                    <svg viewBox="0 0 950 430" width="100%" height="100%">
+                        <rect width="950" height="430" fill="#030305"/>
+                        <g transform="translate(400, 100)">
+                            <path d="M-100,330 Q50,250 120,280 L20,330 Z" fill="#09090d"/>
+                            <path d="M100,250 Q130,220 160,250 Q170,270 150,300 L110,290 Z" fill="#141419"/>
+                            <rect x="120" y="160" width="25" height="80" rx="3" fill="#1c1917" transform="rotate(-15 120 160)"/>
+                            <path d="M110,165 L100,-40 L115,-70 L135,140 Z" fill="#cbd5e1" stroke="#ffffff" stroke-width="1" transform="rotate(-15 120 160)"/>
+                            <path d="M120,165 L112,-35 L122,135 Z" fill="#e2e8f0" transform="rotate(-15 120 160)"/>
+                        </g>
+                        <rect width="950" height="430" fill="none" stroke="#7f1d1d" stroke-width="8" opacity="0.4"/>
                     </svg>
                 `,
                 options: [
-                    { text: "🪟 Volver a la ventana e ingresar a la casa", nextNode: "entrar_casa_armado" }
+                    { text: "🪟 Deslizar ventana e ingresar al living", nextNode: "entrar_casa_armado" }
                 ]
             },
             entrar_casa_desarmado: {
                 status: "FALLIDO",
                 inventoryUpdate: null,
-                story: "Deslizás el marco hacia arriba y saltás al living. Al no llevar nada para defenderte o amedrentar, el crujido alerta al objetivo. Se da vuelta, te ve la máscara, te empuja con el monitor y escapa gritando al vecindario. GAME OVER.",
+                story: "Saltás al interior de la propiedad sin un arma para intimidar. El impacto de tus botas contra el piso de parquet alerta al analista de inmediato. Se voltea, te arroja su taza de café caliente a la cara y huye por la puerta delantera. GAME OVER.",
                 svg: `
-                    <svg viewBox="0 0 900 430" width="100%" height="100%">
-                        <rect width="900" height="430" fill="#4a1a1a"/>
-                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#ff3333" font-size="48">TE DESCUBRIERON</text>
+                    <svg viewBox="0 0 950 430" width="100%" height="100%">
+                        <rect width="950" height="430" fill="#3f1c1c"/>
+                        <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#f87171" font-family="'VT323'" font-size="55">ERROR DE PLANIFICACIÓN</text>
                     </svg>
                 `,
                 options: [
-                    { text: "🔄 Reintentar desde el inicio", nextNode: "exterior_ventana", resetInv: true }
+                    { text: "🔄 Volver a intentar la noche", nextNode: "exterior_ventana", resetInv: true }
                 ]
             },
             entrar_casa_armado: {
                 status: "DENTRO DE LA CASA",
                 inventoryUpdate: null,
-                story: "Entrás sigilosamente por la ventana rota. El living está en penumbra, solo iluminado por el brillo azul de la computadora del analista. Está totalmente indefenso de espaldas a vos.",
+                story: "Estás adentro. El ambiente es frío y silencioso, roto solo por el tecleo frenético del programador. La habitación está sumergida en un resplandor azul eléctrico generado por su monitor ultrapanorámico.",
                 svg: `
-                    <svg viewBox="0 0 900 430" width="100%" height="100%">
-                        <rect width="900" height="430" fill="#060810"/>
-                        <!-- El brillo del monitor del objetivo -->
-                        <path d="M300,430 L450,150 L550,150 L700,430 Z" fill="url(#monitorGlow)" style="mix-blend-mode: screen;"/>
-                        <!-- Escritorio y silueta trasera -->
-                        <rect x="420" y="240" width="160" height="10" fill="#0a0f1d"/>
-                        <path d="M460,330 Q500,240 540,330 L460,330 Z" fill="#020203"/>
-                        <circle cx="500" cy="240" r="20" fill="#020203"/>
-                        <!-- Mano con el cuchillo asomando en la esquina inferior izquierda -->
-                        <path d="M0,430 L120,310 L160,350 L50,430 Z" fill="#09090d"/>
-                        <path d="M120,310 L280,180 L295,170 L285,200 L160,350 Z" fill="#64748b"/>
+                    <svg viewBox="0 0 950 430" width="100%" height="100%">
                         <defs>
-                            <linearGradient id="monitorGlow" x1="0%" y1="0%" x2="0%" y2="100%">
-                                <stop offset="0%" stop-color="#00ffff" stop-opacity="0.3"/>
-                                <stop offset="100%" stop-color="#00ffff" stop-opacity="0"/>
+                            <linearGradient id="cyber-glow" x1="100%" y1="100%" x2="0%" y2="0%">
+                                <stop offset="0%" stop-color="#06b6d4" stop-opacity="0.4"/>
+                                <stop offset="70%" stop-color="#0891b2" stop-opacity="0.05"/>
+                                <stop offset="100%" stop-color="#000000" stop-opacity="0"/>
                             </linearGradient>
+                            <filter id="neon">
+                                <feGaussianBlur stdDeviation="12" />
+                            </filter>
                         </defs>
+                        <rect width="950" height="430" fill="#020205"/>
+                        
+                        <polygon points="950,430 400,100 650,100 950,150" fill="url(#cyber-glow)"/>
+                        <circle cx="520" cy="180" r="150" fill="#06b6d4" opacity="0.15" filter="url(#neon)"/>
+
+                        <rect x="450" y="240" width="200" height="8" fill="#0f172a"/>
+                        <path d="M480,310 Q550,210 620,310 Z" fill="#080c14"/>
+                        <path d="M510,260 Q550,160 590,260 Z" fill="#040406"/>
+                        <circle cx="550" cy="160" r="22" fill="#040406"/>
+
+                        <g transform="translate(50, 260)">
+                            <path d="M-60,200 L60,80 L120,130 L0,200 Z" fill="#050508"/>
+                            <path d="M60,80 L230,-10 L245,-20 L235,10 L120,130 Z" fill="#475569" stroke="#94a3b8" stroke-width="1.5"/>
+                        </g>
                     </svg>
                 `,
                 options: [
-                    { text: "🤫 Ejecución silenciosa por la espalda", nextNode: "final_perfecto" },
-                    { text: "⚡ Cortar el cable de la computadora primero", nextNode: "final_caotico" }
+                    { text: "🤫 Ejecución limpia desde la penumbra", nextNode: "final_perfecto" },
+                    { text: "⚡ Sabotear la línea de energía primero", nextNode: "final_caotico" }
                 ]
             },
             final_perfecto: {
                 status: "MISIÓN COMPLETADA",
                 inventoryUpdate: null,
-                story: "Paso firme y sin ruido. Antes de que el código termine de compilar en su pantalla, tu trabajo está hecho. Limpiás la escena, guardás el cuchillo y salís por donde viniste sin dejar rastro.",
+                story: "Te deslizás detrás del asiento sin hacer crujir una sola madera. Tu proximidad es absoluta pero indetectable. El trabajo concluye antes de que la víctima comprenda el reflejo metálico en su monitor. Limpieza impecable.",
                 svg: `
-                    <svg viewBox="0 0 900 430" width="100%" height="100%">
-                        <rect width="900" height="430" fill="#142115"/>
-                        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#52ff52" font-size="52">EJECUCIÓN LIMPIA</text>
-                        <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="#a3e635" font-size="24">Misión 1 Terminada con éxito</text>
+                    <svg viewBox="0 0 950 430" width="100%" height="100%">
+                        <rect width="950" height="430" fill="#062f19"/>
+                        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#4ade80" font-size="50">CONTRATO EJECUTADO</text>
+                        <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" fill="#166534" font-size="22">Fantasmas en la red. Calificación: Fantasma (S+)</text>
                     </svg>
                 `,
                 options: [
-                    { text: "🔄 Jugar de nuevo", nextNode: "exterior_ventana", resetInv: true }
+                    { text: "🔄 Reiniciar simulación táctica", nextNode: "exterior_ventana", resetInv: true }
                 ]
             },
             final_caotico: {
                 status: "MISIÓN COMPLETADA",
                 inventoryUpdate: null,
-                story: "Cortás el cable, la pantalla chispea y todo queda oscuro. El analista salta del susto y forcejea con vos en el piso, pero tu ventaja con el cuchillo liquida el encuentro. Dejaste demasiado desorden.",
+                story: "Arrancás el disyuntor de la pared. Chispas reales saltan iluminando la sala por un milisegundo antes de la oscuridad total. El pánico genera un forcejeo violento, resolviendo la escena con brusquedad. Demasiado ruido para un profesional.",
                 svg: `
-                    <svg viewBox="0 0 900 430" width="100%" height="100%">
-                        <rect width="900" height="430" fill="#241a10"/>
-                        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#ffaa00" font-size="52">EJECUCIÓN CAÓTICA</text>
-                        <text x="50%" y="60%" dominant-baseline="middle" text-anchor="middle" fill="#d97706" font-size="24">Sobreviviste, pero alertaste a los vecinos.</text>
+                    <svg viewBox="0 0 950 430" width="100%" height="100%">
+                        <rect width="950" height="430" fill="#451a03"/>
+                        <text x="50%" y="45%" dominant-baseline="middle" text-anchor="middle" fill="#f97316" font-size="50">EJECUCIÓN RUIDOSA</text>
+                        <text x="50%" y="62%" dominant-baseline="middle" text-anchor="middle" fill="#7c2d12" font-size="22">Objetivo eliminado, pero la policía va en camino.</text>
                     </svg>
                 `,
                 options: [
-                    { text: "🔄 Jugar de nuevo", nextNode: "exterior_ventana", resetInv: true }
+                    { text: "🔄 Reiniciar simulación táctica", nextNode: "exterior_ventana", resetInv: true }
                 ]
             }
         };
 
-        // MOTOR DEL JUEGO P&C
         function cambiarEscena(idNodo) {
             const escena = escenas[idNodo];
             
-            // Si la opción requiere resetear inventario
             if (escenas[idNodo].resetInv) {
                 inventario.tieneArma = false;
                 inventario.tipoArma = "Ninguna";
             }
 
-            // Aplicar actualizaciones de inventario si el nodo las tiene
             if (escena.inventoryUpdate) {
                 inventario = { ...inventario, ...escena.inventoryUpdate };
             }
 
-            // Actualizar interfaz de texto
             document.getElementById("story-text").innerText = escena.story;
             document.getElementById("game-status").innerText = `ESTADO: ${escena.status}`;
             document.getElementById("inventory-status").innerText = `INVENTARIO: ${inventario.tipoArma.toUpperCase()}`;
-
-            // Inyectar el gráfico en primera persona del viewport
             document.getElementById("scene-graphics").innerHTML = escena.svg;
 
-            // Manejo de colores de la UI según estado
             const statusLabel = document.getElementById("game-status");
             if (escena.status === "MISIÓN COMPLETADA") {
-                statusLabel.style.color = "#52ff52";
+                statusLabel.style.color = "#4ade80";
             } else if (escena.status === "FALLIDO") {
-                statusLabel.style.color = "#ff3333";
+                statusLabel.style.color = "#f87171";
             } else if (escena.status === "ARMADO") {
-                statusLabel.style.color = "#00ffcc";
+                statusLabel.style.color = "#38bdf8";
             } else {
-                statusLabel.style.color = "#ffcc00";
+                statusLabel.style.color = "#eab308";
             }
 
-            // Renderizar los botones de opciones
             const contenedorOpciones = document.getElementById("options-container");
             contenedorOpciones.innerHTML = "";
 
@@ -393,7 +417,6 @@
             });
         }
 
-        // Carga inicial al abrir el navegador
         window.onload = () => {
             cambiarEscena("exterior_ventana");
         };
