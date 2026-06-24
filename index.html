@@ -6,7 +6,7 @@
     <title>Retro City Outlaw - Top-Down Edition</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { background-color: #0a0a0a; color: white; font-family: 'Courier New', Courier, monospace; overflow: hidden; select: none; }
+        body { background-color: #0a0a0a; color: white; font-family: 'Courier New', Courier, monospace; overflow: hidden; user-select: none; }
         canvas { display: block; background: #151515; }
         #hud {
             position: absolute; top: 15px; right: 15px;
@@ -19,10 +19,10 @@
             background: rgba(0,0,0,0.8); padding: 15px; border-radius: 6px;
             border: 1px solid #444; pointer-events: none; font-size: 0.85em;
         }
-        .wanted-star { color: #555; font-size: 24px; font-weight: bold; transition: color 0.2s; }
+        .wanted-star { color: #333; font-size: 24px; font-weight: bold; transition: color 0.2s; }
         .active-star { color: #ffcc00; text-shadow: 0 0 10px #ffcc00; }
         kbd { background: #333; padding: 2px 5px; border-radius: 3px; border: 1px solid #555; color: #00ffcc; }
-        .stat-bar { width: 150px; height: 12px; background: #333; display: inline-block; border: 1px solid #fff; }
+        .stat-bar { width: 150px; height: 12px; background: #333; display: inline-block; border: 1px solid #fff; vertical-align: middle; margin-left: 5px; }
         #health-fill { width: 100%; height: 100%; background: #ff3333; transition: width 0.1s; }
     </style>
 </head>
@@ -41,7 +41,7 @@
             <span class="wanted-star">★</span><span class="wanted-star">★</span><span class="wanted-star">★</span><span class="wanted-star">★</span><span class="wanted-star">★</span>
         </div>
         <p>SALUD: <span class="stat-bar"><div id="health-fill"></div></span></p>
-        <p style="margin-top: 5px; color: #00ffcc;" id="ammo-display">MUNICIÓN: 30 / ∞</p>
+        <p style="margin-top: 5px; color: #00ffcc;" id="ammo-display">MUNICIÓN: ∞</p>
         <p style="font-size: 0.8em; color: #aaa; margin-top: 5px;" id="status-display">Estado: Civil a pie</p>
     </div>
 
@@ -70,14 +70,13 @@ window.addEventListener("mousemove", e => {
 
 // SISTEMA DE BALAS
 class Bullet {
-    constructor(x, y, angle, isPlayer = true) {
+    constructor(x, y, angle) {
         this.x = x;
         this.y = y;
-        this.speed = 14;
+        this.speed = 16;
         this.dx = Math.cos(angle) * this.speed;
         this.dy = Math.sin(angle) * this.speed;
-        this.life = 60; // Duración de la bala en frames
-        this.isPlayer = isPlayer;
+        this.life = 60; 
     }
     update() {
         this.x += this.dx;
@@ -101,13 +100,12 @@ class Vehicle {
         this.height = 32;
         this.color = color;
         this.isPolice = isPolice;
-        this.angle = Math.random() * Math.PI * 2;
+        this.angle = isPolice ? 0 : Math.random() * Math.PI * 2;
         this.speed = 0;
         this.maxSpeed = isPolice ? 9.5 : 7.5;
         this.acc = 0.18;
         this.friction = 0.06;
         this.isOccupied = false;
-        this.health = 100;
     }
 
     update(targetX, targetY) {
@@ -120,23 +118,21 @@ class Vehicle {
                 if (keys['d']) this.angle += turn;
             }
         } else if (this.isPolice && game.wantedLevel > 0) {
-            // Inteligencia Artificial de la Policía: Persecución pura
+            // IA de Policía: Persigue directo al jugador
             let angleToPlayer = Math.atan2(targetY - this.y, targetX - this.x);
-            // Suavizar giro de la IA
             let diff = angleToPlayer - this.angle;
             while (diff < -Math.PI) diff += Math.PI * 2;
             while (diff > Math.PI) diff -= Math.PI * 2;
-            this.angle += Math.sign(diff) * 0.04;
-            this.speed = Math.min(this.speed + this.acc, this.maxSpeed - 1);
+            this.angle += Math.sign(diff) * 0.05;
+            this.speed = Math.min(this.speed + this.acc, this.maxSpeed - 1.5);
         } else {
-            // Desaceleración si queda vacío
             if (this.speed > 0) this.speed = Math.max(this.speed - this.friction, 0);
+            if (this.speed < 0) this.speed = Math.min(this.speed + this.friction, 0);
         }
 
         this.x += Math.cos(this.angle) * this.speed;
         this.y += Math.sin(this.angle) * this.speed;
         
-        // Límites del mundo
         this.x = Math.max(100, Math.min(WORLD_SIZE - 100, this.x));
         this.y = Math.max(100, Math.min(WORLD_SIZE - 100, this.y));
     }
@@ -174,7 +170,7 @@ class Vehicle {
     }
 }
 
-// CLASE PEATÓN AVANZADO
+// CLASE PEATÓN
 class Pedestrian {
     constructor(x, y) {
         this.x = x;
@@ -193,8 +189,8 @@ class Pedestrian {
         let distToPlayer = Math.hypot(px - this.x, py - this.y);
         if (game.wantedLevel > 0 && distToPlayer < 250) {
             this.isPanicked = true;
-            this.speed = 3.2; // Corre por su vida
-            this.angle = Math.atan2(this.y - py, this.x - px); // Huye en dirección contraria
+            this.speed = 3.2; 
+            this.angle = Math.atan2(this.y - py, this.x - px); 
         } else {
             this.timer--;
             if (this.timer <= 0) {
@@ -221,7 +217,7 @@ class Pedestrian {
     }
 }
 
-// CLASE JUGADOR ACTUALIZADA
+// CLASE JUGADOR
 class Player {
     constructor(x, y) {
         this.x = x;
@@ -241,7 +237,6 @@ class Player {
             return;
         }
 
-        // Movimiento direccional ordinario
         let dx = 0, dy = 0;
         if (keys['w']) dy = -this.speed;
         if (keys['s']) dy = this.speed;
@@ -251,7 +246,9 @@ class Player {
         if (dx !== 0 && dy !== 0) { dx *= 0.7071; dy *= 0.7071; }
         this.x += dx; this.y += dy;
 
-        // Apuntar con el mouse en coordenadas del mundo real
+        this.x = Math.max(50, Math.min(WORLD_SIZE - 50, this.x));
+        this.y = Math.max(50, Math.min(WORLD_SIZE - 50, this.y));
+
         this.angle = Math.atan2(mouse.worldY - this.y, mouse.worldX - this.x);
     }
 
@@ -262,22 +259,25 @@ class Player {
         ctx.translate(this.x - cx, this.y - cy);
         ctx.rotate(this.angle);
 
-        // Cuerpo principal
         ctx.beginPath();
         ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
-        ctx.fillStyle = "#00ffcc"; // Look criminal tecnológico moderno
+        ctx.fillStyle = "#00ffcc"; 
         ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = "#fff";
         ctx.stroke();
 
-        // Brazos sosteniendo arma
         ctx.fillStyle = "#fff";
-        ctx.fillRect(5, -this.radius - 2, 12, 5); // Cañón del arma apuntando adelante
+        ctx.fillRect(5, -this.radius - 2, 12, 5); 
 
         ctx.restore();
     }
 }
 
-// GESTOR CENTRAL DEL MOTOR DEL JUEGO
+// INSTANCIA GLOBAL DEL JUGADOR
+const player = new Player(500, 500);
+
+// GESTOR CENTRAL DEL MOTOR
 class GameEngine {
     constructor() {
         this.bullets = [];
@@ -285,15 +285,15 @@ class GameEngine {
         this.pedestrians = [];
         this.wantedLevel = 0;
         this.policeSpawnTimer = 0;
-        this.ammo = 30;
     }
 
     init() {
-        // Población del mapa inicial
-        for (let i = 0; i < 6; i++) {
-            this.vehicles.push(new Vehicle(600 + i * 450, 500 + (i%2)*300, ["#ff33aa", "#ffcc00", "#3355ff", "#ffffff"][i%4]));
+        // Generar vehículos civiles iniciales
+        for (let i = 0; i < 8; i++) {
+            this.vehicles.push(new Vehicle(600 + i * 400, 600 + (i % 2) * 250, ["#ff33aa", "#ffcc00", "#3355ff", "#ffffff"][i % 4]));
         }
-        for (let i = 0; i < 80; i++) {
+        // Generar peatones
+        for (let i = 0; i < 60; i++) {
             this.pedestrians.push(new Pedestrian(Math.random() * (WORLD_SIZE - 200) + 100, Math.random() * (WORLD_SIZE - 200) + 100));
         }
     }
@@ -315,50 +315,37 @@ class GameEngine {
         if (this.wantedLevel === 0) return;
         this.policeSpawnTimer--;
         if (this.policeSpawnTimer <= 0) {
-            // Spawnear patrullero fuera de cámara pero cerca del jugador
             let spawnAngle = Math.random() * Math.PI * 2;
-            let sx = player.x + Math.cos(spawnAngle) * 700;
-            let sy = player.y + Math.sin(spawnAngle) * 700;
-            this.vehicles.push(new Vehicle(sx, sy, "#0a0a0a", true)); // Patrullero negro táctico
-            this.policeSpawnTimer = 350 / this.wantedLevel; // Frecuencia según nivel de búsqueda
+            let sx = player.x + Math.cos(spawnAngle) * 600;
+            let sy = player.y + Math.sin(spawnAngle) * 600;
+            this.vehicles.push(new Vehicle(sx, sy, "#0a0a0a", true)); 
+            this.policeSpawnTimer = 250; 
         }
     }
 
     checkCollisions() {
-        // Balas impactando entidades
+        // Balas contra peatones y autos
         for (let b of this.bullets) {
-            // Impacto en peatones
             for (let p of this.pedestrians) {
                 if (!p.dead && Math.hypot(b.x - p.x, b.y - p.y) < p.radius + 3) {
                     p.dead = true;
                     b.life = 0;
-                    this.triggerCrime(2); // Matar civiles activa persecución policial
-                }
-            }
-            // Impacto en vehículos
-            for (let v of this.vehicles) {
-                if (Math.hypot(b.x - v.x, b.y - v.y) < 30) {
-                    v.speed *= 0.8; // Lo frena por el impacto
-                    b.life = 0;
+                    this.triggerCrime(2); 
                 }
             }
         }
 
-        // Patrullas policiales embistiendo al jugador
+        // Colisión de vehículos policiales contra el jugador
         for (let v of this.vehicles) {
-            if (v.isPolice && v.speed > 2) {
+            if (v.isPolice && v.speed > 1) {
                 let dist = Math.hypot(v.x - player.x, v.y - player.y);
-                if (player.inVehicle && player.inVehicle !== v) {
-                    if (dist < 40) { v.speed = -2; player.inVehicle.speed *= 0.4; } // Choque vehicular
-                } else if (!player.inVehicle) {
-                    if (dist < 22) { // Atropello letal directo al jugador
-                        player.health = Math.max(0, player.health - 25);
-                        document.getElementById("health-fill").style.width = player.health + "%";
-                        v.speed = -1;
-                        if(player.health <= 0) {
-                            alert("¡FUISTE ELIMINADO POR EL CIR! Juego reiniciado.");
-                            window.location.reload();
-                        }
+                if (!player.inVehicle && dist < 22) { 
+                    player.health = Math.max(0, player.health - 20);
+                    document.getElementById("health-fill").style.width = player.health + "%";
+                    v.speed = -2; // Rebote
+                    if(player.health <= 0) {
+                        alert("¡FUISTE ELIMINADO! Presioná OK para reiniciar.");
+                        window.location.reload();
                     }
                 }
             }
@@ -369,16 +356,16 @@ class GameEngine {
 const game = new GameEngine();
 game.init();
 
-// LÓGICA DE DISPARO DIRECTO
+// MANEJO DE DISPAROS
 window.addEventListener("mousedown", e => {
-    if (e.button === 0 && !player.inVehicle) { // Click izquierdo a pie
+    if (e.button === 0 && !player.inVehicle) { 
         let bAngle = Math.atan2(mouse.worldY - player.y, mouse.worldX - player.x);
         game.bullets.push(new Bullet(player.x, player.y, bAngle));
-        game.triggerCrime(1); // Disparar al aire te da 1 estrella instantánea
+        game.triggerCrime(1); 
     }
 });
 
-// INTERACCIÓN CON VEHÍCULOS (TECLA E)
+// INTERACCIÓN VEHICULAR FIJADA (Sin error de undefined)
 let eKeyLock = false;
 function updateVehicleInteraction() {
     if (keys['e']) {
@@ -390,14 +377,14 @@ function updateVehicleInteraction() {
                 player.inVehicle = null;
                 player.x = v.x + Math.cos(v.angle + Math.PI/2) * 45;
                 player.y = v.y + Math.sin(v.angle + Math.PI/2) * 45;
-                document.getElementById("status-display").innerText = "Estado: A pie de nuevo";
+                document.getElementById("status-display").innerText = "Estado: A pie";
             } else {
-                for (let v of this.game.vehicles) {
+                for (let v of game.vehicles) { // Se cambió 'this.game' a 'game' global
                     if (Math.hypot(player.x - v.x, player.y - v.y) < 55) {
                         player.inVehicle = v;
                         v.isOccupied = true;
-                        if (v.isPolice) game.triggerCrime(3); // Robar un patrullero sube alerta al nivel 3
-                        document.getElementById("status-display").innerText = v.isPolice ? "¡MANEJANDO UN PATRULLERO ROBADO!" : "Estado: Conduciendo";
+                        if (v.isPolice) game.triggerCrime(3); 
+                        document.getElementById("status-display").innerText = v.isPolice ? "¡EN PATRULLERO ROBADO!" : "Estado: Conduciendo";
                         break;
                     }
                 }
@@ -407,7 +394,7 @@ function updateVehicleInteraction() {
 }
 
 function drawCityGrid(cx, cy) {
-    ctx.fillStyle = "#222228"; // Calles oscuras asfaltadas
+    ctx.fillStyle = "#222228"; 
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
     ctx.fillStyle = "#111116";
@@ -424,7 +411,6 @@ function drawCityGrid(cx, cy) {
                 ctx.fillRect(bx, by, bs, bs);
                 ctx.strokeRect(bx, by, bs, bs);
                 
-                // Efecto pseudo-3D del techo (estilo GTA clásico)
                 ctx.fillStyle = "#0c0c0f";
                 ctx.fillRect(bx + 15, by + 15, bs - 30, bs - 30);
             }
@@ -432,26 +418,23 @@ function drawCityGrid(cx, cy) {
     }
 }
 
-// BUCLE DE RENDERIZADO Y CONTROL
+// BUCLE PRINCIPAL DE JUEGO (GAME LOOP)
 function loop() {
-    // Vincular cámara y mouse al mundo real
     let cx = player.x - canvas.width / 2;
     let cy = player.y - canvas.height / 2;
     mouse.worldX = mouse.x + cx;
     mouse.worldY = mouse.y + cy;
 
-    // Actualizar Actores
     player.update();
     game.vehicles.forEach(v => v.update(player.x, player.y));
     game.pedestrians.forEach(p => p.update(player.x, player.y));
     game.bullets.forEach(b => b.update());
-    game.bullets = game.bullets.filter(b => b.life > 0); // Limpiar memoria de balas muertas
+    game.bullets = game.bullets.filter(b => b.life > 0); 
 
     game.spawnPolice();
     game.checkCollisions();
     updateVehicleInteraction();
 
-    // Renderizado en Pantalla
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     drawCityGrid(cx, cy);
 
