@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stickman World - Tipo Roblox</title>
+    <title>Stickman Game</title>
     <style>
         body {
             margin: 0;
@@ -14,282 +14,209 @@
             align-items: center;
             height: 100vh;
             color: white;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: Arial, sans-serif;
             overflow: hidden;
-        }
-        #gameContainer {
-            text-align: center;
         }
         canvas {
             background-color: #ffffff;
             box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
-            border-radius: 12px;
-            border: 4px solid #333;
-        }
-        .instructions {
-            margin-top: 15px;
-            color: #aaa;
-            font-size: 14px;
+            border-radius: 8px;
         }
     </style>
 </head>
 <body>
 
-<div id="gameContainer">
-    <canvas id="gameCanvas" width="800" height="450"></canvas>
-    <div class="instructions">Usa las flechas [ ← ] [ → ] o [ A ] [ D ] para correr. Salta con [ Espacio ], [ W ] o [ ↑ ]</div>
-</div>
+    <canvas id="gameCanvas" width="800" height="500"></canvas>
 
-<script>
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
+    <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
 
-// CONFIGURACIÓN DEL MUNDO (El mapa es gigantesco, mide 4000 píxeles de largo)
-const world = {
-    width: 4000,
-    height: 450,
-    groundY: 400 // Altura exacta del suelo
-};
+    const world = {
+        width: 2400,
+        height: 500
+    };
 
-// CÁMARA (Sigue al jugador para centrarlo en pantalla)
-const camera = {
-    x: 0,
-    y: 0
-};
+    const camera = {
+        x: 0,
+        y: 0
+    };
 
-// EL STICKMAN
-const stickman = {
-    x: 200,
-    y: 200,
-    radius: 14,
-    velocityX: 0,
-    velocityY: 0,
-    speed: 5.5,
-    jumpForce: 13,
-    grounded: false,
-    color: "#e74c3c", // Rojo Alan Becker
-    
-    // Propiedades mecánicas de animación
-    walkCycle: 0,
-    isMoving: false
-};
+    const stickman = {
+        x: 100,
+        y: 300,
+        radius: 15,
+        velocityX: 0,
+        velocityY: 0,
+        speed: 6,
+        jumpForce: 13,
+        grounded: false,
+        color: "#ff3333",
+        animTimer: 0,
+        isMoving: false
+    };
 
-const physics = {
-    gravity: 0.6,
-    friction: 0.83
-};
+    const physics = {
+        gravity: 0.6,
+        friction: 0.82
+    };
 
-const keys = {};
+    const keys = {};
 
-window.addEventListener("keydown", (e) => keys[e.code] = true);
-window.addEventListener("keyup", (e) => keys[e.code] = false);
+    window.addEventListener("keydown", (e) => keys[e.code] = true);
+    window.addEventListener("keyup", (e) => keys[e.code] = false);
 
-// GENERAR DECORACIONES EN EL MAPA PARA NOTAR LA CÁMARA
-const obstacles = [];
-for (let i = 400; i < world.width; i += 350) {
-    obstacles.push({
-        x: i,
-        y: world.groundY - 80,
-        width: 30,
-        height: 80,
-        color: "#34495e"
-    });
-}
+    function drawStickman(x, y, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 4;
+        ctx.lineCap = "round";
 
-// DIBUJAR AL STICKMAN CON ANIMACIONES REALES
-function drawStickman(x, y) {
-    ctx.strokeStyle = stickman.color;
-    ctx.lineWidth = 4;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
+        let legSwing = 0;
+        let armSwing = 0;
+        let bodyYOffset = 0;
 
-    // Variables de balanceo dinámico
-    let leftLegY, rightLegY, leftLegX, rightLegX;
-    let leftArmY, rightArmY, leftArmX, rightArmX;
-    let headBob = 0;
+        if (!stickman.grounded) {
+            legSwing = 0.5;
+            armSwing = 1.2;
+        } else if (stickman.isMoving) {
+            legSwing = Math.sin(stickman.animTimer * 0.15) * 0.6;
+            armSwing = Math.cos(stickman.animTimer * 0.15) * 0.5;
+            bodyYOffset = Math.abs(Math.sin(stickman.animTimer * 0.3)) * 3;
+        }
 
-    if (!stickman.grounded) {
-        // --- ANIMACIÓN DE SALTO (Extremidades encogidas/al aire) ---
-        headBob = -2;
-        leftLegX = x - 10;  leftLegY = y + 75;
-        rightLegX = x + 12; rightLegY = y + 70;
-        leftArmX = x - 15;  leftArmY = y + 10; // Brazos hacia arriba
-        rightArmX = x + 15; rightArmY = y + 10;
-    } else if (stickman.isMoving) {
-        // --- ANIMACIÓN DE CAMINAR (Matemáticas de balanceo cruzado) ---
-        // El ciclo se calcula con el movimiento del jugador
-        const speedFactor = stickman.walkCycle;
-        
-        // Las piernas se cruzan de adelante hacia atrás de forma fluida
-        leftLegX = x + Math.sin(speedFactor) * 20;
-        leftLegY = world.groundY;
-        
-        rightLegX = x - Math.sin(speedFactor) * 20;
-        rightLegY = world.groundY;
+        const currentY = y + bodyYOffset;
 
-        // Los brazos se balancean al revés de las piernas (como al correr de verdad)
-        leftArmX = x - Math.sin(speedFactor) * 18;
-        leftArmY = y + 38;
-        
-        rightArmX = x + Math.sin(speedFactor) * 18;
-        rightArmY = y + 38;
-
-        // Cabeza sube y baja levemente al dar pasos
-        headBob = Math.abs(Math.sin(speedFactor * 2)) * 3;
-    } else {
-        // --- POSTURA EN REPOSO (Parado quieto) ---
-        leftLegX = x - 12;  leftLegY = world.groundY;
-        rightLegX = x + 12; rightLegY = world.groundY;
-        leftArmX = x - 10;  leftArmY = y + 42;
-        rightArmX = x + 10; rightArmY = y + 42;
-    }
-
-    const finalHeadY = y + headBob;
-    const torsoTopY = finalHeadY + stickman.radius;
-    const torsoBottomY = y + 45;
-
-    // 1. DIBUJAR CABEZA
-    ctx.beginPath();
-    ctx.arc(x, finalHeadY, stickman.radius, 0, Math.PI * 2);
-    ctx.fillStyle = "#fff"; // Fondo de cabeza en blanco para que tenga cuerpo
-    ctx.fill();
-    ctx.stroke();
-
-    // 2. DIBUJAR CUERPO (TRONCO)
-    ctx.beginPath();
-    ctx.moveTo(x, torsoTopY);
-    ctx.lineTo(x, torsoBottomY);
-    ctx.stroke();
-
-    // 3. DIBUJAR BRAZOS
-    const shoulderY = torsoTopY + 10;
-    ctx.beginPath();
-    ctx.moveTo(x, shoulderY);
-    ctx.lineTo(leftArmX, leftArmY); // Brazo Izquierdo
-    ctx.moveTo(x, shoulderY);
-    ctx.lineTo(rightArmX, rightArmY); // Brazo Derecho
-    ctx.stroke();
-
-    // 4. DIBUJAR PIERNAS
-    ctx.beginPath();
-    ctx.moveTo(x, torsoBottomY);
-    ctx.lineTo(leftLegX, leftLegY); // Pierna Izquierda
-    ctx.moveTo(x, torsoBottomY);
-    ctx.lineTo(rightLegX, rightLegY); // Pierna Derecha
-    ctx.stroke();
-}
-
-function update() {
-    stickman.isMoving = false;
-
-    // Controles de movimiento
-    if (keys["ArrowRight"] || keys["KeyD"]) {
-        if (stickman.velocityX < stickman.speed) stickman.velocityX += 0.7;
-        stickman.isMoving = true;
-    }
-    if (keys["ArrowLeft"] || keys["KeyA"]) {
-        if (stickman.velocityX > -stickman.speed) stickman.velocityX -= 0.7;
-        stickman.isMoving = true;
-    }
-
-    // Mecánica de Salto
-    if ((keys["Space"] || keys["ArrowUp"] || keys["KeyW"]) && stickman.grounded) {
-        stickman.velocityY = -stickman.jumpForce;
-        stickman.grounded = false;
-    }
-
-    // Aplicar gravedad y fricción
-    stickman.velocityY += physics.gravity;
-    stickman.velocityX *= physics.friction;
-
-    // Mover coordenadas del stickman
-    stickman.x += stickman.velocityX;
-    stickman.y += stickman.velocityY;
-
-    // Avanzar el ciclo de animación si camina
-    if (stickman.isMoving) {
-        stickman.walkCycle += 0.22; 
-    } else {
-        stickman.walkCycle = 0;
-    }
-
-    // Colisión con el Suelo Fijo
-    if (stickman.y + 75 >= world.groundY) {
-        stickman.y = world.groundY - 75;
-        stickman.velocityY = 0;
-        stickman.grounded = true;
-    }
-
-    // Evitar que salga del mapa (Límites mundiales)
-    if (stickman.x - stickman.radius < 0) stickman.x = stickman.radius;
-    if (stickman.x + stickman.radius > world.width) stickman.x = world.width - stickman.radius;
-
-    // LÓGICA DE CÁMARA EN TERCERA PERSONA SUAVE
-    // Apunta al centro de la pantalla restando la mitad del ancho del canvas
-    camera.x = stickman.x - canvas.width / 2;
-
-    // Frenar cámara si llega a los extremos del mapa
-    if (camera.x < 0) camera.x = 0;
-    if (camera.x > world.width - canvas.width) camera.x = world.width - canvas.width;
-}
-
-function draw() {
-    // Limpiar pantalla
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // Guardar el contexto para aplicar el desplazamiento de CÁMARA
-    ctx.save();
-    ctx.translate(-camera.x, -camera.y);
-
-    // --- TODO LO QUE SE DIBUJA AQUÍ SE DESPLAZA CON LA CÁMARA ---
-
-    // Dibujar cielo/líneas de fondo tipo cuadrícula para notar la velocidad
-    ctx.strokeStyle = "#f0f0f0";
-    ctx.lineWidth = 1;
-    for (let i = 0; i < world.width; i += 100) {
         ctx.beginPath();
-        ctx.moveTo(i, 0);
-        ctx.lineTo(i, world.groundY);
+        ctx.arc(x, currentY, stickman.radius, 0, Math.PI * 2);
+        ctx.fillStyle = color;
+        ctx.fill();
         ctx.stroke();
+
+        const torsoBottomX = x;
+        const torsoBottomY = currentY + 50;
+        ctx.beginPath();
+        ctx.moveTo(x, currentY + stickman.radius);
+        ctx.lineTo(torsoBottomX, torsoBottomY);
+        ctx.stroke();
+
+        const shoulderY = currentY + 22;
+        if (!stickman.grounded) {
+            ctx.beginPath();
+            ctx.moveTo(x, shoulderY);
+            ctx.lineTo(x - 15, shoulderY - 20);
+            ctx.moveTo(x, shoulderY);
+            ctx.lineTo(x + 15, shoulderY - 20);
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(x, shoulderY);
+            ctx.lineTo(x - 18 * (1 - armSwing), shoulderY + 15 + (armSwing * 10));
+            ctx.moveTo(x, shoulderY);
+            ctx.lineTo(x + 18 * (1 + armSwing), shoulderY + 15 - (armSwing * 10));
+            ctx.stroke();
+        }
+
+        if (!stickman.grounded) {
+            ctx.beginPath();
+            ctx.moveTo(torsoBottomX, torsoBottomY);
+            ctx.lineTo(torsoBottomX - 10, torsoBottomY + 20);
+            ctx.lineTo(torsoBottomX - 5, torsoBottomY + 30);
+            ctx.moveTo(torsoBottomX, torsoBottomY);
+            ctx.lineTo(torsoBottomX + 10, torsoBottomY + 20);
+            ctx.lineTo(torsoBottomX + 15, torsoBottomY + 30);
+            ctx.stroke();
+        } else {
+            ctx.beginPath();
+            ctx.moveTo(torsoBottomX, torsoBottomY);
+            ctx.lineTo(torsoBottomX - 15 + (legSwing * 20), torsoBottomY + 35);
+            ctx.moveTo(torsoBottomX, torsoBottomY);
+            ctx.lineTo(torsoBottomX + 15 - (legSwing * 20), torsoBottomY + 35);
+            ctx.stroke();
+        }
     }
 
-    // Dibujar Suelo del Mundo
-    ctx.fillStyle = "#27ae60"; // Pasto verde
-    ctx.fillRect(0, world.groundY, world.width, world.height - world.groundY);
-    ctx.fillStyle = "#2c3e50"; // Tierra debajo
-    ctx.fillRect(0, world.groundY + 10, world.width, world.height - world.groundY);
+    function drawEnvironment() {
+        ctx.fillStyle = "#555555";
+        for (let i = 200; i < world.width; i += 300) {
+            ctx.fillRect(i, world.height - 100, 20, 90);
+            ctx.fillStyle = "#444444";
+            ctx.fillRect(i - 10, world.height - 110, 40, 10);
+            ctx.fillStyle = "#555555";
+        }
+    }
 
-    // Dibujar los edificios u obstáculos del mapa
-    obstacles.forEach(obs => {
-        ctx.fillStyle = obs.color;
-        ctx.fillRect(obs.x, obs.y, obs.width, obs.height);
-        // Detalles de ventanas
-        ctx.fillStyle = "#f1c40f";
-        ctx.fillRect(obs.x + 5, obs.y + 10, 8, 12);
-        ctx.fillRect(obs.x + 17, obs.y + 10, 8, 12);
-    });
+    function update() {
+        stickman.isMoving = false;
 
-    // Dibujar Stickman con sus animaciones activas
-    drawStickman(stickman.x, stickman.y);
+        if (keys["ArrowRight"] || keys["KeyD"]) {
+            if (stickman.velocityX < stickman.speed) stickman.velocityX += 0.8;
+            stickman.isMoving = true;
+        }
+        if (keys["ArrowLeft"] || keys["KeyA"]) {
+            if (stickman.velocityX > -stickman.speed) stickman.velocityX -= 0.8;
+            stickman.isMoving = true;
+        }
 
-    // Restaurar cámara
-    ctx.restore();
+        if ((keys["ArrowUp"] || keys["Space"] || keys["KeyW"]) && stickman.grounded) {
+            stickman.jumpForce = 13;
+            stickman.velocityY = -stickman.jumpForce;
+            stickman.grounded = false;
+        }
 
-    // UI FIJA EN PANTALLA (No se mueve con la cámara)
-    ctx.fillStyle = "#2c3e50";
-    ctx.font = "bold 14px sans-serif";
-    ctx.fillText(`Mundo Exploración: Metros Recorridos: ${Math.floor(stickman.x)}m / ${world.width}m`, 20, 30);
-}
+        stickman.velocityY += physics.gravity;
+        stickman.velocityX *= physics.friction;
 
-function gameLoop() {
-    update();
-    draw();
-    requestAnimationFrame(gameLoop);
-}
+        stickman.x += stickman.velocityX;
+        stickman.y += stickman.velocityY;
 
-// Arrancar juego
-gameLoop();
-</script>
+        if (stickman.isMoving) {
+            stickman.animTimer += Math.abs(stickman.velocityX);
+        } else {
+            stickman.animTimer = 0;
+        }
 
+        if (stickman.y + 85 >= world.height) {
+            stickman.y = world.height - 85;
+            stickman.velocityY = 0;
+            stickman.grounded = true;
+        }
+
+        if (stickman.x - stickman.radius < 0) stickman.x = stickman.radius;
+        if (stickman.x + stickman.radius > world.width) stickman.x = world.width - stickman.radius;
+
+        camera.x = stickman.x - canvas.width / 2;
+
+        if (camera.x < 0) camera.x = 0;
+        if (camera.x > world.width - canvas.width) camera.x = world.width - canvas.width;
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        ctx.save();
+        ctx.translate(-camera.x, -camera.y);
+
+        ctx.fillStyle = "#c8c8c8";
+        ctx.fillRect(0, world.height - 15, world.width, 15);
+
+        drawEnvironment();
+
+        drawStickman(stickman.x, stickman.y, stickman.color);
+
+        ctx.restore();
+
+        ctx.fillStyle = "#333";
+        ctx.font = "14px Arial";
+        ctx.fillText(`Posición del mapa: ${Math.floor(stickman.x)}px / ${world.width}px`, 20, 30);
+    }
+
+    function gameLoop() {
+        update();
+        draw();
+        requestAnimationFrame(gameLoop);
+    }
+
+    gameLoop();
+    </script>
 </body>
 </html>
