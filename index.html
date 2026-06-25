@@ -1,33 +1,225 @@
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stickman Web Game</title>
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            background-color: #1a1a1a;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            color: white;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
-        }
-        canvas {
-            background-color: #ffffff;
-            box-shadow: 0px 0px 20px rgba(255, 255, 255, 0.1);
-            border-radius: 8px;
-        }
-    </style>
-</head>
-<body>
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
 
-    <canvas id="gameCanvas" width="800" height="500"></canvas>
+// Configuración del Mundo (Mapa más grande que la pantalla)
+const world = {
+    width: 2400, // El mapa mide 3 pantallas de ancho
+    height: 500
+};
 
-    <script src="game.js"></script>
-</body>
-</html>
+// Configuración de la Cámara
+const camera = {
+    x: 0,
+    y: 0
+};
+
+// Configuración del Stickman
+const stickman = {
+    x: 100,
+    y: 300,
+    radius: 15,
+    velocityX: 0,
+    velocityY: 0,
+    speed: 6,
+    jumpForce: 13,
+    grounded: false,
+    color: "#ff3333",
+    // Variables para controlar la animación
+    animTimer: 0,
+    isMoving: false
+};
+
+const physics = {
+    gravity: 0.6,
+    friction: 0.82
+};
+
+const keys = {};
+
+window.addEventListener("keydown", (e) => keys[e.code] = true);
+window.addEventListener("keyup", (e) => keys[e.code] = false);
+
+// Dibuja al Stickman aplicando matemáticas para las extremidades
+function drawStickman(x, y, color) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 4;
+    ctx.lineCap = "round";
+
+    // Variables de animación basadas en el movimiento y el aire
+    let legSwing = 0;
+    let armSwing = 0;
+    let bodyYOffset = 0; // Efecto de rebote al caminar
+
+    if (!stickman.grounded) {
+        // Animación de SALTO: Encoger piernas y subir brazos
+        legSwing = 0.5; 
+        armSwing = 1.2;
+    } else if (stickman.isMoving) {
+        // Animación de CAMINAR/CORRER: Oscilación usando Seno y Coseno
+        legSwing = Math.sin(stickman.animTimer * 0.15) * 0.6;
+        armSwing = Math.cos(stickman.animTimer * 0.15) * 0.5;
+        bodyYOffset = Math.abs(Math.sin(stickman.animTimer * 0.3)) * 3; // Rebote leve de la cabeza
+    }
+
+    const currentY = y + bodyYOffset;
+
+    // 1. Cabeza
+    ctx.beginPath();
+    ctx.arc(x, currentY, stickman.radius, 0, Math.PI * 2);
+    ctx.fillStyle = color;
+    ctx.fill();
+    ctx.stroke();
+
+    // 2. Cuerpo (Tronco)
+    const torsoBottomX = x;
+    const torsoBottomY = currentY + 50;
+    ctx.beginPath();
+    ctx.moveTo(x, currentY + stickman.radius);
+    ctx.lineTo(torsoBottomX, torsoBottomY);
+    ctx.stroke();
+
+    // 3. Brazos
+    const shoulderY = currentY + 22;
+    if (!stickman.grounded) {
+        // Brazos hacia arriba al saltar
+        ctx.beginPath();
+        ctx.moveTo(x, shoulderY);
+        ctx.lineTo(x - 15, shoulderY - 20); // Izquierdo
+        ctx.moveTo(x, shoulderY);
+        ctx.lineTo(x + 15, shoulderY - 20); // Derecho
+        ctx.stroke();
+    } else {
+        // Brazos cruzándose al correr
+        ctx.beginPath();
+        ctx.moveTo(x, shoulderY);
+        ctx.lineTo(x - 18 * (1 - armSwing), shoulderY + 15 + (armSwing * 10)); 
+        ctx.moveTo(x, shoulderY);
+        ctx.lineTo(x + 18 * (1 + armSwing), shoulderY + 15 - (armSwing * 10)); 
+        ctx.stroke();
+    }
+
+    // 4. Piernas
+    if (!stickman.grounded) {
+        // Piernas flexionadas en el aire
+        ctx.beginPath();
+        ctx.moveTo(torsoBottomX, torsoBottomY);
+        ctx.lineTo(torsoBottomX - 10, torsoBottomY + 20);
+        ctx.lineTo(torsoBottomX - 5, torsoBottomY + 30); // Izquierda articulada
+
+        ctx.moveTo(torsoBottomX, torsoBottomY);
+        ctx.lineTo(torsoBottomX + 10, torsoBottomY + 20);
+        ctx.lineTo(torsoBottomX + 15, torsoBottomY + 30); // Derecha articulada
+        ctx.stroke();
+    } else {
+        // Piernas alternándose al caminar
+        ctx.beginPath();
+        ctx.moveTo(torsoBottomX, torsoBottomY);
+        ctx.lineTo(torsoBottomX - 15 + (legSwing * 20), torsoBottomY + 35); // Pierna 1
+        ctx.moveTo(torsoBottomX, torsoBottomY);
+        ctx.lineTo(torsoBottomX + 15 - (legSwing * 20), torsoBottomY + 35); // Pierna 2
+        ctx.stroke();
+    }
+}
+
+// Dibuja elementos estáticos en el mapa para notar el movimiento de la cámara
+function drawEnvironment() {
+    ctx.fillStyle = "#555555";
+    // Dibujamos varios postes o bloques a lo largo de los 2400px de mapa
+    for (let i = 200; i < world.width; i += 300) {
+        ctx.fillRect(i, world.height - 100, 20, 90);
+        ctx.fillStyle = "#444444";
+        ctx.fillRect(i - 10, world.height - 110, 40, 10);
+        ctx.fillStyle = "#555555";
+    }
+}
+
+function update() {
+    stickman.isMoving = false;
+
+    // Movimiento
+    if (keys["ArrowRight"] || keys["KeyD"]) {
+        if (stickman.velocityX < stickman.speed) stickman.velocityX += 0.8;
+        stickman.isMoving = true;
+    }
+    if (keys["ArrowLeft"] || keys["KeyA"]) {
+        if (stickman.velocityX > -stickman.speed) stickman.velocityX -= 0.8;
+        stickman.isMoving = true;
+    }
+
+    // Salto
+    if ((keys["ArrowUp"] || keys["Space"] || keys["KeyW"]) && stickman.grounded) {
+        stickman.velocityY = -stickman.jumpForce;
+        stickman.grounded = false;
+    }
+
+    // Físicas básicas
+    stickman.velocityY += physics.gravity;
+    stickman.velocityX *= physics.friction;
+
+    stickman.x += stickman.velocityX;
+    stickman.y += stickman.velocityY;
+
+    // Si se mueve, sumamos al temporizador de la animación
+    if (stickman.isMoving) {
+        stickman.animTimer += Math.abs(stickman.velocityX);
+    } else {
+        stickman.animTimer = 0; // Volver a posición firme
+    }
+
+    // Colisión Suelo
+    if (stickman.y + 85 >= world.height) {
+        stickman.y = world.height - 85;
+        stickman.velocityY = 0;
+        stickman.grounded = true;
+    }
+
+    // Límites del mapa infinito/largo
+    if (stickman.x - stickman.radius < 0) stickman.x = stickman.radius;
+    if (stickman.x + stickman.radius > world.width) stickman.x = world.width - stickman.radius;
+
+    // LÓGICA DE LA CÁMARA (Seguimiento suave en tercera persona)
+    // Centramos la cámara en la posición X del stickman menos la mitad de la pantalla
+    camera.x = stickman.x - canvas.width / 2;
+
+    // Restringir la cámara para que no filme fuera de los bordes del mapa izquierdo o derecho
+    if (camera.x < 0) camera.x = 0;
+    if (camera.x > world.width - canvas.width) camera.x = world.width - canvas.width;
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // --- AQUÍ EMPIEZA EL EFECTO DE CÁMARA ---
+    // Guardamos el estado del canvas y lo "desplazamos" según la cámara
+    ctx.save();
+    ctx.translate(-camera.x, -camera.y);
+
+    // Todo lo que se dibuje aquí abajo se moverá con la cámara de fondo
+    
+    // Dibujar Suelo Largo
+    ctx.fillStyle = "#c8c8c8";
+    ctx.fillRect(0, world.height - 15, world.width, 15);
+
+    // Dibujar decoraciones del mapa
+    drawEnvironment();
+
+    // Dibujar el Stickman en sus coordenadas globales reales
+    drawStickman(stickman.x, stickman.y, stickman.color);
+
+    // Restauramos el canvas para que el HUD o interfaces no se muevan desfasados
+    ctx.restore();
+    // ----------------------------------------
+    
+    // Texto de interfaz (Fijo en pantalla)
+    ctx.fillStyle = "#333";
+    ctx.font = "14px Arial";
+    ctx.fillText(`Posición del mapa: ${Math.floor(stickman.x)}px / ${world.width}px`, 20, 30);
+}
+
+function gameLoop() {
+    update();
+    draw();
+    requestAnimationFrame(gameLoop);
+}
+
+gameLoop();
