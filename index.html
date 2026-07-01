@@ -18,21 +18,31 @@
             <p>Panel de Gestión de Mundos y Activos</p>
         </div>
 
-        <div class="card">
-            <div>
-                <h3>Survival_World_01</h3>
-                <p>Última actualización: 01/07/2026 | Tamaño: 450MB</p>
-            </div>
-            <a href="mundos/survival_v1.zip" class="btn">DESCARGAR</a>
-        </div>
-
-        <div class="card">
-            <div>
-                <h3>Lobby_Map_Main</h3>
-                <p>Última actualización: 25/06/2026 | Tamaño: 120MB</p>
-            </div>
-            <a href="mundos/lobby_map.zip" class="btn">DESCARGAR</a>
+        <div id="lista-mundos">
+            <!-- Aquí se cargarán tus mundos automáticamente -->
         </div>
     </div>
+
+    <script>
+        // --- SOLO TIENES QUE EDITAR ESTA LISTA ---
+        const misMundos = [
+            { nombre: "Survival World 01", fecha: "01/07/2026", archivo: "mundos/survival_v1.zip" },
+            { nombre: "Lobby Map Main", fecha: "25/06/2026", archivo: "mundos/lobby_map.zip" },
+            { nombre: "Mi Nuevo Mapa Pro", fecha: "01/07/2026", archivo: "mundos/nuevo_mapa.zip" }
+        ];
+
+        const contenedor = document.getElementById('lista-mundos');
+        misMundos.forEach(mundo => {
+            contenedor.innerHTML += `
+                <div class="card">
+                    <div>
+                        <h3>${mundo.nombre}</h3>
+                        <p>Última actualización: ${mundo.fecha}</p>
+                    </div>
+                    <a href="${mundo.archivo}" class="btn">DESCARGAR</a>
+                </div>
+            `;
+        });
+    </script>
 </body>
 </html>
