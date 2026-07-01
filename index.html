@@ -3,220 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stickman Game</title>
+    <title>Detroit Detective - 1990</title>
     <style>
         body {
             margin: 0;
-            padding: 0;
-            background-color: #111;
+            overflow: hidden;
+            background-color: #050505;
+            font-family: 'Courier New', Courier, monospace;
+            user-select: none;
+        }
+
+        #canvas-container {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* Interfaz de la Carta (Estilo Papers, Please) */
+        #ui-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            color: white;
-            font-family: Arial, sans-serif;
-            overflow: hidden;
+            background: rgba(0, 0, 0, 0.4);
+            transition: opacity 1s ease;
         }
-        canvas {
-            background-color: #ffffff;
-            box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.5);
-            border-radius: 8px;
+
+        .letter {
+            background-color: #e2d4b7;
+            color: #2b2519;
+            width: 450px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.7);
+            border: 2px solid #b5a484;
+            transform: rotate(-1deg);
+            position: relative;
+            cursor: move;
+        }
+
+        .letter-header {
+            text-align: center;
+            border-bottom: 2px dashed #b5a484;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+
+        .letter-body {
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .stamp {
+            position: absolute;
+            bottom: 20px;
+            right: 30px;
+            border: 3px solid #7a1f1f;
+            color: #7a1f1f;
+            padding: 5px 10px;
+            font-weight: bold;
+            transform: rotate(15deg);
+            opacity: 0.8;
+            font-size: 14px;
+        }
+
+        .btn-accept {
+            display: block;
+            width: 100%;
+            background-color: #2b2519;
+            color: #e2d4b7;
+            border: none;
+            padding: 12px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #120f0a;
+        }
+
+        .btn-accept:active {
+            transform: translateY(4px);
+            box-shadow: none;
+        }
+
+        /* Filtro de pantalla estilo retro/sucio */
+        #vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 5;
+            pointer-events: none;
+            background: radial-gradient(circle, transparent 30%, rgba(0,0,0,0.85) 100%);
         }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <canvas id="gameCanvas" width="800" height="500"></canvas>
+    <div id="vignette"></div>
+    <div id="canvas-container"></div>
+
+    <div id="ui-layer">
+        <div class="letter" id="letter">
+            <div class="letter-header">
+                DEPARTAMENTO DE POLICÍA DE DETROIT<br>
+                <span style="font-size: 12px;">15 de Julio, 1990</span>
+            </div>
+            <div class="letter-body">
+                Felicidades agente,<br><br>
+                Usted ha subido de puesto debido a su impecable desempeño en el servicio operacional. A partir de este momento, queda asignado oficialmente como <strong>Detective de la División de Homicidios de Detroit</strong>.<br><br>
+                Su nueva oficina y los primeros expedientes lo están esperando. No nos defraude.
+            </div>
+            <div class="stamp">APROBADO</div>
+            <button class="btn-accept" onclick="closeLetter()">ARCHIVAR NOTIFICACIÓN</button>
+        </div>
+    </div>
 
     <script>
-    const canvas = document.getElementById("gameCanvas");
-    const ctx = canvas.getContext("2d");
+        // --- CONFIGURACIÓN BÁSICA DE THREE.JS ---
+        const container = document.getElementById('canvas-container');
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        scene.fog = new THREE.FogExp2(0x0a0a0a, 0.15); // Niebla para dar misterio
 
-    const world = {
-        width: 2400,
-        height: 500
-    };
+        // Cámara en primera persona (Ojos del jugador)
+        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 1.3, 1.2); // Altura de los ojos sentado frente a la mesa
+        camera.lookAt(0, 0.7, -1);
 
-    const camera = {
-        x: 0,
-        y: 0
-    };
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.shadowMap.enabled = true;
+        container.appendChild(renderer.domElement);
 
-    const stickman = {
-        x: 100,
-        y: 300,
-        radius: 15,
-        velocityX: 0,
-        velocityY: 0,
-        speed: 6,
-        jumpForce: 13,
-        grounded: false,
-        color: "#ff3333",
-        animTimer: 0,
-        isMoving: false
-    };
+        // --- ILUMINACIÓN (Estilo Cine Negro / Noir) ---
+        // Luz focal superior (Lámpara de oficina sobre la mesa)
+        const deskLight = new THREE.SpotLight(0xfff5df, 2.5);
+        deskLight.position.set(0, 3, 0);
+        deskLight.angle = Math.PI / 4;
+        deskLight.penumbra = 0.8;
+        deskLight.castShadow = true;
+        scene.add(deskLight);
 
-    const physics = {
-        gravity: 0.6,
-        friction: 0.82
-    };
+        // Luz ambiental muy tenue azulada (Penumbra de la habitación)
+        const ambientLight = new THREE.AmbientLight(0x1a233a, 0.2);
+        scene.add(ambientLight);
 
-    const keys = {};
+        // --- MODELADO DE LA ESCENA (Mesa, Objetos, Puerta) ---
 
-    window.addEventListener("keydown", (e) => keys[e.code] = true);
-    window.addEventListener("keyup", (e) => keys[e.code] = false);
+        // Materiales compartidos
+        const woodMaterial = new THREE.MeshStandardMaterial({ color: 0x3d2314, roughness: 0.7 });
+        const metalMaterial = new THREE.MeshStandardMaterial({ color: 0x444444, roughness: 0.4, metalness: 0.8 });
+        const glassMaterial = new THREE.MeshStandardMaterial({ color: 0x8a643c, roughness: 0.1, transparent: true, opacity: 0.7 });
 
-    function drawStickman(x, y, color) {
-        ctx.strokeStyle = color;
-        ctx.lineWidth = 4;
-        ctx.lineCap = "round";
+        // 1. La Mesa
+        const tableGeo = new THREE.BoxGeometry(2, 0.05, 1.2);
+        const table = new THREE.Mesh(tableGeo, woodMaterial);
+        table.position.set(0, 0.7, -0.2);
+        table.receiveShadow = true;
+        scene.add(table);
 
-        let legSwing = 0;
-        let armSwing = 0;
-        let bodyYOffset = 0;
-
-        if (!stickman.grounded) {
-            legSwing = 0.5;
-            armSwing = 1.2;
-        } else if (stickman.isMoving) {
-            legSwing = Math.sin(stickman.animTimer * 0.15) * 0.6;
-            armSwing = Math.cos(stickman.animTimer * 0.15) * 0.5;
-            bodyYOffset = Math.abs(Math.sin(stickman.animTimer * 0.3)) * 3;
+        // Patas de la mesa
+        const legGeo = new THREE.BoxGeometry(0.05, 0.7, 0.05);
+        for(let x of [-0.9, 0.9]) {
+            for(let z of [-0.6, 0.4]) {
+                const leg = new THREE.Mesh(legGeo, woodMaterial);
+                leg.position.set(x, 0.35, z);
+                scene.add(leg);
+            }
         }
 
-        const currentY = y + bodyYOffset;
+        // 2. Lado Izquierdo: Cenicero y Cigarro apagado
+        const ashtrayGeo = new THREE.CylinderGeometry(0.08, 0.09, 0.02, 16);
+        const ashtray = new THREE.Mesh(ashtrayGeo, metalMaterial);
+        ashtray.position.set(-0.4, 0.74, -0.1);
+        ashtray.castShadow = true;
+        scene.add(ashtray);
 
-        ctx.beginPath();
-        ctx.arc(x, currentY, stickman.radius, 0, Math.PI * 2);
-        ctx.fillStyle = color;
-        ctx.fill();
-        ctx.stroke();
+        const cigaretteGeo = new THREE.CylinderGeometry(0.006, 0.006, 0.06, 8);
+        const cigarette = new THREE.Mesh(cigaretteGeo, new THREE.MeshStandardMaterial({color: 0xeeeeee}));
+        cigarette.rotation.z = Math.PI / 2.3;
+        cigarette.rotation.x = 0.2;
+        cigarette.position.set(-0.38, 0.75, -0.1);
+        scene.add(cigarette);
 
-        const torsoBottomX = x;
-        const torsoBottomY = currentY + 50;
-        ctx.beginPath();
-        ctx.moveTo(x, currentY + stickman.radius);
-        ctx.lineTo(torsoBottomX, torsoBottomY);
-        ctx.stroke();
+        // 3. Lado Derecho: Vaso de Alcohol (Vaso de Whisky de los 90s)
+        const glassGeo = new THREE.CylinderGeometry(0.05, 0.04, 0.1, 16);
+        const glass = new THREE.Mesh(glassGeo, glassMaterial);
+        glass.position.set(0.4, 0.78, -0.1);
+        glass.castShadow = true;
+        scene.add(glass);
 
-        const shoulderY = currentY + 22;
-        if (!stickman.grounded) {
-            ctx.beginPath();
-            ctx.moveTo(x, shoulderY);
-            ctx.lineTo(x - 15, shoulderY - 20);
-            ctx.moveTo(x, shoulderY);
-            ctx.lineTo(x + 15, shoulderY - 20);
-            ctx.stroke();
-        } else {
-            ctx.beginPath();
-            ctx.moveTo(x, shoulderY);
-            ctx.lineTo(x - 18 * (1 - armSwing), shoulderY + 15 + (armSwing * 10));
-            ctx.moveTo(x, shoulderY);
-            ctx.lineTo(x + 18 * (1 + armSwing), shoulderY + 15 - (armSwing * 10));
-            ctx.stroke();
+        // Liquido dentro del vaso
+        const liquidGeo = new THREE.CylinderGeometry(0.045, 0.041, 0.05, 16);
+        const liquidMat = new THREE.MeshStandardMaterial({color: 0x5c330a, roughness: 0.1});
+        const liquid = new THREE.Mesh(liquidGeo, liquidMat);
+        liquid.position.set(0.4, 0.76, -0.1);
+        scene.add(liquid);
+
+        // 4. El Fondo: Pared y Puerta
+        const wallGeo = new THREE.PlaneGeometry(10, 5);
+        const wallMat = new THREE.MeshStandardMaterial({color: 0x22252a, roughness: 0.9});
+        const backWall = new THREE.Mesh(wallGeo, wallMat);
+        backWall.position.set(0, 2, -3);
+        backWall.receiveShadow = true;
+        scene.add(backWall);
+
+        // Marco de la Puerta
+        const doorFrameGeo = new THREE.BoxGeometry(1.1, 2.2, 0.05);
+        const doorFrame = new THREE.Mesh(doorFrameGeo, woodMaterial);
+        doorFrame.position.set(0, 1.1, -2.95);
+        scene.add(doorFrame);
+
+        // Hoja de la Puerta
+        const doorGeo = new THREE.BoxGeometry(1.0, 2.1, 0.02);
+        const doorMat = new THREE.MeshStandardMaterial({color: 0x1c120c, roughness: 0.6});
+        const door = new THREE.Mesh(doorGeo, doorMat);
+        door.position.set(0, 1.05, -2.94);
+        scene.add(door);
+
+        // Picaporte de la puerta
+        const knobGeo = new THREE.SphereGeometry(0.03, 8, 8);
+        const knob = new THREE.Mesh(knobGeo, metalMaterial);
+        knob.position.set(0.4, 1.05, -2.9);
+        scene.add(knob);
+
+        // --- ANIMACIÓN / BUCLE DE RENDER ---
+        let mouseX = 0;
+        let mouseY = 0;
+
+        // Sutil movimiento de cámara con el mouse para simular respiración/mirada en 1ra persona
+        window.addEventListener('mousemove', (e) => {
+            mouseX = (e.clientX / window.innerWidth) - 0.5;
+            mouseY = (e.clientY / window.innerHeight) - 0.5;
+        });
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            // Efecto de mirada fluida en 1ª persona
+            camera.position.x = Math. someX = THREE.MathUtils.lerp(camera.position.x, mouseX * 0.15, 0.05);
+            camera.position.y = THREE.MathUtils.lerp(camera.position.y, 1.3 - (mouseY * 0.1), 0.05);
+
+            renderer.render(scene, camera);
         }
 
-        if (!stickman.grounded) {
-            ctx.beginPath();
-            ctx.moveTo(torsoBottomX, torsoBottomY);
-            ctx.lineTo(torsoBottomX - 10, torsoBottomY + 20);
-            ctx.lineTo(torsoBottomX - 5, torsoBottomY + 30);
-            ctx.moveTo(torsoBottomX, torsoBottomY);
-            ctx.lineTo(torsoBottomX + 10, torsoBottomY + 20);
-            ctx.lineTo(torsoBottomX + 15, torsoBottomY + 30);
-            ctx.stroke();
-        } else {
-            ctx.beginPath();
-            ctx.moveTo(torsoBottomX, torsoBottomY);
-            ctx.lineTo(torsoBottomX - 15 + (legSwing * 20), torsoBottomY + 35);
-            ctx.moveTo(torsoBottomX, torsoBottomY);
-            ctx.lineTo(torsoBottomX + 15 - (legSwing * 20), torsoBottomY + 35);
-            ctx.stroke();
-        }
-    }
+        animate();
 
-    function drawEnvironment() {
-        ctx.fillStyle = "#555555";
-        for (let i = 200; i < world.width; i += 300) {
-            ctx.fillRect(i, world.height - 100, 20, 90);
-            ctx.fillStyle = "#444444";
-            ctx.fillRect(i - 10, world.height - 110, 40, 10);
-            ctx.fillStyle = "#555555";
-        }
-    }
-
-    function update() {
-        stickman.isMoving = false;
-
-        if (keys["ArrowRight"] || keys["KeyD"]) {
-            if (stickman.velocityX < stickman.speed) stickman.velocityX += 0.8;
-            stickman.isMoving = true;
-        }
-        if (keys["ArrowLeft"] || keys["KeyA"]) {
-            if (stickman.velocityX > -stickman.speed) stickman.velocityX -= 0.8;
-            stickman.isMoving = true;
+        // --- LÓGICA DE INTERFAZ (UI) ---
+        function closeLetter() {
+            const uiLayer = document.getElementById('ui-layer');
+            uiLayer.style.opacity = 0;
+            setTimeout(() => {
+                uiLayer.style.display = 'none';
+                // Aquí podrías arrancar la música del juego o interactuar con el entorno 3D
+            }, 1000);
         }
 
-        if ((keys["ArrowUp"] || keys["Space"] || keys["KeyW"]) && stickman.grounded) {
-            stickman.jumpForce = 13;
-            stickman.velocityY = -stickman.jumpForce;
-            stickman.grounded = false;
-        }
-
-        stickman.velocityY += physics.gravity;
-        stickman.velocityX *= physics.friction;
-
-        stickman.x += stickman.velocityX;
-        stickman.y += stickman.velocityY;
-
-        if (stickman.isMoving) {
-            stickman.animTimer += Math.abs(stickman.velocityX);
-        } else {
-            stickman.animTimer = 0;
-        }
-
-        if (stickman.y + 85 >= world.height) {
-            stickman.y = world.height - 85;
-            stickman.velocityY = 0;
-            stickman.grounded = true;
-        }
-
-        if (stickman.x - stickman.radius < 0) stickman.x = stickman.radius;
-        if (stickman.x + stickman.radius > world.width) stickman.x = world.width - stickman.radius;
-
-        camera.x = stickman.x - canvas.width / 2;
-
-        if (camera.x < 0) camera.x = 0;
-        if (camera.x > world.width - canvas.width) camera.x = world.width - canvas.width;
-    }
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-        ctx.save();
-        ctx.translate(-camera.x, -camera.y);
-
-        ctx.fillStyle = "#c8c8c8";
-        ctx.fillRect(0, world.height - 15, world.width, 15);
-
-        drawEnvironment();
-
-        drawStickman(stickman.x, stickman.y, stickman.color);
-
-        ctx.restore();
-
-        ctx.fillStyle = "#333";
-        ctx.font = "14px Arial";
-        ctx.fillText(`Posición del mapa: ${Math.floor(stickman.x)}px / ${world.width}px`, 20, 30);
-    }
-
-    function gameLoop() {
-        update();
-        draw();
-        requestAnimationFrame(gameLoop);
-    }
-
-    gameLoop();
+        // Ajustar pantalla al redimensionar ventana
+        window.addEventListener('resize', () => {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
